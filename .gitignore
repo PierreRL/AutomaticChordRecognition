@@ -1,2 +1,4 @@
 data
 .python-version
+!report/skeleton.tex
+!report/skeleton.pdf
