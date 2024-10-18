@@ -1,3 +1,6 @@
 data
 .python-version
 report/
+!report/dissertation.pdf
+!report/dissertation.tex
+!report/references.bib
