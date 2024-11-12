@@ -1,6 +1,7 @@
 data
 .python-version
-report/
+report/*
 !report/dissertation.pdf
 !report/dissertation.tex
 !report/references.bib
+*.pyc

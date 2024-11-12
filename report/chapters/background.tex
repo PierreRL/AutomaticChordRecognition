@@ -63,7 +63,7 @@ Datasets that have seen common use in ACR over the last decade include:
 
 Other, small datasets, also exist, and have been compiled together into the \emph{Chord Corpus} by \citet{Choco}, with standardised annotation formats.
 
-A variety of machine learning methods have been applied to such datasets. Older methods such as ~\cite{ACRHMM} use HMMs, but more recent methods use deep learning. Often, CNNs and RNNs are used in combination~\citep{ACRCNNRNN1,ACRLargeVocab1,ACRLargeVocab2} with CNNs performing feature extraction from a spectrogram feature, and an RNN (normally Bi-LSTM or Bi-GRU) predicts chord sequences. More recently, transformers have been applied to the entire process~\citet{MelodyTranscriptionViaGenerativePreTraining} and~\citet{HarmonyTransformer}.
+A variety of machine learning methods have been applied to such datasets. Older methods such as ~\cite{ACRHMM} use HMMs, but more recent methods use deep learning. Often, CNNs and RNNs are used in combination~\citep{ACRCNNRNN1,ACRLargeVocab1,ACRLargeVocab2} with CNNs performing feature extraction from a spectrogram feature, and an RNN (normally Bi-LSTM or Bi-GRU) predicts chord sequences. More recently, transformers have been applied to the entire process~\citet{MelodyTranscriptionViaGenerativePreTraining} and~\citet{HarmonyTransformer,AttendToChords}.
 
 Evaluation is typically done using accuracy and recall of correct chord predictions, or more music-aware measures such as the correct root note, 3rd or the MIREX metric which measures that chords have at least 3 notes in common. These are all implemented by \citet{MIREVAL} in the \texttt{mir\_eval} library~\footnote{\url{https://mir-evaluation.github.io/mir_eval/}}. Qualitative evaluation is also often carried out.
 
