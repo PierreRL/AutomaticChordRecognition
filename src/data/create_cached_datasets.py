@@ -13,30 +13,27 @@ import os
 import torch
 from tqdm import tqdm
 from src.utils import get_cqt, chord_ann_to_tensor, get_filenames
-from src.data.dataset import ChordDataset
+from src.data.dataset import FullChordDataset
 
 
 def main():
 
-    dataset = ChordDataset()
+    dataset = FullChordDataset()
     os.makedirs(dataset.cqt_cache_dir, exist_ok=True)
     os.makedirs(dataset.chord_cache_dir, exist_ok=True)
-
-    sr = 22050
-    hop_length = 2048
-    n_bins = 24 * 6
-    bins_per_octave = 24
 
     filenames = get_filenames()
     for filename in tqdm(filenames):
         cqt = get_cqt(
             filename,
-            sr=sr,
-            hop_length=hop_length,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
+            sr=dataset.sr,
+            hop_length=dataset.hop_length,
+            n_bins=dataset.n_bins,
+            bins_per_octave=dataset.bins_per_octave,
         )
-        chord_one_hot = chord_ann_to_tensor(filename, frame_length=hop_length / sr)
+        chord_one_hot = chord_ann_to_tensor(
+            filename, frame_length=dataset.hop_length / dataset.sr
+        )
 
         torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
         torch.save(chord_one_hot, f"{dataset.chord_cache_dir}/{filename}.pt")

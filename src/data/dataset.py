@@ -7,13 +7,14 @@ from torch import Tensor
 
 
 # Create a torch dataset
-class ChordDataset(Dataset):
-    def __init__(self, filenames=None, hop_length=2048, cached=True):
+class FullChordDataset(Dataset):
+    def __init__(self, filenames=None, hop_length=4096, cached=True):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
         Args:
             filenames (list) = None: A list of filenames to include in the dataset. If None, all files in the processed audio directory are included.
             hop_length (int): The hop length used to compute the log CQT.
+            cached (bool): If True, the dataset loads cached CQT and chord annotation files. If False, the CQT and chord annotation are computed on the fly.
         """
         if not filenames:
             filenames = os.listdir("./data/processed/audio")
@@ -27,7 +28,9 @@ class ChordDataset(Dataset):
         self.filenames = filenames
         self.hop_length = hop_length
         self.cached = cached
-        self.sr = 22050
+        self.sr = 44100
+        self.bins_per_octave = 36
+        self.n_bins = self.bins_per_octave * 6
         self.cqt_cache_dir = "./data/processed/cache/cqts"
         self.chord_cache_dir = "./data/processed/cache/chords"
 
@@ -40,7 +43,12 @@ class ChordDataset(Dataset):
         filename = self.filenames[idx]
 
         # Load the log CQT and chord annotation
-        cqt = get_cqt(filename, hop_length=self.hop_length)
+        cqt = get_cqt(
+            filename,
+            hop_length=self.hop_length,
+            n_bins=self.n_bins,
+            bins_per_octave=self.bins_per_octave,
+        )
         chord_ids = chord_ann_to_tensor(
             filename, frame_length=self.hop_length / self.sr
         )
@@ -76,6 +84,54 @@ class ChordDataset(Dataset):
         return self.filenames[idx]
 
 
+class FixedLengthChordDataset(FullChordDataset):
+    """
+    A chord dataset that returns fixed length frames.
+    """
+
+    def __init__(self, frame_length=10, hop_length=4096, cached=True):
+        """
+        Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
+        Args:
+            frame_length (int): The length of the frame in seconds.
+            hop_length (int): The hop length used to compute the log CQT.
+            cached (bool): If True, the dataset loads cached CQT and chord annotation files. If False, the CQT and chord annotation are computed on the fly.
+        """
+        super().__init__(hop_length=hop_length, cached=cached)
+        self.frame_length = frame_length
+        self.full_dataset = FullChordDataset(hop_length=hop_length, cached=cached)
+
+    def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
+        full_cqt, full_chord_ids = self.full_dataset[idx]
+
+        # Convert frame length in seconds to frame length in samples
+        frame_length_samples = int(self.frame_length * self.sr / self.hop_length)
+
+        if full_cqt.shape[0] > frame_length_samples:
+            # If the full data is longer than the desired frame length, take a random slice
+            start_idx = torch.randint(
+                0, full_cqt.shape[0] - frame_length_samples, (1,)
+            ).item()
+            cqt_patch = full_cqt[start_idx : start_idx + frame_length_samples]
+            chord_ids_patch = full_chord_ids[
+                start_idx : start_idx + frame_length_samples
+            ]
+        else:
+            # If the full data is shorter than the desired frame length, pad it
+            pad_length = frame_length_samples - full_cqt.shape[0]
+            cqt_patch = torch.cat(
+                (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
+            )
+            chord_ids_patch = torch.cat(
+                (
+                    full_chord_ids,
+                    torch.full((pad_length,), -1),
+                )  # Use -1 as a padding label
+            )
+
+        return cqt_patch, chord_ids_patch
+
+
 def main():
     import torch
 
@@ -88,7 +144,7 @@ def main():
     ]
 
     # Create a dataset
-    dataset = ChordDataset(filenames)
+    dataset = FullChordDataset(filenames)
 
     # Split the dataset into train and test
     train_size = int(0.8 * len(dataset))

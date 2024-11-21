@@ -62,10 +62,10 @@ def get_annotation_metadata(filename):
 
 def get_cqt(
     filename: str,
-    sr: int = 22050,
-    hop_length: int = 2048,
-    n_bins: int = 24 * 6,
-    bins_per_octave: int = 24,
+    sr: int = 44100,
+    hop_length: int = 4096,
+    n_bins: int = 36 * 6,
+    bins_per_octave: int = 36,
     fmin: float = librosa.note_to_hz("C1"),
 ) -> torch.Tensor:
     """
@@ -82,7 +82,7 @@ def get_cqt(
     Returns:
         cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
     """
-    # Default hyperparameters from https://arxiv.org/pdf/1907.02698.pdf
+    # Default hyperparameters from https://brianmcfee.net/papers/ismir2017_chord.pdf
     src = librosa.load(
         os.path.join("./data/processed/audio/", f"{filename}.mp3"), sr=sr
     )[0]
@@ -197,3 +197,25 @@ def chord_ann_to_tensor(
         frames[i] = chord_id
 
     return frames
+
+
+def get_torch_device():
+    """
+    Get the torch device to use for training.
+
+    Returns:
+        torch.device: The torch device to use.
+    """
+
+    # CUDA
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+
+    # MPS
+    if torch.backends.mps.is_available():
+        if not torch.backends.mps.is_built():
+            print("MPS is available but not built.")
+        return torch.device("mps")
+
+    # CPU
+    return torch.device("cpu")
