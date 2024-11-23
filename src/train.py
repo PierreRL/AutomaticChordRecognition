@@ -22,6 +22,11 @@ def train_model(
     val_loader: DataLoader,
     num_epochs: int,
     lr: float,
+    early_stopping: int = 10,
+    do_validation: bool = True,
+    save_model: bool = True,
+    save_dir: str = "data/models/",
+    device: torch.device = None,
 ):
     """
     Train a model on the given data.
@@ -34,12 +39,10 @@ def train_model(
         lr (float): Learning rate for the optimizer.
     """
 
-    save_dir = "data/models/"
-
-    # Use GPU if available, check for cuda and mps
-    device = get_torch_device()
-
-    print("Using device:", device)
+    if not device:
+        # Use GPU if available, check for cuda and mps
+        device = get_torch_device()
+        print("Using device:", device)
 
     model = model.to(device)
     criterion = nn.CrossEntropyLoss(ignore_index=-1)
@@ -66,6 +69,10 @@ def train_model(
             train_loss += loss.item()
 
         train_loss /= len(train_loader)
+
+        if not do_validation:
+            print(f"\nEpoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}")
+            continue
 
         model.eval()
         val_loss = 0.0
@@ -100,10 +107,14 @@ def train_model(
             if not val_losses or val_loss < min(val_losses):
                 print("Saving model")
                 os.makedirs(save_dir, exist_ok=True)
-                torch.save(model.state_dict(), f"{save_dir}/ismir2017.pth")
+                torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
 
             # Early stopping if not improved in the last 10 epochs
-            if len(val_losses) > 10 and val_loss > max(val_losses[-10:]):
+            if not early_stopping:
+                continue
+            if len(val_losses) > early_stopping and val_loss > max(
+                val_losses[-early_stopping:]
+            ):
                 print("Early stopping triggered at epoch ", epoch)
                 break
 
@@ -127,7 +138,7 @@ def main():
     model = ISMIR2017ACR(input_features=dataset.n_bins, num_classes=25)
 
     # Train the model
-    train_model(model, train_loader, val_loader, num_epochs=100, lr=0.001)
+    train_model(model, train_loader, val_loader, num_epochs=1, lr=0.001)
 
 
 if __name__ == "__main__":

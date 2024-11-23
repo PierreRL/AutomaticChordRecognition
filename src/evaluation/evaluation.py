@@ -8,7 +8,7 @@ import mir_eval
 
 from src.models.base_model import BaseACR
 from src.data.dataset import FullChordDataset
-from src.utils import id_to_chord
+from src.utils import id_to_chord, get_torch_device
 
 
 class EvalMetric(Enum):
@@ -91,6 +91,8 @@ def evaluate_model(
         EvalMetric.THIRD,
         EvalMetric.SEVENTH,
     ],
+    batch_size: int = 64,
+    device: torch.device = None,
 ) -> dict[str, float]:
     """
     Evaluate a model on a dataset split using a list of evaluation metrics.
@@ -99,15 +101,25 @@ def evaluate_model(
         model (BaseACRModel): The model to evaluate.
         dataset (ChordDataset): The dataset to evaluate on.
         evals (list[EvalMetrics]): The evaluation metrics to use. Defaults to [EvalMetrics.ROOT, EvalMetrics.MAJMIN, EvalMetrics.MIREX, EvalMetrics.CHORD_OVERLAP, EvalMetrics.CHORD_LABEL].
+        batch_size (int): The batch size to use for evaluation. Defaults to 64.
+        device (torch.device): The device to use for evaluation. Defaults to None.
 
     Returns:
         metrics (dict[str, float]): A dictionary of evaluation metrics and their values.
     """
 
+    if not device:
+        device = get_torch_device()
+
+    model.to(device)
+
+    # Set the model to evaluation mode
+    model.eval()
+
     # Initialize the evaluation metrics dictionary
     metrics = {}
 
-    data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
     for eval in evals:
         # Initialize the evaluation metric
@@ -116,6 +128,10 @@ def evaluate_model(
     print("Evaluating model...")
     # Evaluate the model on the data loader
     for batch_features, batch_labels in tqdm(data_loader):
+        # Send the batch to the device
+        batch_features, batch_labels = batch_features.to(device), batch_labels.to(
+            device
+        )
 
         # Get the chord predictions from the model
         predictions = model.predict(batch_features)

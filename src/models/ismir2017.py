@@ -4,46 +4,6 @@ STRUCTURED TRAINING FOR LARGE-VOCABULARY CHORD
 RECOGNITION
 
 https://brianmcfee.net/papers/ismir2017_chord.pdf
-
-TF version:
-def construct_model(pump, structured):
-
-    INPUTS = 'cqt/mag'
-
-    # Build the input layer
-    x = pump.layers()[INPUTS]
-
-    # Apply batch normalization
-    x_bn = K.layers.BatchNormalization()(x)
-
-    # First convolutional filter: a single 5x5
-    conv1 = K.layers.Convolution2D(1, (5, 5),
-                                   padding='same',
-                                   activation='relu',
-                                   data_format='channels_last')(x_bn)
-
-    # Second convolutional filter: a bank of full-height filters
-    conv2 = K.layers.Convolution2D(36, (1, int(conv1.shape[2])),
-                                   padding='valid', activation='relu',
-                                   data_format='channels_last')(conv1)
-
-    # Squeeze out the frequency dimension
-    squeeze = K.layers.Lambda(lambda z: K.backend.squeeze(z, axis=2))(conv2)
-
-    # BRNN layer
-    rnn = K.layers.Bidirectional(K.layers.GRU(256,
-                                              return_sequences=True))(squeeze)
-
-    p0 = K.layers.Dense(len(pump['chord_tag'].vocabulary()),
-                        activation='softmax',
-                        bias_regularizer=K.regularizers.l2())
-
-    tag = K.layers.TimeDistributed(p0, name='chord_tag')(rnn)
-
-    model = K.models.Model(x, [tag])
-    OUTPUTS = ['chord_tag/chord']
-
-    return model, INPUTS, OUTPUTS
 """
 
 import autorootcwd
@@ -60,7 +20,7 @@ class ISMIR2017ACR(BaseACR):
     Pytorch implementation of the ISMIR 2017 model for Automatic Chord Recognition.
     """
 
-    def __init__(self, input_features: int, num_classes: int):
+    def __init__(self, input_features: int = 216, num_classes: int = 25):
         """
         Initializes the ISMIR2017ACR model.
 
