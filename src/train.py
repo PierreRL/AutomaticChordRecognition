@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from src.models.ismir2017 import ISMIR2017ACR
-from src.data.dataset import FixedLengthChordDataset
+from src.data.dataset import FixedLengthRandomChordDataset
 from src.utils import get_torch_device
 
 
@@ -123,7 +123,7 @@ def main():
     torch.manual_seed(0)
 
     # Load the dataset
-    dataset = FixedLengthChordDataset(frame_length=10, cached=True)
+    dataset = FixedLengthRandomChordDataset(segment_length=10, cached=True)
 
     # Split the dataset into train, validation
     train_size = int(0.9 * len(dataset))

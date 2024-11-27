@@ -7,8 +7,8 @@ from torch.utils.data import DataLoader
 import mir_eval
 
 from src.models.base_model import BaseACR
-from src.data.dataset import FullChordDataset
-from src.utils import id_to_chord, get_torch_device
+from src.data.dataset import FixedLengthChordDataset, FullChordDataset
+from src.utils import id_to_chord, get_torch_device, collate_fn
 
 
 class EvalMetric(Enum):
@@ -67,16 +67,27 @@ class EvalMetric(Enum):
         # Iterate over the batch of chord predictions and ground truth labels
         ref_labels = []
         hyp_labels = []
+        # Loop over the batch of chord predictions and ground truth labels
         for i in range(hypotheses.shape[0]):
-            # Convert the chord labels from indices to strings
-            ref_labels.extend([id_to_chord(id) for id in references[i]])
-            hyp_labels.extend([id_to_chord(id) for id in hypotheses[i]])
+
+            # Get the mask of valid (non-padded) labels
+            valid_mask = references[i] != -1
+            # Apply the mask to both references and hypotheses
+            filtered_references = references[i][valid_mask]
+            filtered_hypotheses = hypotheses[i][valid_mask]
+
+            # Convert the filtered chord ids to chord strings. Use extend to flatten across batches
+            ref_labels.extend(
+                [id_to_chord(chord_id) for chord_id in filtered_references]
+            )
+            hyp_labels.extend(
+                [id_to_chord(chord_id) for chord_id in filtered_hypotheses]
+            )
 
         # Evaluate the chord labels using the evaluation metric
-        metrics = torch.from_numpy(self.eval_func()(ref_labels, hyp_labels))
-
-        # Reshape the metrics tensor to include the batch dimension again
-        metrics = metrics.reshape(hypotheses.shape)
+        metrics = torch.from_numpy(self.eval_func()(ref_labels, hyp_labels)).to(
+            dtype=torch.float32
+        )
 
         return metrics
 
@@ -119,7 +130,9 @@ def evaluate_model(
     # Initialize the evaluation metrics dictionary
     metrics = {}
 
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    data_loader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
+    )
 
     for eval in evals:
         # Initialize the evaluation metric
@@ -134,7 +147,7 @@ def evaluate_model(
         )
 
         # Get the chord predictions from the model
-        predictions = model.predict(batch_features)
+        predictions = model.predict(batch_features).to(device)
 
         # Evaluate the model on the sample using the evaluation metrics
         for eval in evals:
@@ -152,19 +165,23 @@ def main():
     from torch.utils.data import random_split
     from src.models.random_acr import RandomACR
 
-    dataset = FullChordDataset()
+    full_length_dataset = FullChordDataset()
 
     # Split the dataset into train and test
-    train_size = int(0.95 * len(dataset))
-    test_size = len(dataset) - train_size
+    train_size = int(0.95 * len(full_length_dataset))
+    test_size = len(full_length_dataset) - train_size
 
     torch.manual_seed(42)
-    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+    train_dataset, test_dataset = random_split(
+        full_length_dataset, [train_size, test_size]
+    )
+
+    dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
 
     # Evaluate the random model on the test dataset
     model = RandomACR()
 
-    metrics = evaluate_model(model, test_dataset)
+    metrics = evaluate_model(model, dataset)
     print(metrics)
 
 

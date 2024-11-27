@@ -219,3 +219,23 @@ def get_torch_device():
 
     # CPU
     return torch.device("cpu")
+
+
+def collate_fn(data: list[tuple]) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Collate function for the DataLoader.
+
+    Args:
+        data (list): A list of tuples, where each tuple is a fixed length frame of features and chord annotation.
+
+    Returns:
+        cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
+        chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
+    """
+    cqt, chord_ids = zip(*data)
+    # Stack the CQTs and chord annotations with padding if necessary
+    cqt = torch.nn.utils.rnn.pad_sequence(cqt, batch_first=True, padding_value=0)
+    chord_ids = torch.nn.utils.rnn.pad_sequence(
+        chord_ids, batch_first=True, padding_value=-1
+    )
+    return cqt, chord_ids

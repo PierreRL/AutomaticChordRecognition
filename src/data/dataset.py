@@ -84,12 +84,12 @@ class FullChordDataset(Dataset):
         return self.filenames[idx]
 
 
-class FixedLengthChordDataset(FullChordDataset):
+class FixedLengthRandomChordDataset(Dataset):
     """
-    A chord dataset that returns fixed length frames.
+    A chord dataset that returns fixed length frames, where the frame location in each sample of audio is uniformly random.
     """
 
-    def __init__(self, frame_length=10, hop_length=4096, cached=True):
+    def __init__(self, segment_length=10, hop_length=4096, cached=True):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
         Args:
@@ -98,27 +98,29 @@ class FixedLengthChordDataset(FullChordDataset):
             cached (bool): If True, the dataset loads cached CQT and chord annotation files. If False, the CQT and chord annotation are computed on the fly.
         """
         super().__init__(hop_length=hop_length, cached=cached)
-        self.frame_length = frame_length
+        self.segment_length = segment_length
         self.full_dataset = FullChordDataset(hop_length=hop_length, cached=cached)
 
     def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
         full_cqt, full_chord_ids = self.full_dataset[idx]
 
-        # Convert frame length in seconds to frame length in samples
-        frame_length_samples = int(self.frame_length * self.sr / self.hop_length)
+        # Convert segment length in seconds to segment length in frames
+        segment_length_samples = int(
+            self.segment_length * self.full_dataset.sr / self.hop_length
+        )
 
-        if full_cqt.shape[0] > frame_length_samples:
+        if full_cqt.shape[0] > segment_length_samples:
             # If the full data is longer than the desired frame length, take a random slice
             start_idx = torch.randint(
-                0, full_cqt.shape[0] - frame_length_samples, (1,)
+                0, full_cqt.shape[0] - segment_length_samples, (1,)
             ).item()
-            cqt_patch = full_cqt[start_idx : start_idx + frame_length_samples]
+            cqt_patch = full_cqt[start_idx : start_idx + segment_length_samples]
             chord_ids_patch = full_chord_ids[
-                start_idx : start_idx + frame_length_samples
+                start_idx : start_idx + segment_length_samples
             ]
         else:
-            # If the full data is shorter than the desired frame length, pad it
-            pad_length = frame_length_samples - full_cqt.shape[0]
+            # If the full data is shorter than the desired segment length, pad it
+            pad_length = segment_length_samples - full_cqt.shape[0]
             cqt_patch = torch.cat(
                 (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
             )
@@ -130,6 +132,63 @@ class FixedLengthChordDataset(FullChordDataset):
             )
 
         return cqt_patch, chord_ids_patch
+
+
+class FixedLengthChordDataset(Dataset):
+    """
+    A chord dataset that returns fixed length frames, that splits up the audio in a test set into fixed length frames.
+    """
+
+    def __init__(
+        self,
+        full_length_dataset: FullChordDataset,
+        segment_length=10,
+        hop_length=4096,
+    ):
+        super().__init__()
+        self.full_dataset = full_length_dataset
+        self.segment_length = segment_length
+        self.hop_length = hop_length
+        self.data = self.generate_fixed_segments(self.full_dataset, self.segment_length)
+
+    def generate_fixed_segments(
+        self, full_dataset: FullChordDataset, segment_length: int = 10
+    ) -> list[tuple[Tensor, Tensor]]:
+        """
+        Generate fixed length segments from the full dataset. Each song is split into segments of the specified length.
+
+        Args:
+            full_dataset (FullChordDataset): The full chord dataset.
+            frame_length (int): The length of the frame in seconds.
+
+        Returns:
+            data (list): A list of tuples, where each tuple is a fixed length frame of features and chord annotation.
+        """
+        data = []
+
+        # Convert segment length in seconds to segment length in frames
+        segment_length_samples = int(
+            segment_length * full_dataset.dataset.sr / self.hop_length
+        )  # full_dataset.dataset.sr required due to subsetted dataset
+
+        #  Loop over each song in the dataset
+        for i in range(len(full_dataset)):
+            cqt, chord_ids = full_dataset[i]
+            # Loop over each 'segment' in the song
+            for j in range(0, cqt.shape[0], segment_length_samples):
+                data.append(
+                    (
+                        cqt[j : j + segment_length_samples],
+                        chord_ids[j : j + segment_length_samples],
+                    )
+                )
+        return data
+
+    def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
+        return self.data[idx]
+
+    def __len__(self):
+        return len(self.data)
 
 
 def main():
