@@ -1,25 +1,185 @@
 import autorootcwd
-from torch.utils.data import random_split
+from tqdm import tqdm
+from enum import Enum
+import os
+
 import torch
+import numpy as np
+from torch.utils.data import DataLoader
+import mir_eval
 
 from src.models.ismir2017 import ISMIR2017ACR
-from src.data.dataset import FullChordDataset
-from src.evaluation.evaluation import evaluate_model
-from src.utils import get_torch_device
+from src.models.base_model import BaseACR
+from src.data.dataset import FixedLengthChordDataset, FullChordDataset
+from src.utils import id_to_chord_table, get_torch_device, collate_fn
+
+
+class EvalMetric(Enum):
+    """
+    Defines an ENUM of evaluation metrics used in this project from the mir_eval library.
+
+    Attributes:
+        ROOT: Chord root evaluation metrics.
+        MAJMIN: Major/minor evaluation metrics.
+        MIREX: MIREX evaluation metric - returns 1 if at least three pitches are in common.
+        THIRD: Third evaluation metric - returns 1 if the third is in common.
+        SEVENTH: Seventh evaluation metric - returns 1 if the seventh is in common.
+    """
+
+    def __str__(self):
+        return self.name
+
+    ROOT = "root"
+    MAJMIN = "majmin"
+    MIREX = "mirex"
+    THIRD = "third"
+    SEVENTH = "seventh"
+
+    def eval_func(self) -> callable:
+        """
+        Returns the evaluation function for this evaluation metric.
+        """
+        if self == EvalMetric.ROOT:
+            return mir_eval.chord.root
+        elif self == EvalMetric.MAJMIN:
+            return mir_eval.chord.majmin
+        elif self == EvalMetric.MIREX:
+            return mir_eval.chord.mirex
+        elif self == EvalMetric.THIRD:
+            return mir_eval.chord.thirds
+        elif self == EvalMetric.SEVENTH:
+            return mir_eval.chord.sevenths
+        else:
+            raise ValueError(f"Invalid evaluation metric: {self}")
+
+    def evaluate(self, hypotheses: torch.Tensor, references: torch.Tensor):
+        """
+        Evaluate a model on a dataset split using a list of evaluation metrics.
+
+        Args:
+            hypotheses (list[str]): List of strings of chord predictions.
+            references (list[str]): List of strings of ground truth chord labels.
+
+        Returns:
+            metrics (nd.array): A numpy array of evaluation metrics and their values. Flatten across batches. Shape (num_frames,)
+        """
+
+        # Evaluate the chord labels using the evaluation metric
+        metrics = self.eval_func()(references, hypotheses)
+
+        return metrics
+
+
+def evaluate_model(
+    model: BaseACR,
+    dataset: FullChordDataset,
+    evals: list[EvalMetric] = [
+        EvalMetric.ROOT,
+        EvalMetric.MAJMIN,
+        EvalMetric.MIREX,
+        EvalMetric.THIRD,
+        EvalMetric.SEVENTH,
+    ],
+    batch_size: int = 64,
+    device: torch.device = None,
+) -> dict[str, float]:
+    """
+    Evaluate a model on a dataset split using a list of evaluation metrics.
+
+    Args:
+        model (BaseACRModel): The model to evaluate.
+        dataset (ChordDataset): The dataset to evaluate on.
+        evals (list[EvalMetrics]): The evaluation metrics to use. Defaults to [EvalMetrics.ROOT, EvalMetrics.MAJMIN, EvalMetrics.MIREX, EvalMetrics.CHORD_OVERLAP, EvalMetrics.CHORD_LABEL].
+        batch_size (int): The batch size to use for evaluation. Defaults to 64.
+        device (torch.device): The device to use for evaluation. Defaults to None.
+
+    Returns:
+        metrics (dict[str, float]): A dictionary of evaluation metrics and their values.
+    """
+
+    if not device:
+        device = get_torch_device()
+
+    model.to(device)
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    # Initialize the evaluation metrics dictionary
+    metrics = {}
+
+    data_loader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
+    )
+
+    for eval in evals:
+        # Initialize the evaluation metric
+        metrics[eval.value] = 0.0
+
+    print("Evaluating model...")
+    # Evaluate the model on the data loader
+    for batch_features, batch_labels in tqdm(data_loader):
+        # Send the batch to the device
+        batch_features, batch_labels = batch_features.to(device), batch_labels.to(
+            device
+        )
+
+        # Get the chord predictions from the model
+        predictions = model.predict(batch_features).to(device)
+
+        # Iterate over the batch of chord predictions and ground truth labels
+        ref_labels = []
+        hyp_labels = []
+
+        # Mask invalid labels (non-padded) across the entire batch
+        valid_mask = batch_labels != -1  # Shape: (batch_size, num_frames)
+
+        # Apply the mask to flatten and filter the references and predictions
+        filtered_references = batch_labels[valid_mask]  # 1D tensor of valid references
+        filtered_hypotheses = predictions[valid_mask]  # 1D tensor of valid predictions
+
+        # Map IDs to chord labels using the lookup table
+        ref_labels = id_to_chord_table[filtered_references.cpu().numpy()]
+        hyp_labels = id_to_chord_table[filtered_hypotheses.cpu().numpy()]
+
+        # Evaluate the model on the sample using the evaluation metrics
+        for eval in evals:
+            metrics[eval.value] += np.mean(eval.evaluate(hyp_labels, ref_labels))
+
+    # Calculate the average evaluation metrics
+    for eval in evals:
+        metrics[eval.value] /= len(data_loader)
+
+    return metrics
 
 
 def main():
-    dataset = FullChordDataset()
 
-    model = ISMIR2017ACR(input_features=dataset.n_bins, num_classes=25)
-    model.load_state_dict(torch.load("./data/models/best_model.pth", weights_only=True))
+    from torch.utils.data import random_split
 
-    train_size = int(0.9 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    full_length_dataset = FullChordDataset()
 
-    metrics = evaluate_model(model, val_dataset, batch_size=32)
+    # Split the dataset into train and test
+    train_size = int(0.95 * len(full_length_dataset))
+    test_size = len(full_length_dataset) - train_size
 
+    torch.manual_seed(42)
+    train_dataset, test_dataset = random_split(
+        full_length_dataset, [train_size, test_size]
+    )
+
+    dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
+
+    # Initialize the model architecture
+    model = ISMIR2017ACR(
+        input_features=test_dataset.dataset.n_bins, num_classes=25, cr2=False
+    )
+
+    # Load the trained weights
+    save_path = os.path.join("data/models/", "best_model.pth")
+    model.load_state_dict(torch.load(save_path, weights_only=True))
+
+    metrics = evaluate_model(model, dataset)
     print(metrics)
 
 

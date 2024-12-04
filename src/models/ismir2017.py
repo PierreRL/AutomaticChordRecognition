@@ -20,15 +20,19 @@ class ISMIR2017ACR(BaseACR):
     Pytorch implementation of the ISMIR 2017 model for Automatic Chord Recognition.
     """
 
-    def __init__(self, input_features: int = 216, num_classes: int = 25):
+    def __init__(
+        self, input_features: int = 216, num_classes: int = 25, cr2: bool = True
+    ):
         """
         Initializes the ISMIR2017ACR model.
 
         Args:
             input_features (int): Number of input frequency bins (e.g., 216 for CQT features).
             num_classes (int): Number of chord classes in the vocabulary.
+            cr2 (bool): If True, the model uses the CR2 variant, cr1 otherwise.
         """
         super(ISMIR2017ACR, self).__init__()
+        self.cr2 = cr2
 
         self.batch_norm = nn.BatchNorm2d(
             1
@@ -50,19 +54,31 @@ class ISMIR2017ACR(BaseACR):
             padding=(0, 0),  # Valid padding to reduce frequency dimension to 1
         )
 
-        # Bidirectional GRU
-        self.bi_gru = nn.GRU(
+        encoder_hidden_size = 128 if self.cr2 else 256
+
+        # Encoder: Bidirectional GRU layer
+        self.bi_gru_encoder = nn.GRU(
             input_size=36,
-            hidden_size=256,  # 256 per direction
+            hidden_size=encoder_hidden_size,  # E per direction, output 2*E
             num_layers=1,
             batch_first=True,
             bidirectional=True,
         )
 
+        if cr2:
+            # Decoder: Secondary Bidirectional GRU for CR2
+            self.bi_gru_decoder = nn.GRU(
+                input_size=2 * encoder_hidden_size,  # 2*E from encoder
+                hidden_size=128,
+                num_layers=1,
+                batch_first=True,
+                bidirectional=True,
+            )
+
         # Dense output layer
         self.dense = nn.Linear(
-            512, num_classes
-        )  # GRU outputs 512 features (256 x 2 for bidirectional)
+            256 if self.cr2 else 512, num_classes
+        )  # GRU outputs 256 if cr2, 512 if cr1
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
         """
@@ -93,12 +109,19 @@ class ISMIR2017ACR(BaseACR):
         x = x.permute(0, 2, 1)  # (B, frames, 36)
 
         # Bidirectional GRU layer
-        x, _ = self.bi_gru(x)  # (B, frames, 512)
+        x, _ = self.bi_gru_encoder(x)  # (B, frames, 2*E)
+
+        if self.cr2:
+            # Secondary Bidirectional GRU layer
+            x, _ = self.bi_gru_decoder(x)  # (B, frames, 256)
 
         # Dense output layer with softmax activation over chord classes
         x = self.dense(x)  # (B, frames, num_classes)
 
         return x
+
+    def __str__(self):
+        return f"ISMIR2017ACR(cr2:{self.cr2})"
 
 
 def main():
