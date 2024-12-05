@@ -205,7 +205,7 @@ class FixedLengthChordDataset(Dataset):
         data = []
 
         # Convert segment length in seconds to segment length in frames
-        segment_length_samples = int(
+        self.segment_length_samples = int(
             self.segment_length * self.full_dataset.sr / self.hop_length
         )
 
@@ -213,11 +213,11 @@ class FixedLengthChordDataset(Dataset):
         for i in range(len(self.full_dataset)):
             cqt, chord_ids = self.full_dataset[i]
             # Loop over each 'segment' in the song
-            for j in range(0, cqt.shape[0], segment_length_samples):
+            for j in range(0, cqt.shape[0], self.segment_length_samples):
                 data.append(
                     (
-                        cqt[j : j + segment_length_samples],
-                        chord_ids[j : j + segment_length_samples],
+                        cqt[j : j + self.segment_length_samples],
+                        chord_ids[j : j + self.segment_length_samples],
                     )
                 )
         return data

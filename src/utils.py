@@ -441,11 +441,15 @@ if __name__ == "__main__":
     # print("done")
 
     # Test shifting entire batch
-    from torch.utils.data import DataLoader
-    from src.data.dataset import FixedLengthRandomChordDataset
+    # from torch.utils.data import DataLoader
+    # from src.data.dataset import FixedLengthRandomChordDataset
 
-    dataset = FixedLengthRandomChordDataset(segment_length=10, cached=True)
-    loader = DataLoader(dataset, batch_size=2, shuffle=True)
+    # dataset = FixedLengthRandomChordDataset(segment_length=10, cached=True)
+    # loader = DataLoader(dataset, batch_size=2, shuffle=True)
 
-    for batch in loader:
-        break
+    # for batch in loader:
+    #     break
+
+    # Test chord to id
+    # print(chord_to_id("C:7"))
+    pass
