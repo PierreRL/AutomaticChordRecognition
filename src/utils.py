@@ -9,6 +9,7 @@ import random
 import json
 import numpy as np
 import torch
+from functools import lru_cache
 
 # Music processing libraries
 import torch_pitch_shift
@@ -41,7 +42,8 @@ def get_filenames(directory: str = "data/processed/audio") -> list:
     return filenames
 
 
-def get_chord_annotation(filename):
+@lru_cache(maxsize=None)
+def get_raw_chord_annotation(filename):
     """
     Retrieves the raw chord annotation data from a JAMS file.
 
@@ -56,6 +58,7 @@ def get_chord_annotation(filename):
     return chord_ann.data
 
 
+@lru_cache(maxsize=None)
 def get_annotation_metadata(filename):
     """
     Retrieves the metadata from a JAMS file.
@@ -179,6 +182,7 @@ def cqt_to_audio(
     return audio
 
 
+@lru_cache(maxsize=None)
 def chord_to_id(chord: str) -> torch.Tensor:
     """
     Convert a chord to an index corresponding to a chord id.
@@ -212,6 +216,7 @@ def chord_to_id(chord: str) -> torch.Tensor:
     return root + 12 * quality + 1
 
 
+@lru_cache(maxsize=None)
 def id_to_chord(chord_id: int) -> str:
     """
     Converts a chord id to a string representation of a chord.
@@ -242,6 +247,7 @@ def id_to_chord(chord_id: int) -> str:
     return f"{root}:{quality}"
 
 
+@lru_cache(maxsize=None)
 def transpose_chord_id(chord_id: int, semitones: int) -> int:
     """
     Apply a pitch shift to a list of chord ids.
@@ -278,12 +284,13 @@ id_to_chord_table = np.array([id_to_chord(i) for i in range(NUM_CHORDS)], dtype=
 chord_to_id_map = {v: k for k, v in id_to_chord_map.items()}
 
 
-def chord_ann_to_tensor(
+def get_chord_annotation(
     filename: str,
     frame_length: float = 0.1,
+    return_transitions: bool = False,
 ) -> torch.Tensor:
     """
-    Convert a chord annotation to a tensor of chord ids.
+    Gets the chord annotation of an audio file as a tensor of chord ids.
 
     Args:
         filename (str): The filename of the audio file.
@@ -293,12 +300,20 @@ def chord_ann_to_tensor(
         chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
     """
 
-    chord_ann = get_chord_annotation(filename)
+    chord_ann = get_raw_chord_annotation(filename)
     duration = chord_ann[-1].time + chord_ann[-1].duration
 
     # Loop over each frame and assign the chord
-    frames = torch.zeros(math.ceil(duration / frame_length), dtype=torch.int64)
+    num_frames = math.ceil(duration / frame_length)
+    frames = torch.zeros(num_frames, dtype=torch.int64)
     current_chord_idx = 0
+    previous_chord_id = None
+
+    # If we want transitions, create a boolean tensor (False by default)
+    if return_transitions:
+        transitions = torch.zeros(num_frames, dtype=torch.bool)
+    else:
+        transitions = None
     for i in range(math.ceil(int(duration / frame_length))):
         time = i * frame_length + frame_length / 2
         while (
@@ -306,10 +321,34 @@ def chord_ann_to_tensor(
             < time
         ):
             current_chord_idx += 1
+            # If we reach the end of the chord annotation, break
+            if current_chord_idx >= len(chord_ann):
+                current_chord_idx = len(chord_ann) - 1
+                break
 
         chord_id = chord_to_id(chord_ann[current_chord_idx].value)
         frames[i] = chord_id
 
+        if return_transitions:
+            # We mark the first frame as a transition
+            if i == 0:
+                transitions[i] = True
+
+            # If the chord changes, mark the frame as a transition
+            if i != 0 and chord_id != previous_chord_id:
+                boundary_time = chord_ann[current_chord_idx].time
+                frame_start = time - (frame_length / 2)
+
+                # Check if the chord boundary lies in this frame or the previous frame
+                if frame_start < boundary_time:
+                    transitions[i] = True
+                else:
+                    transitions[i - 1] = True
+
+        previous_chord_id = chord_id
+
+    if return_transitions:
+        return frames, transitions
     return frames
 
 

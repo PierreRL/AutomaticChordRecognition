@@ -12,7 +12,7 @@ import autorootcwd
 import os
 import torch
 from tqdm import tqdm
-from src.utils import get_cqt, chord_ann_to_tensor, get_filenames
+from src.utils import get_cqt, get_chord_annotation, get_filenames
 from src.data.dataset import FullChordDataset
 
 
@@ -31,7 +31,7 @@ def main():
             n_bins=dataset.n_bins,
             bins_per_octave=dataset.bins_per_octave,
         )
-        chord_one_hot = chord_ann_to_tensor(
+        chord_one_hot = get_chord_annotation(
             filename, frame_length=dataset.hop_length / dataset.sr
         )
 

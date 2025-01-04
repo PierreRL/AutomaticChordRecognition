@@ -3,7 +3,7 @@ import os
 from torch.utils.data import Dataset, random_split
 from src.utils import (
     get_cqt,
-    chord_ann_to_tensor,
+    get_chord_annotation,
     pitch_shift_cqt,
     transpose_chord_id_vector,
 )
@@ -54,7 +54,7 @@ class FullChordDataset(Dataset):
             n_bins=self.n_bins,
             bins_per_octave=self.bins_per_octave,
         )
-        chord_ids = chord_ann_to_tensor(
+        chord_ids = get_chord_annotation(
             filename, frame_length=self.hop_length / self.sr
         )
 
