@@ -6,6 +6,7 @@ from src.utils import (
     get_chord_annotation,
     pitch_shift_cqt,
     transpose_chord_id_vector,
+    SMALL_VOCABULARY,
 )
 import torch
 from torch import Tensor
@@ -38,6 +39,8 @@ class FullChordDataset(Dataset):
         self.n_bins = self.bins_per_octave * 6
         self.cqt_cache_dir = "./data/processed/cache/cqts"
         self.chord_cache_dir = "./data/processed/cache/chords"
+        if SMALL_VOCABULARY:
+            self.chord_cache_dir = "./data/processed/cache/chords_small_vocab"
 
     def __len__(self):
         return len(self.filenames)
@@ -105,7 +108,7 @@ class FixedLengthRandomChordDataset(Dataset):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
         Args:
-            frame_length (int): The length of the frame in seconds.
+            frame_length (int): The length of the frame in se1nds.
             hop_length (int): The hop length used to compute the log CQT.
             cached (bool): If True, the dataset loads cached CQT and chord annotation files. If False, the CQT and chord annotation are computed on the fly.
             random_pitch_shift (bool): If True, the dataset randomly shifts the pitch of the cqt.

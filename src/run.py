@@ -22,7 +22,7 @@ def main():
         description="Train and evaluate a chord recognition model."
     )
     parser.add_argument(
-        "--exp_name", type=str, default="ismir2017-cr1", help="Name of the experiment."
+        "--exp_name", type=str, help="Name of the experiment.", required=True
     )
     parser.add_argument(
         "--segment_length",
@@ -111,6 +111,12 @@ def main():
         "experiment_name": args.exp_name,
         "time": str(datetime.now()),
         "model": str(model),
+        "dataset": {
+            "train_size": train_size,
+            "val_size": val_size,
+            "test_size": test_size,
+            "NUM_CHORDS": NUM_CHORDS,
+        },
     }
     write_json(run_metadata, f"{DIR}/metadata.json")
 

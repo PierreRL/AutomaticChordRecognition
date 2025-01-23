@@ -17,7 +17,7 @@ import librosa
 import jams
 from harte.harte import Harte
 
-SMALL_VOCABULARY = True
+SMALL_VOCABULARY = False
 
 if SMALL_VOCABULARY:
     NUM_CHORDS = 25
@@ -172,8 +172,6 @@ def cqt_to_audio(
     # Convert the CQT to a numpy array and reshape to (n_bins, num_frames)
     cqt = cqt.T.numpy()
 
-    print(cqt.shape)
-
     # Invert the CQT to a waveform
     audio = librosa.icqt(
         cqt, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave
@@ -183,68 +181,276 @@ def cqt_to_audio(
 
 
 @lru_cache(maxsize=None)
-def chord_to_id(chord: str) -> torch.Tensor:
+def get_pitch_classes(chord_str: str):
+    """
+    Extracts pitch classes from the chord string.
+    Converts the string to a Harte object internally and computes pitch classes.
+
+    Args:
+        chord_str (str): The chord in Harte string format.
+
+    Returns:
+        tuple: A sorted tuple of pitch classes (integers 0-11).
+    """
+    # Parse the chord using the Harte library
+    chord = Harte(chord_str)
+
+    # Return the pitch classes as a sorted tuple
+    prime_form_chord = chord.normalOrder
+
+    # Transpose the chord to C
+    root = chord.root().pitchClass
+    prime_form_chord = [(note - root) % 12 for note in prime_form_chord]
+
+    return tuple(sorted(prime_form_chord))
+
+
+@lru_cache(maxsize=None)
+def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
     """
     Convert a chord to an index corresponding to a chord id.
 
     Args:
         chord (str): Harte string representation of a chord.
+        use_small_vocab (bool): If True, use the small vocabulary; otherwise, use the large vocabulary.
 
     Returns:
-        torch.Tensor: The chord id in the range 0-24. 0 is reserved for N (no chord).
+        torch.Tensor: The chord id.
+            - For small vocab: id in the range 0-24 (0 is reserved for N, X).
+            - For large vocab: id in the range 0-170 (0 for N, 1 for X, 2-170 for root and quality combinations).
     """
-    # If the chord is N, return 0
-    if chord == "N" or chord == "X":
+    # If the chord is N or X, return the corresponding id (0 for N, 1 for X in large vocab)
+    if chord == "N":
         return 0
+    if chord == "X":
+        return 1 if not use_small_vocab else 0
 
-    # Convert the chord to a Harte object
-    chord = Harte(chord)
+    # Parse the chord using the Harte library
+    try:
+        parsed_chord = Harte(chord)
+    except Exception:
+        # Raise an error if the chord is invalid
+        raise ValueError(f"Invalid chord format: {chord}")
 
-    # Get the root of the chord as a pitch class (0-11)
-    root = chord.root().pitchClass
+    if use_small_vocab:
+        # Small vocabulary (0-24)
+        root = parsed_chord.root().pitchClass
+        quality = parsed_chord.quality
+        if quality == "major":
+            quality = 0
+        elif quality == "minor":
+            quality = 1
+        else:
+            return 0  # Map unknown chords to N
 
-    # Major is 0, minor is 1
-    quality = chord.quality
-    if quality == "major":
-        quality = 0
-    elif quality == "minor":
-        quality = 1
+        return root + 12 * quality + 1
+
     else:
-        return 0
+        # Large vocabulary (0-170)
+        root = parsed_chord.root().pitchClass
+        pitch_classes = get_pitch_classes(chord)
 
-    # Return the chord id in the range 1-24 (0 is reserved for N)
-    return root + 12 * quality + 1
+        # Define the templates
+        templates = {
+            (0, 4, 7): "maj",
+            (0, 3, 7): "min",
+            (0, 3, 6): "dim",
+            (0, 4, 8): "aug",
+            (0, 3, 7, 9): "min6",
+            (0, 4, 7, 9): "maj6",
+            (0, 3, 7, 10): "min7",
+            (0, 3, 7, 11): "minmaj7",
+            (0, 4, 7, 11): "maj7",
+            (0, 4, 7, 10): "7",
+            (0, 3, 6, 9): "dim7",
+            (0, 3, 6, 10): "hdim7",
+            (0, 2, 7): "sus2",
+            (0, 5, 7): "sus4",
+        }
+
+        quality = templates.get(pitch_classes, None)
+        if quality is None:
+            return 1  # Map unknown chords to X
+
+        # Compute id based on root and quality
+        quality_index = list(templates.values()).index(quality)
+        return 2 + root * 14 + quality_index  # Offset by 2 for N and X
 
 
 @lru_cache(maxsize=None)
-def id_to_chord(chord_id: int) -> str:
+def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
+    """
+    Get the root of a chord id.
+
+    Args:
+        id (int): The chord id.
+        use_small_vocab (bool): If True, use the small vocabulary; otherwise, use the large vocabulary.
+
+    Returns:
+        str: The root of the chord.
+    """
+    if use_small_vocab:
+        # Small vocabulary (0-24)
+        if id < 0 or id > 24:
+            raise ValueError("Chord id must be in the range 0-24.")
+
+        if id == 0:
+            return "N"
+
+        root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        root = root_name[(id - 1) % 12]
+
+        return root
+
+    else:
+        # Large vocabulary (0-170)
+        if id < 0 or id > 170:
+            raise ValueError("Chord id must be in the range 0-170.")
+
+        if id == 0:
+            return "N"
+        elif id == 1:
+            return "X"
+
+        # Subtract 2 to account for N and X
+        id -= 2
+
+        root = id // 14
+
+        root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        root = root_name[root]
+
+        return root
+
+
+@lru_cache(maxsize=None)
+def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
+    """
+    Get the quality of a chord id.
+
+    Args:
+        id (int): The chord id.
+        use_small_vocab (bool): If True, use the small vocabulary; otherwise, use the large vocabulary.
+
+    Returns:
+        str: The quality of the chord.
+    """
+    if use_small_vocab:
+        # Small vocabulary (0-24)
+        if id < 0 or id > 24:
+            raise ValueError("Chord id must be in the range 0-24.")
+
+        if id == 0:
+            return "N"
+
+        quality = "maj" if (id - 1) // 12 == 0 else "min"
+        return quality
+
+    else:
+        # Large vocabulary (0-170)
+        if id < 0 or id > 170:
+            raise ValueError("Chord id must be in the range 0-170.")
+
+        if id == 0:
+            return "N"
+        elif id == 1:
+            return "X"
+
+        # Subtract 2 to account for N and X
+        id -= 2
+
+        quality_index = id % 14
+
+        templates = [
+            "maj",
+            "min",
+            "dim",
+            "aug",
+            "min6",
+            "maj6",
+            "min7",
+            "minmaj7",
+            "maj7",
+            "7",
+            "dim7",
+            "hdim7",
+            "sus2",
+            "sus4",
+        ]
+
+        quality = templates[quality_index]
+        return quality
+
+
+@lru_cache(maxsize=None)
+def id_to_chord(chord_id: int, use_small_vocab: bool = False) -> str:
     """
     Converts a chord id to a string representation of a chord.
 
     Args:
-        chord_id (int): The chord id in the range 0-24.
+        chord_id (int): The chord id.
+            - For small vocab: id in the range 0-24.
+            - For large vocab: id in the range 0-170.
+        use_small_vocab (bool): If True, use the small vocabulary; otherwise, use the large vocabulary.
 
     Returns:
         chord (str): The string representation of the chord.
     """
+    if use_small_vocab:
+        # Small vocabulary (0-24)
+        if chord_id < 0 or chord_id > 24:
+            raise ValueError("Chord id must be in the range 0-24.")
 
-    if chord_id < 0 or chord_id > 24:
-        raise ValueError("Chord id must be in the range 0-24.")
+        if chord_id == 0:
+            return "N"
 
-    # If the chord is N, return N
-    if chord_id == 0:
-        return "N"
+        root = (chord_id - 1) % 12
+        quality = "maj" if (chord_id - 1) // 12 == 0 else "min"
 
-    # Convert the chord id to a Harte object
-    root = (chord_id - 1) % 12
-    quality = "maj" if (chord_id - 1) // 12 == 0 else "min"
+        root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        root = root_name[root]
 
-    # Convert the root to a string
-    root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    root = root_name[root]
+        return f"{root}:{quality}"
 
-    # Return the string representation of the chord
-    return f"{root}:{quality}"
+    else:
+        # Large vocabulary (0-170)
+        if chord_id < 0 or chord_id > 170:
+            raise ValueError("Chord id must be in the range 0-170.")
+
+        if chord_id == 0:
+            return "N"
+        elif chord_id == 1:
+            return "X"
+
+        # Subtract 2 to account for N and X
+        chord_id -= 2
+
+        root = chord_id // 14
+        quality_index = chord_id % 14
+
+        root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        root = root_name[root]
+
+        templates = [
+            "maj",
+            "min",
+            "dim",
+            "aug",
+            "min6",
+            "maj6",
+            "min7",
+            "minmaj7",
+            "maj7",
+            "7",
+            "dim7",
+            "hdim7",
+            "sus2",
+            "sus4",
+        ]
+
+        quality = templates[quality_index]
+
+        return f"{root}:{quality}"
 
 
 @lru_cache(maxsize=None)
@@ -423,72 +629,11 @@ def write_text(text: str, file: str):
         f.write(text)
 
 
-# def random_pitch_shift_batch(batch, sample_rate, fast_shifts):
-#     """
-#     Applies a random pitch shift to each mono audio sample in a batch.
-
-#     Args:
-#         batch (torch.Tensor): A batch of mono audio samples of shape (batch_size, samples).
-#         sample_rate (int): Sampling rate of the audio.
-#         semitone_range (tuple): Range of semitones to shift (min, max).
-
-#     Returns:
-#         torch.Tensor: Batch of audio samples with random pitch shifts applied.
-#     """
-#     batch_size, samples = batch.shape
-
-#     print("batch size", batch_size)
-
-#     # Add channel dimension to match torch-pitch-shift requirements
-#     batch = batch.unsqueeze(1)  # Shape: (batch_size, 1, samples)
-
-#     # Choose one of the fast shifts
-#     random_shift = random.choice(fast_shifts)
-
-#     print("random shifts", random_shift)
-
-#     shifted_batch = torch_pitch_shift.pitch_shift(batch, random_shift, sample_rate)
-
-#     return shifted_batch
-
-
 if __name__ == "__main__":
-    # # Get first filename
-    # filenames = get_filenames()
-    # filename = filenames[0]
+    # Test get_pitch_classes
+    print(get_chord_quality(13))
+    print(get_chord_root(13))
 
-    # # Get CQT
-    # audio = librosa.load(f"./data/processed/audio/{filename}.mp3", sr=44100)[0][
-    #     : 44100 * 10
-    # ]
-
-    # audio_tensor = torch.tensor(audio, dtype=torch.float32)[None, None, :]
-
-    # # pitched_up = torch_pitch_shift.pitch_shift(audio_tensor, 5, 44100)[0, 0].numpy()
-    # # pitched_down = torch_pitch_shift.pitch_shift(audio_tensor, -5, 44100)[0, 0].numpy()
-
-    # # Make directory
-    # os.makedirs("./tmp/test", exist_ok=True)
-
-    # # Save audio
-    # import soundfile as sf
-
-    # sf.write("./tmp/test/audio.wav", audio, 44100)
-    # # sf.write("./tmp/test/pitched_up.wav", pitched_up, 44100)
-    # # sf.write("./tmp/test/pitched_down.wav", pitched_down, 44100)
-
-    # print("done")
-
-    # Test shifting entire batch
-    # from torch.utils.data import DataLoader
-    # from src.data.dataset import FixedLengthRandomChordDataset
-
-    # dataset = FixedLengthRandomChordDataset(segment_length=10, cached=True)
-    # loader = DataLoader(dataset, batch_size=2, shuffle=True)
-
-    # for batch in loader:
-    #     break
-
-    # Test chord to id
-    # print(chord_to_id("C:7"))
-    pass
+    for i in range(2, 16):
+        print(i, id_to_chord(i))
+        print(get_chord_root(i), get_chord_quality(i))

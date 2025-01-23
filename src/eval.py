@@ -11,7 +11,7 @@ import mir_eval
 from src.models.ismir2017 import ISMIR2017ACR
 from src.models.base_model import BaseACR
 from src.data.dataset import FixedLengthChordDataset, FullChordDataset
-from src.utils import id_to_chord_table, get_torch_device, collate_fn
+from src.utils import id_to_chord_table, get_torch_device, collate_fn, NUM_CHORDS
 
 
 class EvalMetric(Enum):
@@ -172,7 +172,7 @@ def main():
 
     # Initialize the model architecture
     model = ISMIR2017ACR(
-        input_features=test_dataset.dataset.n_bins, num_classes=25, cr2=False
+        input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
     )
 
     # Load the trained weights

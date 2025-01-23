@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.models.base_model import BaseACR
+from src.utils import NUM_CHORDS
 
 
 class ISMIR2017ACR(BaseACR):
@@ -21,7 +22,7 @@ class ISMIR2017ACR(BaseACR):
     """
 
     def __init__(
-        self, input_features: int = 216, num_classes: int = 25, cr2: bool = True
+        self, input_features: int = 216, num_classes: int = NUM_CHORDS, cr2: bool = True
     ):
         """
         Initializes the ISMIR2017ACR model.
