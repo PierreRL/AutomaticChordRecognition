@@ -202,6 +202,9 @@ def get_pitch_classes(chord_str: str):
     root = chord.root().pitchClass
     prime_form_chord = [(note - root) % 12 for note in prime_form_chord]
 
+    # Remove duplicates
+    prime_form_chord = list(set(prime_form_chord))
+
     return tuple(sorted(prime_form_chord))
 
 
@@ -270,7 +273,13 @@ def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
 
         quality = templates.get(pitch_classes, None)
         if quality is None:
-            return 1  # Map unknown chords to X
+            quality = parsed_chord.quality
+            if quality == "other":
+                return 1  # Map unknown chords to X
+            else:
+                quality = quality[
+                    :3
+                ]  # Get the first 3 characters of the quality 'min', 'maj', 'dim' or 'aug'
 
         # Compute id based on root and quality
         quality_index = list(templates.values()).index(quality)

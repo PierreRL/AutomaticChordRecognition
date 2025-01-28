@@ -10,6 +10,7 @@ from src.train import train_model, TrainingArgs
 from src.data.dataset import (
     FixedLengthRandomChordDataset,
     FixedLengthChordDataset,
+    FullChordDataset,
 )
 from src.models.ismir2017 import ISMIR2017ACR
 from src.utils import NUM_CHORDS, write_json, write_text, get_filenames
@@ -95,9 +96,7 @@ def main():
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames, segment_length=args.segment_length
     )
-    test_dataset = FixedLengthChordDataset(
-        filenames=test_filenames, segment_length=args.segment_length
-    )
+    test_dataset = FullChordDataset(filenames=test_filenames)
 
     # Initialize the model
     model = ISMIR2017ACR(

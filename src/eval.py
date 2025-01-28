@@ -34,6 +34,7 @@ class EvalMetric(Enum):
     MIREX = "mirex"
     THIRD = "third"
     SEVENTH = "seventh"
+    WEIGHTED_ACC = "weighted_accuracy"
 
     def eval_func(self) -> callable:
         """
@@ -49,6 +50,8 @@ class EvalMetric(Enum):
             return mir_eval.chord.thirds
         elif self == EvalMetric.SEVENTH:
             return mir_eval.chord.sevenths
+        elif self == EvalMetric.WEIGHTED_ACC:
+            return mir_eval.chord.weighted_accuracy
         else:
             raise ValueError(f"Invalid evaluation metric: {self}")
 
@@ -79,8 +82,9 @@ def evaluate_model(
         EvalMetric.MIREX,
         EvalMetric.THIRD,
         EvalMetric.SEVENTH,
+        EvalMetric.WEIGHTED_ACC,
     ],
-    batch_size: int = 64,
+    batch_size: int = 32,
     device: torch.device = None,
 ) -> dict[str, float]:
     """
@@ -88,9 +92,9 @@ def evaluate_model(
 
     Args:
         model (BaseACRModel): The model to evaluate.
-        dataset (ChordDataset): The dataset to evaluate on.
-        evals (list[EvalMetrics]): The evaluation metrics to use. Defaults to [EvalMetrics.ROOT, EvalMetrics.MAJMIN, EvalMetrics.MIREX, EvalMetrics.CHORD_OVERLAP, EvalMetrics.CHORD_LABEL].
-        batch_size (int): The batch size to use for evaluation. Defaults to 64.
+        dataset (FullChordDataset): The dataset to evaluate on.
+        evals (list[EvalMetrics]): The evaluation metrics to use. Defaults to [EvalMetrics.ROOT, EvalMetrics.MAJMIN, EvalMetrics.MIREX, EvalMetrics.THIRD, EvalMetrics.SEVENTH].
+        batch_size (int): The batch size to use for evaluation. Defaults to 32.
         device (torch.device): The device to use for evaluation. Defaults to None.
 
     Returns:
@@ -160,7 +164,7 @@ def main():
     full_length_dataset = FullChordDataset()
 
     # Split the dataset into train and test
-    train_size = int(0.95 * len(full_length_dataset))
+    train_size = int(0.8 * len(full_length_dataset))
     test_size = len(full_length_dataset) - train_size
 
     torch.manual_seed(42)
@@ -168,7 +172,7 @@ def main():
         full_length_dataset, [train_size, test_size]
     )
 
-    dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
+    # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
 
     # Initialize the model architecture
     model = ISMIR2017ACR(
@@ -176,10 +180,11 @@ def main():
     )
 
     # Load the trained weights
-    save_path = os.path.join("data/models/", "best_model.pth")
+    exp_name = "first-large-vocab"
+    save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
     model.load_state_dict(torch.load(save_path, weights_only=True))
 
-    metrics = evaluate_model(model, dataset)
+    metrics = evaluate_model(model, test_dataset, batch_size=32)
     print(metrics)
 
 
