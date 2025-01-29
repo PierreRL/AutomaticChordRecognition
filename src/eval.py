@@ -102,14 +102,12 @@ def evaluate_model(
     model.to(device)
     model.eval()
 
-    # Initialize metrics storage
-    metrics = {"mean": {}, "median": {}, "ignore_X": {"mean": {}, "median": {}}}
+    # Initialize metrics storage (ignore_X is now the default)
+    metrics = {"mean": {}, "median": {}}
 
     for eval in evals:
         metrics["mean"][eval.value] = 0.0
         metrics["median"][eval.value] = []
-        metrics["ignore_X"]["mean"][eval.value] = 0.0
-        metrics["ignore_X"]["median"][eval.value] = []
 
     data_loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
@@ -117,7 +115,6 @@ def evaluate_model(
     print("Evaluating model...")
 
     song_metrics = {eval.value: {} for eval in evals}
-    song_metrics_ignore_X = {eval.value: {} for eval in evals}
 
     for batch_features, batch_labels in tqdm(data_loader):
         batch_features, batch_labels = batch_features.to(device), batch_labels.to(
@@ -138,30 +135,23 @@ def evaluate_model(
             filtered_hyp_ignore = hyp_labels[ignore_mask.cpu().numpy()]
 
             for eval in evals:
-                song_eval_score = np.mean(eval.evaluate(hyp_labels, ref_labels))
-                song_eval_score_ignore_X = np.mean(
-                    eval.evaluate(filtered_hyp_ignore, filtered_ref_ignore)
+                song_eval_scores = eval.evaluate(
+                    filtered_hyp_ignore, filtered_ref_ignore
                 )
+
+                # Filter out invalid scores that are -1 (produced by mir_eval with 'X' labels for example)
+                song_eval_scores = song_eval_scores[song_eval_scores != -1]
 
                 if i not in song_metrics[eval.value]:
                     song_metrics[eval.value][i] = []
-                if i not in song_metrics_ignore_X[eval.value]:
-                    song_metrics_ignore_X[eval.value][i] = []
 
-                song_metrics[eval.value][i].append(song_eval_score)
-                song_metrics_ignore_X[eval.value][i].append(song_eval_score_ignore_X)
+                song_metrics[eval.value][i].append(np.mean(song_eval_scores))
 
     for eval in evals:
         song_scores = [np.mean(scores) for scores in song_metrics[eval.value].values()]
-        song_scores_ignore_X = [
-            np.mean(scores) for scores in song_metrics_ignore_X[eval.value].values()
-        ]
 
         metrics["mean"][eval.value] = np.mean(song_scores)
-        metrics["ignore_X"]["mean"][eval.value] = np.mean(song_scores_ignore_X)
-
         metrics["median"][eval.value] = np.median(song_scores)
-        metrics["ignore_X"]["median"][eval.value] = np.median(song_scores_ignore_X)
 
     return metrics
 
