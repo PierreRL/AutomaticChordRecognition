@@ -157,7 +157,7 @@ def main():
     except Exception as e:
         print(f"Evaluation Error: {e}")
         # Save the exception to a file
-        write_text(f"{DIR}/evaluation_error.txt", str(e))
+        write_text(str(e), f"{DIR}/evaluation_error.txt")
 
     # Save the training history dictionary and metrics dictionary as json files
     write_json(training_history, f"{DIR}/training_history.json")

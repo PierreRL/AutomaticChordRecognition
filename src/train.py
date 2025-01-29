@@ -172,7 +172,7 @@ def train_model(
             if (
                 args.do_validation
                 and len(val_losses) > args.decrease_lr_epochs
-                and val_loss > max(val_losses[-args.decrease_lr_epochs :])
+                and val_loss > min(val_losses[-args.decrease_lr_epochs :])
             ):
                 print("\nDecreasing learning rate\n")
                 for param_group in optimizer.param_groups:
@@ -181,7 +181,7 @@ def train_model(
             # Early stopping if not improved in the last 10 epochs
             if args.early_stopping is None:
                 continue
-            elif len(val_losses) > args.early_stopping and val_loss > max(
+            elif len(val_losses) > args.early_stopping and val_loss > min(
                 val_losses[-args.early_stopping :]
             ):
                 print("Early stopping triggered at epoch ", epoch)

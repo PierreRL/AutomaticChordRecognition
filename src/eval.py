@@ -10,7 +10,7 @@ import mir_eval
 
 from src.models.ismir2017 import ISMIR2017ACR
 from src.models.base_model import BaseACR
-from src.data.dataset import FixedLengthChordDataset, FullChordDataset
+from src.data.dataset import FullChordDataset
 from src.utils import id_to_chord_table, get_torch_device, collate_fn, NUM_CHORDS
 
 
@@ -34,7 +34,6 @@ class EvalMetric(Enum):
     MIREX = "mirex"
     THIRD = "third"
     SEVENTH = "seventh"
-    WEIGHTED_ACC = "weighted_accuracy"
 
     def eval_func(self) -> callable:
         """
@@ -50,8 +49,6 @@ class EvalMetric(Enum):
             return mir_eval.chord.thirds
         elif self == EvalMetric.SEVENTH:
             return mir_eval.chord.sevenths
-        elif self == EvalMetric.WEIGHTED_ACC:
-            return mir_eval.chord.weighted_accuracy
         else:
             raise ValueError(f"Invalid evaluation metric: {self}")
 
@@ -82,7 +79,6 @@ def evaluate_model(
         EvalMetric.MIREX,
         EvalMetric.THIRD,
         EvalMetric.SEVENTH,
-        EvalMetric.WEIGHTED_ACC,
     ],
     batch_size: int = 32,
     device: torch.device = None,
@@ -100,59 +96,72 @@ def evaluate_model(
     Returns:
         metrics (dict[str, float]): A dictionary of evaluation metrics and their values.
     """
-
     if not device:
         device = get_torch_device()
 
     model.to(device)
-
-    # Set the model to evaluation mode
     model.eval()
 
-    # Initialize the evaluation metrics dictionary
-    metrics = {}
+    # Initialize metrics storage
+    metrics = {"mean": {}, "median": {}, "ignore_X": {"mean": {}, "median": {}}}
+
+    for eval in evals:
+        metrics["mean"][eval.value] = 0.0
+        metrics["median"][eval.value] = []
+        metrics["ignore_X"]["mean"][eval.value] = 0.0
+        metrics["ignore_X"]["median"][eval.value] = []
 
     data_loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
     )
-
-    for eval in evals:
-        # Initialize the evaluation metric
-        metrics[eval.value] = 0.0
-
     print("Evaluating model...")
-    # Evaluate the model on the data loader
+
+    song_metrics = {eval.value: {} for eval in evals}
+    song_metrics_ignore_X = {eval.value: {} for eval in evals}
+
     for batch_features, batch_labels in tqdm(data_loader):
-        # Send the batch to the device
         batch_features, batch_labels = batch_features.to(device), batch_labels.to(
             device
         )
-
-        # Get the chord predictions from the model
         predictions = model.predict(batch_features).to(device)
 
-        # Iterate over the batch of chord predictions and ground truth labels
-        ref_labels = []
-        hyp_labels = []
+        for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
+            valid_mask = batch_labels[i] != -1
+            filtered_references = batch_labels[i][valid_mask]
+            filtered_hypotheses = predictions[i][valid_mask]
 
-        # Mask invalid labels (non-padded) across the entire batch
-        valid_mask = batch_labels != -1  # Shape: (batch_size, num_frames)
+            ref_labels = id_to_chord_table[filtered_references.cpu().numpy()]
+            hyp_labels = id_to_chord_table[filtered_hypotheses.cpu().numpy()]
 
-        # Apply the mask to flatten and filter the references and predictions
-        filtered_references = batch_labels[valid_mask]  # 1D tensor of valid references
-        filtered_hypotheses = predictions[valid_mask]  # 1D tensor of valid predictions
+            ignore_mask = filtered_references != 1
+            filtered_ref_ignore = ref_labels[ignore_mask.cpu().numpy()]
+            filtered_hyp_ignore = hyp_labels[ignore_mask.cpu().numpy()]
 
-        # Map IDs to chord labels using the lookup table
-        ref_labels = id_to_chord_table[filtered_references.cpu().numpy()]
-        hyp_labels = id_to_chord_table[filtered_hypotheses.cpu().numpy()]
+            for eval in evals:
+                song_eval_score = np.mean(eval.evaluate(hyp_labels, ref_labels))
+                song_eval_score_ignore_X = np.mean(
+                    eval.evaluate(filtered_hyp_ignore, filtered_ref_ignore)
+                )
 
-        # Evaluate the model on the sample using the evaluation metrics
-        for eval in evals:
-            metrics[eval.value] += np.mean(eval.evaluate(hyp_labels, ref_labels))
+                if i not in song_metrics[eval.value]:
+                    song_metrics[eval.value][i] = []
+                if i not in song_metrics_ignore_X[eval.value]:
+                    song_metrics_ignore_X[eval.value][i] = []
 
-    # Calculate the average evaluation metrics
+                song_metrics[eval.value][i].append(song_eval_score)
+                song_metrics_ignore_X[eval.value][i].append(song_eval_score_ignore_X)
+
     for eval in evals:
-        metrics[eval.value] /= len(data_loader)
+        song_scores = [np.mean(scores) for scores in song_metrics[eval.value].values()]
+        song_scores_ignore_X = [
+            np.mean(scores) for scores in song_metrics_ignore_X[eval.value].values()
+        ]
+
+        metrics["mean"][eval.value] = np.mean(song_scores)
+        metrics["ignore_X"]["mean"][eval.value] = np.mean(song_scores_ignore_X)
+
+        metrics["median"][eval.value] = np.median(song_scores)
+        metrics["ignore_X"]["median"][eval.value] = np.median(song_scores_ignore_X)
 
     return metrics
 
@@ -180,7 +189,7 @@ def main():
     )
 
     # Load the trained weights
-    exp_name = "first-large-vocab"
+    exp_name = "large-vocab-fewer-X"
     save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
     model.load_state_dict(torch.load(save_path, weights_only=True))
 
