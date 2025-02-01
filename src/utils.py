@@ -42,6 +42,24 @@ def get_filenames(directory: str = "data/processed/audio") -> list:
     return filenames
 
 
+def get_split_filenames() -> tuple[list, list, list]:
+    """
+    Get the filenames for the train, validation, and test sets.
+
+    Returns:
+        train_filenames (list): The filenames for the training set.
+        val_filenames (list): The filenames for the validation set.
+        test_filenames (list): The filenames for the test set.
+    """
+    with open("data/splits/train.json", "r") as f:
+        train_filenames = json.load(f)
+    with open("data/splits/val.json", "r") as f:
+        val_filenames = json.load(f)
+    with open("data/splits/test.json", "r") as f:
+        test_filenames = json.load(f)
+    return train_filenames, val_filenames, test_filenames
+
+
 @lru_cache(maxsize=None)
 def get_raw_chord_annotation(filename):
     """
