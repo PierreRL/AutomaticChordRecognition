@@ -14,7 +14,9 @@ from torch import Tensor
 
 # Create a torch dataset
 class FullChordDataset(Dataset):
-    def __init__(self, filenames=None, hop_length=4096, cached=True):
+    def __init__(
+        self, filenames=None, hop_length=4096, cached=True, override_small_vocab=False
+    ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
         Args:
@@ -39,7 +41,7 @@ class FullChordDataset(Dataset):
         self.n_bins = self.bins_per_octave * 6
         self.cqt_cache_dir = "./data/processed/cache/cqts"
         self.chord_cache_dir = "./data/processed/cache/chords"
-        if SMALL_VOCABULARY:
+        if SMALL_VOCABULARY or override_small_vocab:
             self.chord_cache_dir = "./data/processed/cache/chords_small_vocab"
 
     def __len__(self):
