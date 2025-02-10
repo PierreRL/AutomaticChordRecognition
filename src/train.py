@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from src.models.ismir2017 import ISMIR2017ACR
 from src.data.dataset import FixedLengthRandomChordDataset, FixedLengthChordDataset
-from src.utils import get_torch_device, collate_fn, NUM_CHORDS
+from src.utils import get_torch_device, collate_fn, NUM_CHORDS, EarlyStopper
 
 
 class TrainingArgs:
@@ -81,6 +81,8 @@ def train_model(
     val_loader = DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn
     )
+    if args.early_stopping is not None:
+        early_stopper = EarlyStopper(args.early_stopping)
 
     if args.device is None:
         # Use GPU if available, check for cuda and mps
@@ -90,6 +92,12 @@ def train_model(
     model = model.to(device)
     criterion = nn.CrossEntropyLoss(ignore_index=-1)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=args.decrease_lr_factor,
+        patience=args.decrease_lr_epochs,
+    )
 
     val_losses = []
     val_accuracies = []
@@ -168,22 +176,14 @@ def train_model(
                 ):  # Save the best model based on validation loss
                     save_model()
 
-            # Reduce learning rate if not improved in the last 5 epochs
-            if (
-                args.do_validation
-                and len(val_losses) > args.decrease_lr_epochs
-                and val_loss > min(val_losses[-args.decrease_lr_epochs :])
-            ):
-                print("\nDecreasing learning rate\n")
-                for param_group in optimizer.param_groups:
-                    param_group["lr"] *= args.decrease_lr_factor
+            # Reduce learning rate if not improved in the last # epochs
+            if args.decrease_lr_epochs is not None:
+                scheduler.step(val_loss)
 
-            # Early stopping if not improved in the last 10 epochs
+            # Early stopping if not improved in the last # epochs
             if args.early_stopping is None:
                 continue
-            elif len(val_losses) > args.early_stopping and val_loss > min(
-                val_losses[-args.early_stopping :]
-            ):
+            elif early_stopper(val_loss):
                 print("Early stopping triggered at epoch ", epoch)
                 break
 

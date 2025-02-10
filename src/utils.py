@@ -51,13 +51,10 @@ def get_split_filenames() -> tuple[list, list, list]:
         val_filenames (list): The filenames for the validation set.
         test_filenames (list): The filenames for the test set.
     """
-    with open("data/splits/train.json", "r") as f:
-        train_filenames = json.load(f)
-    with open("data/splits/val.json", "r") as f:
-        val_filenames = json.load(f)
-    with open("data/splits/test.json", "r") as f:
-        test_filenames = json.load(f)
-    return train_filenames, val_filenames, test_filenames
+    with open("data/processed/splits.json", "r") as f:
+        splits = json.load(f)
+
+    return splits["train"], splits["val"], splits["test"]
 
 
 @lru_cache(maxsize=None)
@@ -654,6 +651,23 @@ def write_text(text: str, file: str):
     """
     with open(file, "w") as f:
         f.write(text)
+
+
+class EarlyStopper:
+    def __init__(self, patience=1):
+        self.patience = patience
+        self.counter = 0
+        self.min_validation_loss = float("inf")
+
+    def __call__(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > self.min_validation_loss:
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
 
 
 if __name__ == "__main__":

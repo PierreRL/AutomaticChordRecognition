@@ -2,9 +2,7 @@ import autorootcwd
 import os
 import argparse
 from datetime import datetime
-
 import torch
-from sklearn.model_selection import train_test_split
 
 from src.train import train_model, TrainingArgs
 from src.data.dataset import (
@@ -13,7 +11,13 @@ from src.data.dataset import (
     FullChordDataset,
 )
 from src.models.ismir2017 import ISMIR2017ACR
-from src.utils import NUM_CHORDS, write_json, write_text, get_filenames
+from src.utils import (
+    NUM_CHORDS,
+    write_json,
+    write_text,
+    get_filenames,
+    get_split_filenames,
+)
 from src.eval import evaluate_model
 
 
@@ -70,7 +74,7 @@ def main():
 
     # Create a directory to store the experiment results
     DIR = f"./data/experiments/{args.exp_name}"
-    os.makedirs(DIR, exist_ok=True)
+    os.makedirs(DIR)
 
     # Load the dataset
     all_filenames = get_filenames()
@@ -79,12 +83,7 @@ def main():
     train_size = int(0.8 * len(all_filenames))
     val_size = int(0.25 * train_size)
     test_size = len(all_filenames) - train_size
-    train_filenames, test_filenames = train_test_split(
-        all_filenames, test_size=test_size, random_state=0, shuffle=False
-    )
-    val_filenames = train_filenames[
-        :val_size
-    ]  # Use a subset of the training set for validation, only for early stopping and decreasing LR, and samples are random segments so this is not tooo egregious.
+    train_filenames, val_filenames, test_filenames = get_split_filenames()
 
     # Create datasets
     train_dataset = FixedLengthRandomChordDataset(
