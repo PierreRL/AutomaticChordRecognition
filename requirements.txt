@@ -2,7 +2,7 @@ autorootcwd==1.0.1
 harte_library==0.4.5
 jams==0.3.4
 librosa==0.10.2.post1
-mir_eval==0.7
-numpy==1.26.4
-torch==2.5.1
-tqdm==4.66.6
+mir_eval==0.8.0
+numpy==1.24.4
+torch==2.4.1
+tqdm==4.67.1
