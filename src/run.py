@@ -100,13 +100,7 @@ def main():
     DIR = f"./data/experiments/{args.exp_name}"
     os.makedirs(DIR)
 
-    # Load the dataset
-    all_filenames = get_filenames()
-
-    # Split the dataset into train, validation, and test
-    train_size = int(0.8 * len(all_filenames))
-    val_size = int(0.25 * train_size)
-    test_size = len(all_filenames) - train_size
+    # Load the dataset filenames
     train_filenames, val_filenames, test_filenames = get_split_filenames()
 
     # Create datasets
@@ -133,9 +127,9 @@ def main():
         "time": str(datetime.now()),
         "model": str(model),
         "dataset": {
-            "train_size": train_size,
-            "val_size": val_size,
-            "test_size": test_size,
+            "train_size": len(train_dataset),
+            "val_size": len(val_dataset),
+            "test_size": len(test_dataset),
             "NUM_CHORDS": NUM_CHORDS,
         },
     }
