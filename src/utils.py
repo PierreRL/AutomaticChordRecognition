@@ -12,12 +12,15 @@ import torch
 from functools import lru_cache
 
 # Music processing libraries
-import torch_pitch_shift
 import librosa
 import jams
 from harte.harte import Harte
 
+# Constants
 SMALL_VOCABULARY = False
+SR = 44100
+HOP_LENGTH = 4096
+SEGMENT_LENGTH = 10
 
 if SMALL_VOCABULARY:
     NUM_CHORDS = 25
@@ -25,6 +28,7 @@ else:
     NUM_CHORDS = 170
 
 
+# Functions
 def get_filenames(directory: str = "data/processed/audio") -> list:
     """
     Get a list of filenames in a directory.
@@ -91,8 +95,8 @@ def get_annotation_metadata(filename):
 
 def get_cqt(
     filename: str,
-    sr: int = 44100,
-    hop_length: int = 4096,
+    sr: int = SR,
+    hop_length: int = HOP_LENGTH,
     n_bins: int = 36 * 6,
     bins_per_octave: int = 36,
     fmin: float = librosa.note_to_hz("C1"),
@@ -167,8 +171,8 @@ def pitch_shift_cqt(
 
 def cqt_to_audio(
     cqt: torch.Tensor,
-    sr: int = 44100,
-    hop_length: int = 4096,
+    sr: int = SR,
+    hop_length: int = HOP_LENGTH,
     bins_per_octave: int = 36,
 ):
     """

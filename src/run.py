@@ -13,6 +13,7 @@ from src.data.dataset import (
 from src.models.ismir2017 import ISMIR2017ACR
 from src.utils import (
     NUM_CHORDS,
+    HOP_LENGTH,
     write_json,
     write_text,
     get_filenames,
@@ -64,6 +65,35 @@ def main():
         action="store_true",
         help="Whether to use the cr2 version of ISMIR2017.",
     )
+    parser.add_argument(
+        "--cached",
+        action="store_true",
+        help="Whether to use cached CQT and chord annotation files.",
+    )
+    # TODO:
+    parser.add_argument(
+        "--hop_length",
+        type=int,
+        default=4096,
+        help="Hop length used to compute the log CQT.",
+    )
+    parser.add_argument(
+        "--segment_length",
+        type=int,
+        default=10,
+        help="Segment length for training dataset in seconds.",
+    )
+    parser.add_argument(
+        "--weighted_loss",
+        action="store_true",
+        help="Whether to use weighted loss.",
+    )
+    parser.add_argument(
+        "--train_on_X",
+        action="store_true",
+        help="Whether to train on class lable X.",
+    )
+
     args = parser.parse_args()
 
     torch.manual_seed(0)
@@ -89,13 +119,14 @@ def main():
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         segment_length=args.segment_length,
-        hop_length=4096,
+        hop_length=HOP_LENGTH,
         random_pitch_shift=args.random_pitch_shift,
+        cached=args.cached,
     )
     val_dataset = FixedLengthChordDataset(
-        filenames=val_filenames, segment_length=args.segment_length
+        filenames=val_filenames, segment_length=args.segment_length, cached=args.cached
     )
-    test_dataset = FullChordDataset(filenames=test_filenames)
+    test_dataset = FullChordDataset(filenames=test_filenames, cached=args.cached)
 
     # Initialize the model
     model = ISMIR2017ACR(
@@ -152,6 +183,7 @@ def main():
 
     # Evaluate the model
     try:
+        model.load_state_dict(torch.load(f"{DIR}/best_model.pth"))
         metrics = evaluate_model(model, test_dataset)
     except Exception as e:
         print(f"Evaluation Error: {e}")

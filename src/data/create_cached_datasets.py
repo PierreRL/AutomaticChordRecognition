@@ -12,7 +12,7 @@ import autorootcwd
 import os
 import torch
 from tqdm import tqdm
-from src.utils import get_cqt, get_chord_annotation, get_filenames
+from src.utils import get_cqt, get_chord_annotation, get_filenames, HOP_LENGTH, SR
 from src.data.dataset import FullChordDataset
 
 # Set to True to create the cached CQTs (takes ~1hr)
@@ -27,18 +27,12 @@ def main():
     filenames = get_filenames()
     for filename in tqdm(filenames):
         if create_cqts:
-            cqt = get_cqt(
-                filename,
-                sr=dataset.sr,
-                hop_length=dataset.hop_length,
-                n_bins=dataset.n_bins,
-                bins_per_octave=dataset.bins_per_octave,
-            )
+            cqt = get_cqt(filename)
             torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
 
         chord_one_hot = get_chord_annotation(
             filename,
-            frame_length=dataset.hop_length / dataset.sr,
+            frame_length=HOP_LENGTH / SR,
         )
         torch.save(chord_one_hot, f"{dataset.chord_cache_dir}/{filename}.pt")
 

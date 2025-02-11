@@ -26,6 +26,8 @@ class TrainingArgs:
         early_stopping: int = 20,
         decrease_lr_factor: float = 0.1,
         decrease_lr_epochs: int = 10,
+        train_on_X: bool = True,
+        use_weighted_loss: bool = False,
         do_validation: bool = True,
         save_model: bool = True,
         save_dir: str = "data/models/",
@@ -39,6 +41,8 @@ class TrainingArgs:
         self.early_stopping = early_stopping
         self.decrease_lr_factor = decrease_lr_factor
         self.decrease_lr_epochs = decrease_lr_epochs
+        self.train_on_X = train_on_X
+        self.use_weighted_loss = use_weighted_loss
         self.do_validation = do_validation
         self.save_model = save_model
         self.save_dir = save_dir
@@ -55,6 +59,8 @@ class TrainingArgs:
             "decrease_lr_factor": self.decrease_lr_factor,
             "decrease_lr_epochs": self.decrease_lr_epochs,
             "do_validation": self.do_validation,
+            "train_on_X": self.train_on_X,
+            "use_weighted_loss": self.use_weighted_loss,
         }
 
 
@@ -98,6 +104,7 @@ def train_model(
         factor=args.decrease_lr_factor,
         patience=args.decrease_lr_epochs,
     )
+    prev_lr = args.lr
 
     val_losses = []
     val_accuracies = []
@@ -133,7 +140,7 @@ def train_model(
         correct = 0
         total = 0
         with torch.no_grad():
-            for i, (features, labels) in enumerate(val_loader):
+            for i, (features, labels) in tqdm(enumerate(val_loader)):
                 features, labels = features.to(device), labels.to(device)
                 outputs = model(features)
 
@@ -179,6 +186,9 @@ def train_model(
             # Reduce learning rate if not improved in the last # epochs
             if args.decrease_lr_epochs is not None:
                 scheduler.step(val_loss)
+                if optimizer.param_groups[0]["lr"] < prev_lr:
+                    prev_lr = optimizer.param_groups[0]["lr"]
+                    print(f"Reducing learning rate to {prev_lr}")
 
             # Early stopping if not improved in the last # epochs
             if args.early_stopping is None:
@@ -209,9 +219,6 @@ def main():
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset, [train_size, val_size]
     )
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
-
     # Initialize the model
     model = ISMIR2017ACR(
         input_features=dataset.full_dataset.n_bins, num_classes=NUM_CHORDS, cr2=True
@@ -232,8 +239,8 @@ def main():
     # Train the model
     train_model(
         model,
-        train_loader,
-        val_loader,
+        train_dataset,
+        val_dataset,
         args=training_args,
     )
 
