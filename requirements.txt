@@ -1,0 +1,8 @@
+autorootcwd==1.0.1
+harte_library==0.4.5
+jams==0.3.4
+librosa==0.10.2.post1
+mir_eval==0.7
+numpy==2.2.2
+torch==2.5.1
+tqdm==4.66.6
