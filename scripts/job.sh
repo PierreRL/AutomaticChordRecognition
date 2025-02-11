@@ -10,9 +10,6 @@
 #SBATCH --mem=4G
 #SBATCH --gres=gpu:1
 
-# Load necessary modules (adjust based on your cluster's setup)
-module load python/3.9.6  # Ensure this matches your local Python version
-
 # Set up the virtual environment (only if not already created)
 VENV_DIR=~/ug4_venv
 if [ ! -d "$VENV_DIR" ]; then
