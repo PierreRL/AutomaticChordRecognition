@@ -22,6 +22,8 @@ SMALL_VOCABULARY = False
 SR = 44100
 HOP_LENGTH = 4096
 SEGMENT_LENGTH = 10
+BINS_PER_OCTAVE = 36
+N_BINS = BINS_PER_OCTAVE * 6
 
 if SMALL_VOCABULARY:
     NUM_CHORDS = 25
@@ -98,8 +100,8 @@ def get_cqt(
     filename: str,
     sr: int = SR,
     hop_length: int = HOP_LENGTH,
-    n_bins: int = 36 * 6,
-    bins_per_octave: int = 36,
+    n_bins: int = N_BINS,
+    bins_per_octave: int = BINS_PER_OCTAVE,
     fmin: float = librosa.note_to_hz("C1"),
     absolute: bool = True,
 ) -> torch.Tensor:

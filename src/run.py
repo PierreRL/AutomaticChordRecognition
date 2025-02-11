@@ -13,7 +13,7 @@ from src.data.dataset import (
 from src.models.ismir2017 import ISMIR2017ACR
 from src.utils import (
     NUM_CHORDS,
-    HOP_LENGTH,
+    N_BINS,
     write_json,
     write_text,
     get_filenames,
@@ -122,7 +122,7 @@ def main():
 
     # Initialize the model
     model = ISMIR2017ACR(
-        input_features=train_dataset.full_dataset.n_bins,
+        input_features=N_BINS,
         num_classes=NUM_CHORDS,
         cr2=args.cr2,
     )
