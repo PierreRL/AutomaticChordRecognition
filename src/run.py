@@ -60,7 +60,7 @@ def main():
         help="Whether to use the cr2 version of ISMIR2017.",
     )
     parser.add_argument(
-        "--cached",
+        "--no_cache",
         action="store_true",
         help="Whether to use cached CQT and chord annotation files.",
     )
@@ -107,12 +107,14 @@ def main():
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         random_pitch_shift=args.random_pitch_shift,
-        cached=args.cached,
+        cached=not args.no_cache,
     )
     val_dataset = FixedLengthChordDataset(
-        filenames=val_filenames, segment_length=args.segment_length, cached=args.cached
+        filenames=val_filenames,
+        segment_length=args.segment_length,
+        cached=not args.no_cache,
     )
-    test_dataset = FullChordDataset(filenames=test_filenames, cached=args.cached)
+    test_dataset = FullChordDataset(filenames=test_filenames, cached=not args.no_cache)
 
     # Initialize the model
     model = ISMIR2017ACR(
