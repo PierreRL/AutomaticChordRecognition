@@ -2,6 +2,7 @@ import autorootcwd
 from tqdm import tqdm
 from enum import Enum
 import os
+from typing import List, Dict
 
 import torch
 import numpy as np
@@ -73,7 +74,7 @@ class EvalMetric(Enum):
 def evaluate_model(
     model: BaseACR,
     dataset: FullChordDataset,
-    evals: list[EvalMetric] = [
+    evals: List[EvalMetric] = [
         EvalMetric.ROOT,
         EvalMetric.MAJMIN,
         EvalMetric.MIREX,
@@ -82,7 +83,7 @@ def evaluate_model(
     ],
     batch_size: int = 32,
     device: torch.device = None,
-) -> dict[str, float]:
+) -> Dict[str, float]:
     """
     Evaluate a model on a dataset split using a list of evaluation metrics.
 

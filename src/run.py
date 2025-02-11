@@ -30,12 +30,6 @@ def main():
     parser.add_argument(
         "--exp_name", type=str, help="Name of the experiment.", required=True
     )
-    parser.add_argument(
-        "--segment_length",
-        type=int,
-        default=10,
-        help="Segment length for the dataset in seconds.",
-    )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
         "--num_epochs", type=int, default=100, help="Number of epochs to train."
@@ -118,8 +112,6 @@ def main():
     # Create datasets
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
-        segment_length=args.segment_length,
-        hop_length=HOP_LENGTH,
         random_pitch_shift=args.random_pitch_shift,
         cached=args.cached,
     )

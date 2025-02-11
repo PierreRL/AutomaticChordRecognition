@@ -10,6 +10,7 @@ import json
 import numpy as np
 import torch
 from functools import lru_cache
+from typing import List, Tuple
 
 # Music processing libraries
 import librosa
@@ -46,7 +47,7 @@ def get_filenames(directory: str = "data/processed/audio") -> list:
     return filenames
 
 
-def get_split_filenames() -> tuple[list, list, list]:
+def get_split_filenames() -> Tuple[List, List, List]:
     """
     Get the filenames for the train, validation, and test sets.
 
@@ -608,7 +609,7 @@ def get_torch_device():
     return torch.device("cpu")
 
 
-def collate_fn(data: list[tuple]) -> tuple[torch.Tensor, torch.Tensor]:
+def collate_fn(data: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Collate function for the DataLoader.
 

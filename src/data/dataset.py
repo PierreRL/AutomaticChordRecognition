@@ -1,6 +1,10 @@
 import autorootcwd
 import os
 from torch.utils.data import Dataset, random_split
+import torch
+from torch import Tensor
+from typing import Tuple, List
+
 from src.utils import (
     get_cqt,
     get_chord_annotation,
@@ -11,8 +15,6 @@ from src.utils import (
     SEGMENT_LENGTH,
     SR,
 )
-import torch
-from torch import Tensor
 
 
 # Create a torch dataset
@@ -49,7 +51,7 @@ class FullChordDataset(Dataset):
     def __len__(self):
         return len(self.filenames)
 
-    def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
+    def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
         if self.cached:
             return self.__get_cached_item(idx)
         filename = self.filenames[idx]
@@ -62,7 +64,7 @@ class FullChordDataset(Dataset):
 
     def get_minimum_length_frame(
         self, cqt: Tensor, chord_ids: Tensor
-    ) -> tuple[Tensor, Tensor]:
+    ) -> Tuple[Tensor, Tensor]:
         """
         Returns the cqt and chord annotation with the minimum length.
 
@@ -113,7 +115,7 @@ class FixedLengthRandomChordDataset(Dataset):
         self.full_dataset = FullChordDataset(cached=cached, filenames=filenames)
         self.random_pitch_shift = random_pitch_shift
 
-    def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
+    def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
         full_cqt, full_chord_ids = self.full_dataset[idx]
 
         # Convert segment length in seconds to segment length in frames
@@ -177,14 +179,12 @@ class FixedLengthChordDataset(Dataset):
             filenames (list): A list of filenames to include in the dataset. If None, all files in the processed audio directory are included.
         """
         super().__init__()
-        self.full_dataset = FullChordDataset(
-            filenames=filenames, hop_length=hop_length, cached=cached
-        )
+        self.full_dataset = FullChordDataset(filenames=filenames, cached=cached)
         self.segment_length = segment_length
         self.hop_length = hop_length
         self.data = self.generate_fixed_segments()
 
-    def generate_fixed_segments(self) -> list[tuple[Tensor, Tensor]]:
+    def generate_fixed_segments(self) -> List[Tuple[Tensor, Tensor]]:
         """
         Generate fixed length segments from the full dataset. Each song is split into segments of the specified length.
 
@@ -198,9 +198,7 @@ class FixedLengthChordDataset(Dataset):
         data = []
 
         # Convert segment length in seconds to segment length in frames
-        self.segment_length_samples = int(
-            self.segment_length * self.full_dataset.sr / self.hop_length
-        )
+        self.segment_length_samples = int(SEGMENT_LENGTH * SR / HOP_LENGTH)
 
         #  Loop over each song in the dataset
         for i in range(len(self.full_dataset)):
@@ -215,7 +213,7 @@ class FixedLengthChordDataset(Dataset):
                 )
         return data
 
-    def __getitem__(self, idx) -> tuple[Tensor, Tensor]:
+    def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
         return self.data[idx]
 
     def __len__(self):
