@@ -16,8 +16,8 @@ from src.utils import (
     N_BINS,
     write_json,
     write_text,
-    get_filenames,
     get_split_filenames,
+    generate_experiment_name,
 )
 from src.eval import evaluate_model
 
@@ -27,12 +27,22 @@ def main():
     parser = argparse.ArgumentParser(
         description="Train and evaluate a chord recognition model."
     )
+    parser.add_argument("--exp_name", type=str, help="Name of the experiment.")
     parser.add_argument(
-        "--exp_name", type=str, help="Name of the experiment.", required=True
+        "--input_dir",
+        type=str,
+        default="data/processed",
+        help="Directory containing the processed data.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="experiments",
+        help="Directory to store the experiment results.",
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
-        "--num_epochs", type=int, default=100, help="Number of epochs to train."
+        "--epochs", type=int, default=100, help="Number of epochs to train."
     )
     parser.add_argument(
         "--decrease_lr_epochs",
@@ -60,12 +70,6 @@ def main():
         help="Whether to use the cr2 version of ISMIR2017.",
     )
     parser.add_argument(
-        "--no_cache",
-        action="store_true",
-        help="Whether to use cached CQT and chord annotation files.",
-    )
-    # TODO:
-    parser.add_argument(
         "--hop_length",
         type=int,
         default=4096,
@@ -78,17 +82,20 @@ def main():
         help="Segment length for training dataset in seconds.",
     )
     parser.add_argument(
-        "--weighted_loss",
+        "--mask_X",
+        action="store_true",
+        help="Whether to ignore class label X for training.",
+    )
+    parser.add_argument(
+        "--weight_loss",
         action="store_true",
         help="Whether to use weighted loss.",
     )
-    parser.add_argument(
-        "--train_on_X",
-        action="store_true",
-        help="Whether to train on class lable X.",
-    )
 
     args = parser.parse_args()
+
+    if not args.exp_name:
+        args.exp_name = generate_experiment_name()
 
     torch.manual_seed(0)
 
@@ -97,7 +104,7 @@ def main():
     print("=" * 50)
 
     # Create a directory to store the experiment results
-    DIR = f"./data/experiments/{args.exp_name}"
+    DIR = f"{args.output_dir}/{args.exp_name}"
     os.makedirs(DIR)
 
     # Load the dataset filenames
@@ -107,14 +114,20 @@ def main():
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         random_pitch_shift=args.random_pitch_shift,
-        cached=not args.no_cache,
+        hop_length=args.hop_length,
+        mask_X=args.mask_X,
+        segment_length=args.segment_length,
+        input_dir=args.input_dir,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
         segment_length=args.segment_length,
-        cached=not args.no_cache,
+        hop_length=args.hop_length,
+        input_dir=args.input_dir,
     )
-    test_dataset = FullChordDataset(filenames=test_filenames, cached=not args.no_cache)
+    test_dataset = FullChordDataset(
+        filenames=test_filenames, hop_length=args.hop_length, input_dir=args.input_dir
+    )
 
     # Initialize the model
     model = ISMIR2017ACR(
@@ -138,14 +151,14 @@ def main():
     write_json(run_metadata, f"{DIR}/metadata.json")
 
     training_args = TrainingArgs(
-        num_epochs=args.num_epochs,
+        epochs=args.epochs,
         lr=args.lr,
         segment_length=args.segment_length,
         decrease_lr_epochs=args.decrease_lr_epochs,
         decrease_lr_factor=args.decrease_lr_factor,
+        mask_X=args.mask_X,
+        use_weighted_loss=args.weight_loss,
         early_stopping=args.early_stopping,
-        do_validation=True,
-        save_model=True,
         save_dir=f"{DIR}/",
         save_filename="best_model.pth",
         device=None,
@@ -168,6 +181,7 @@ def main():
         print(f"Training Error: {e}")
         # Save the exception to a file
         write_text(f"{DIR}/training_error.txt", str(e))
+        return
 
     # Evaluate the model
     try:
@@ -176,11 +190,16 @@ def main():
     except Exception as e:
         print(f"Evaluation Error: {e}")
         # Save the exception to a file
-        write_text(str(e), f"{DIR}/evaluation_error.txt")
+        write_text(f"{DIR}/evaluation_error.txt", str(e))
+        return
 
     # Save the training history dictionary and metrics dictionary as json files
     write_json(training_history, f"{DIR}/training_history.json")
     write_json(metrics, f"{DIR}/metrics.json")
+
+    print("=" * 50)
+    print(f"Experiment {args.exp_name} completed.")
+    print("=" * 50)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,6 @@ from harte.harte import Harte
 SMALL_VOCABULARY = False
 SR = 44100
 HOP_LENGTH = 4096
-SEGMENT_LENGTH = 10
 BINS_PER_OCTAVE = 36
 N_BINS = BINS_PER_OCTAVE * 6
 
@@ -645,7 +644,7 @@ def write_json(dictionary: dict, file: str):
         json.dump(dictionary, f)
 
 
-def write_text(text: str, file: str):
+def write_text(file: str, text: str):
     """
     Writes a string to a text file.
 
@@ -658,6 +657,61 @@ def write_text(text: str, file: str):
     """
     with open(file, "w") as f:
         f.write(text)
+
+
+def generate_experiment_name():
+    """
+    Generates a random experiment name.
+
+    Returns:
+        str: The experiment name.
+    """
+    adjectives = [
+        "happy",
+        "sad",
+        "exciting",
+        "boring",
+        "fast",
+        "slow",
+        "loud",
+        "quiet",
+        "bright",
+        "dark",
+        "simple",
+        "complex",
+        "beautiful",
+        "ugly",
+        "calm",
+        "chaotic",
+        "melodic",
+        "atonal",
+        "jazzy",
+        "classical",
+    ]
+    nouns = [
+        "music",
+        "song",
+        "chord",
+        "note",
+        "rhythm",
+        "harmony",
+        "melody",
+        "beat",
+        "tune",
+        "sound",
+        "audio",
+        "instrument",
+        "genre",
+        "tempo",
+        "pitch",
+        "timbre",
+        "dynamics",
+        "texture",
+        "form",
+        "structure",
+    ]
+
+    return f"{random.choice(adjectives)}-{random.choice(nouns)}-{random.randint(1000, 9999)}"
 
 
 class EarlyStopper:
