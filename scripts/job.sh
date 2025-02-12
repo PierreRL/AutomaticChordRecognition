@@ -81,7 +81,7 @@ rm -r ${SCRATCH_HOME}/experiments/*
 echo "Running script"
 
 # Run your Python script
-python ${repo_home}/src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments --epochs=10
+python ${repo_home}/src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments
 
 # ======================================
 # Move output data from scratch to DFS
