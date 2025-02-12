@@ -93,12 +93,11 @@ echo "Moving output data back to DFS"
 
 src_path=${SCRATCH_HOME}/experiments
 dest_path=${repo_home}/experiments/
-
-# Deactivate the virtual environment (optional but good practice)
-deactivate
+rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # Clean up the node's scratch disk
 rm -r ${SCRATCH_HOME}
+
 
 # =========================
 # Post experiment logging
@@ -108,3 +107,6 @@ echo "============"
 echo "job finished successfully"
 dt=$(date '+%d/%m/%Y %H:%M:%S')
 echo "Job finished: $dt"
+
+# Deactivate the virtual environment (optional but good practice)
+deactivate
