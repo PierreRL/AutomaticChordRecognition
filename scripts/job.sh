@@ -1,14 +1,28 @@
 #!/bin/bash
-#SBATCH --job-name=run_experiment_%j
-#SBATCH --output=logs/run_experiment_%j.log
-#SBATCH --error=logs/run_experiment_%j.err
-#
-#SBATCH --time=02:00:00
-#SBATCH --ntasks=1
+# ====================
+# Options for sbatch
+# ====================
+
+# Location for stdout log - see https://slurm.schedmd.com/sbatch.html#lbAH
+#SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
+
+# Location for stderr log - see https://slurm.schedmd.com/sbatch.html#lbAH
+#SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
+
+# Maximum number of nodes to use for the job
+# #SBATCH --nodes=1
+
+# Generic resources to use - typically you'll want gpu:n to get n gpus
+#SBATCH --gres=gpu:0
+
+# Megabytes of RAM required. Check `cluster-status` for node configurations
+#SBATCH --mem=4000
+
+# Number of CPUs to use. Check `cluster-status` for node configurations
 #SBATCH --cpus-per-task=1
-#SBATCH --gpus-per-node=1
-#SBATCH --mem=4G
-#SBATCH --gres=gpu:1
+
+# Maximum time for the job to run, format: days-hours:minutes:seconds
+#SBATCH --time=01:00:00
 
 echo "Starting job $SLURM_JOB_ID"
 echo "Running on $SLURM_JOB_NODELIST"
