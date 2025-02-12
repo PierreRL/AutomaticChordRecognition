@@ -63,7 +63,7 @@ rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 echo "Running script"
 
 # Run your Python script
-python src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments
+python ${repo_home}/src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments --epochs=10
 
 # ======================================
 # Move output data from scratch to DFS
@@ -75,7 +75,6 @@ echo "Moving output data back to DFS"
 
 src_path=${SCRATCH_HOME}/experiments
 dest_path=${repo_home}/experiments/
-rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # Deactivate the virtual environment (optional but good practice)
 deactivate
