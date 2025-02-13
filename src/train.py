@@ -26,7 +26,7 @@ class TrainingArgs:
         early_stopping: int = 20,
         decrease_lr_factor: float = 0.1,
         decrease_lr_epochs: int = 10,
-        validate_every: int = 5,
+        validate_every: int = 1,
         mask_X: bool = True,
         use_weighted_loss: bool = False,
         hop_length: int = 4096,

@@ -91,6 +91,11 @@ def main():
         action="store_true",
         help="Whether to use weighted loss.",
     )
+    parser.add_argument(
+        "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
+        action="store_true",
+        help="Run a single batch of training and validation and small evaluation set.",
+    )
 
     args = parser.parse_args()
 
@@ -128,6 +133,9 @@ def main():
     test_dataset = FullChordDataset(
         filenames=test_filenames, hop_length=args.hop_length, input_dir=args.input_dir
     )
+    val_final_test_dataset = FullChordDataset(
+        filenames=val_filenames, hop_length=args.hop_length, input_dir=args.input_dir
+    )
 
     # Initialize the model
     model = ISMIR2017ACR(
@@ -135,6 +143,15 @@ def main():
         num_classes=NUM_CHORDS,
         cr2=args.cr2,
     )
+
+    if args.fdr:
+        train_dataset = torch.utils.data.Subset(train_dataset, range(10))
+        val_dataset = torch.utils.data.Subset(val_dataset, range(4))
+        test_dataset = torch.utils.data.Subset(test_dataset, range(4))
+        val_final_test_dataset = torch.utils.data.Subset(
+            val_final_test_dataset, range(4)
+        )
+        args.epochs = 1
 
     # Save the experiment name and time
     run_metadata = {
@@ -161,7 +178,6 @@ def main():
         early_stopping=args.early_stopping,
         save_dir=f"{DIR}/",
         save_filename="best_model.pth",
-        device=None,
     )
 
     # Save the training args
@@ -183,19 +199,29 @@ def main():
         write_text(f"{DIR}/training_error.txt", str(e))
         return
 
-    # Evaluate the model
+    # Save the training history dictionary
+    write_json(training_history, f"{DIR}/training_history.json")
+
+    # Evaluate the model on val and test
     try:
-        model.load_state_dict(torch.load(f"{DIR}/best_model.pth"))
-        metrics = evaluate_model(model, test_dataset)
+        # Load the best model
+        model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
+
+        # Validation set
+        print("Evaluation model on validation set...")
+        val_metrics = evaluate_model(model, val_final_test_dataset)
+        write_json(val_metrics, f"{DIR}/val_metrics.json")
+
+        # Test set
+        print("Evaluating model on test...")
+        test_metrics = evaluate_model(model, test_dataset)
+        write_json(test_metrics, f"{DIR}/test_metrics.json")
+
     except Exception as e:
         print(f"Evaluation Error: {e}")
         # Save the exception to a file
         write_text(f"{DIR}/evaluation_error.txt", str(e))
         return
-
-    # Save the training history dictionary and metrics dictionary as json files
-    write_json(training_history, f"{DIR}/training_history.json")
-    write_json(metrics, f"{DIR}/metrics.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")

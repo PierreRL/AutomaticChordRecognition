@@ -8,6 +8,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 import mir_eval
+from sklearn.metrics import accuracy_score
 
 from src.models.ismir2017 import ISMIR2017ACR
 from src.models.base_model import BaseACR
@@ -35,6 +36,7 @@ class EvalMetric(Enum):
     MIREX = "mirex"
     THIRD = "third"
     SEVENTH = "seventh"
+    SONG_WISE_ACC = "song_wise_acc"
 
     def eval_func(self) -> callable:
         """
@@ -50,8 +52,20 @@ class EvalMetric(Enum):
             return mir_eval.chord.thirds
         elif self == EvalMetric.SEVENTH:
             return mir_eval.chord.sevenths
+        elif self == EvalMetric.SONG_WISE_ACC:
+            return accuracy_score
         else:
             raise ValueError(f"Invalid evaluation metric: {self}")
+
+    def get_eval_input_type(self) -> str:
+        """
+        Returns the evaluation type for this evaluation metric.
+        """
+        # Only SONG_WISE_ACC uses integer inputs
+        if self in [EvalMetric.SONG_WISE_ACC]:
+            return "int"
+        else:
+            return "str"
 
     def evaluate(self, hypotheses: torch.Tensor, references: torch.Tensor):
         """
@@ -80,8 +94,11 @@ def evaluate_model(
         EvalMetric.MIREX,
         EvalMetric.THIRD,
         EvalMetric.SEVENTH,
+        EvalMetric.SONG_WISE_ACC,
     ],
-    batch_size: int = 32,
+    frame_wise_acc: bool = True,
+    class_wise_acc: bool = True,
+    batch_size: int = 8,
     device: torch.device = None,
 ) -> Dict[str, float]:
     """
@@ -103,7 +120,7 @@ def evaluate_model(
     model.to(device)
     model.eval()
 
-    # Initialize metrics storage (ignore_X is now the default)
+    # Initialize metrics storage
     metrics = {"mean": {}, "median": {}}
 
     for eval in evals:
@@ -113,32 +130,35 @@ def evaluate_model(
     data_loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
     )
-    print("Evaluating model...")
 
     song_metrics = {eval.value: {} for eval in evals}
+
+    all_hypotheses = []
+    all_references = []
 
     for batch_features, batch_labels in tqdm(data_loader):
         batch_features, batch_labels = batch_features.to(device), batch_labels.to(
             device
         )
         predictions = model.predict(batch_features).to(device)
+        all_hypotheses.extend(predictions.cpu().numpy())
+        all_references.extend(batch_labels.cpu().numpy())
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
             valid_mask = batch_labels[i] != -1
-            filtered_references = batch_labels[i][valid_mask]
-            filtered_hypotheses = predictions[i][valid_mask]
+            filtered_references = batch_labels[i][valid_mask].cpu().numpy()
+            filtered_hypotheses = predictions[i][valid_mask].cpu().numpy()
 
-            ref_labels = id_to_chord_table[filtered_references.cpu().numpy()]
-            hyp_labels = id_to_chord_table[filtered_hypotheses.cpu().numpy()]
-
-            ignore_mask = filtered_references != 1
-            filtered_ref_ignore = ref_labels[ignore_mask.cpu().numpy()]
-            filtered_hyp_ignore = hyp_labels[ignore_mask.cpu().numpy()]
+            ref_labels = id_to_chord_table[filtered_references]
+            hyp_labels = id_to_chord_table[filtered_hypotheses]
 
             for eval in evals:
-                song_eval_scores = eval.evaluate(
-                    filtered_hyp_ignore, filtered_ref_ignore
-                )
+                if eval.get_eval_input_type() == "int":
+                    song_eval_scores = eval.evaluate(
+                        filtered_references, filtered_hypotheses
+                    )
+                else:
+                    song_eval_scores = eval.evaluate(hyp_labels, ref_labels)
 
                 # Filter out invalid scores that are -1 (produced by mir_eval with 'X' labels for example)
                 song_eval_scores = song_eval_scores[song_eval_scores != -1]
@@ -153,6 +173,27 @@ def evaluate_model(
 
         metrics["mean"][eval.value] = np.mean(song_scores)
         metrics["median"][eval.value] = np.median(song_scores)
+
+    # Flatten along song dimension
+    all_hypotheses = np.concatenate(all_hypotheses)
+    all_references = np.concatenate(all_references)
+
+    if frame_wise_acc:
+        metrics["frame_wise_acc"] = accuracy_score(all_references, all_hypotheses)
+
+    if class_wise_acc:
+        class_accs = np.full(NUM_CHORDS, np.nan)
+        for i in range(NUM_CHORDS):
+            # Find all references of class i
+            mask = all_references == i
+            class_references = all_references[mask]
+            class_hypotheses = all_hypotheses[mask]
+
+            if class_references.size > 0:
+                class_accs[i] = accuracy_score(class_references, class_hypotheses)
+
+        metrics["class_wise_acc_mean"] = np.nanmean(class_accs)  # Ignore NaNs
+        metrics["class_wise_acc_median"] = np.nanmedian(class_accs)
 
     return metrics
 

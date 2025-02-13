@@ -1,6 +1,5 @@
 # Lead Sheet Transcription 🎼
 
-
 This is my (Pierre Lardet) 4th year undergraduate project at the University of Edinburgh. Please cite this work if you use it. Bibtex:
 
 ```
