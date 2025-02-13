@@ -1,26 +1,14 @@
-"""
-Creates a cached version of dataset.
-
-This script is run once to prepare the data to be faster to load.
-
-The cached version of the dataset is stored in the following directories:
-- data/processed/cqt
-- data/processed/chord_ids
-"""
-
 import autorootcwd
 import os
 import torch
+import argparse
 from tqdm import tqdm
-from src.utils import get_cqt, get_chord_annotation, get_filenames, HOP_LENGTH, SR
+from src.utils import get_cqt, get_chord_annotation, get_filenames, SR
 from src.data.dataset import FullChordDataset
 
-# Set to True to create the cached CQTs (takes ~1hr)
-create_cqts = False
 
-
-def main():
-    dataset = FullChordDataset()
+def main(hop_length, create_cqts):
+    dataset = FullChordDataset(hop_length=hop_length)
     os.makedirs(dataset.cqt_cache_dir, exist_ok=True)
     os.makedirs(dataset.chord_cache_dir, exist_ok=True)
 
@@ -32,10 +20,19 @@ def main():
 
         chord_one_hot = get_chord_annotation(
             filename,
-            frame_length=HOP_LENGTH / SR,
+            frame_length=hop_length / SR,
         )
         torch.save(chord_one_hot, f"{dataset.chord_cache_dir}/{filename}.pt")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Cache dataset for faster loading.")
+    parser.add_argument(
+        "--hop_length", type=int, required=True, help="Hop length to use in processing."
+    )
+    parser.add_argument(
+        "--create_cqts", action="store_true", help="Flag to create CQTs (takes ~1hr)"
+    )
+    args = parser.parse_args()
+
+    main(args.hop_length, args.create_cqts)
