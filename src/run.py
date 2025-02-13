@@ -42,7 +42,7 @@ def main():
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
-        "--epochs", type=int, default=100, help="Number of epochs to train."
+        "--epochs", type=int, default=150, help="Number of epochs to train."
     )
     parser.add_argument(
         "--decrease_lr_epochs",
@@ -57,7 +57,7 @@ def main():
         help="Factor by which to decrease LR.",
     )
     parser.add_argument(
-        "--early_stopping", type=int, default=20, help="Early stopping patience."
+        "--early_stopping", type=int, default=40, help="Early stopping patience."
     )
     parser.add_argument(
         "--random_pitch_shift",
