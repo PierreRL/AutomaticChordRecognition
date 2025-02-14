@@ -11,7 +11,7 @@ SCRATCH_HOME = f"{SCRATCH_DISK}/{USER}"
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{REPO_HOME}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME}/input --output_dir={SCRATCH_HOME}/experiments "
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={SCRATCH_HOME}/experiments "
 
 learning_rates = [1e-5, 1e-4, 1e-3, 1e-2]
 schedulers = ["cosine", "plateau", "none"]
