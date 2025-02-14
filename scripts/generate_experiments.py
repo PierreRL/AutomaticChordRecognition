@@ -8,7 +8,7 @@ USER = os.getenv("USER")
 SCRATCH_DISK = "/disk/scratch"
 SCRATCH_HOME = f"{SCRATCH_DISK}/{USER}"
 
-REPO_HOME = f"/home/${USER}/LeadSheetTranscription"
+REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{REPO_HOME}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME}/input --output_dir={SCRATCH_HOME}/experiments "
