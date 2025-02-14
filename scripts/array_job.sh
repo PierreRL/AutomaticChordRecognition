@@ -80,7 +80,11 @@ echo "Running script"
 cd ${repo_home}
 
 # Run script
-python ${repo_home}/src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments
+experiment_text_file=$1
+COMMAND="`sed \"${SLURM_ARRAY_TASK_ID}q;d \" ${experiment_text_file}`"
+echo "Running provided command: ${COMMAND}"
+eval "${COMMAND}"
+echo "Command ran successfully!"
 
 # ======================================
 # Move output data from scratch to DFS

@@ -18,3 +18,6 @@ class RandomACR(BaseACR):
         num_batches, num_frames, _ = features.shape
         labels = torch.randint(0, self.chord_vocab_size, (num_batches, num_frames))
         return torch.nn.functional.one_hot(labels, self.chord_vocab_size).float()
+
+    def __str__(self):
+        return f"RandomACR(chord_vocab_size={self.chord_vocab_size})"

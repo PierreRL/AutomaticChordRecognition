@@ -288,6 +288,70 @@ class FixedLengthChordDataset(Dataset):
         return len(self.data)
 
 
+def generate_datasets(
+    train_filenames: List[str],
+    val_filenames: List[str],
+    test_filenames: List[str],
+    input_dir: str,
+    segment_length: int,
+    mask_X: bool,
+    hop_length: int,
+    random_pitch_shift: bool = True,
+    subset_size=None,
+):
+    """
+    Generate the training, validation, and test datasets.
+
+    Args:
+        train_filenames (list): The list of training filenames.
+        val_filenames (list): The list of validation filenames.
+        test_filenames (list): The list of test filenames.
+        input_dir (str): The directory where the audio files are stored.
+        segment_length (int): The length of the segment in seconds.
+        mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
+        hop_length (int): The hop length used to compute the log CQT.
+        subset_size (int): The size of the subset to use. If None, the full dataset is used.
+
+    Returns:
+        train_dataset (FixedLengthRandomChordDataset): The training dataset.
+        val_dataset (FixedLengthChordDataset): The validation dataset.
+        test_dataset (FullChordDataset): The test dataset.
+        val_final_test_dataset (FullChordDataset): The validation dataset for the final test.
+    """
+    if subset_size:
+        train_filenames = train_filenames[:subset_size]
+        val_filenames = val_filenames[:subset_size]
+        test_filenames = test_filenames[:subset_size]
+    train_dataset = FixedLengthRandomChordDataset(
+        filenames=train_filenames,
+        segment_length=segment_length,
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+        random_pitch_shift=random_pitch_shift,
+    )
+    val_dataset = FixedLengthChordDataset(
+        filenames=val_filenames,
+        segment_length=segment_length,
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+    )
+    test_dataset = FullChordDataset(
+        filenames=test_filenames,
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+    )
+    val_final_test_dataset = FullChordDataset(
+        filenames=val_filenames,
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+    )
+    return train_dataset, val_dataset, test_dataset, val_final_test_dataset
+
+
 def main():
     import torch
 

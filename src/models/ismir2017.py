@@ -22,7 +22,12 @@ class ISMIR2017ACR(BaseACR):
     """
 
     def __init__(
-        self, input_features: int = 216, num_classes: int = NUM_CHORDS, cr2: bool = True
+        self,
+        input_features: int = 216,
+        num_classes: int = NUM_CHORDS,
+        hidden_size: int = 256,
+        num_layers: int = 1,
+        cr2: bool = True,
     ):
         """
         Initializes the ISMIR2017ACR model.
@@ -34,6 +39,9 @@ class ISMIR2017ACR(BaseACR):
         """
         super(ISMIR2017ACR, self).__init__()
         self.cr2 = cr2
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        self.num_layers = num_layers
 
         self.batch_norm = nn.BatchNorm2d(
             1
@@ -55,13 +63,13 @@ class ISMIR2017ACR(BaseACR):
             padding=(0, 0),  # Valid padding to reduce frequency dimension to 1
         )
 
-        encoder_hidden_size = 128 if self.cr2 else 256
+        encoder_hidden_size = self.hidden_size // 2 if self.cr2 else self.hidden_size
 
         # Encoder: Bidirectional GRU layer
         self.bi_gru_encoder = nn.GRU(
             input_size=36,
             hidden_size=encoder_hidden_size,  # E per direction, output 2*E
-            num_layers=1,
+            num_layers=self.num_layers,
             batch_first=True,
             bidirectional=True,
         )
@@ -70,15 +78,15 @@ class ISMIR2017ACR(BaseACR):
             # Decoder: Secondary Bidirectional GRU for CR2
             self.bi_gru_decoder = nn.GRU(
                 input_size=2 * encoder_hidden_size,  # 2*E from encoder
-                hidden_size=128,
-                num_layers=1,
+                hidden_size=encoder_hidden_size,  # E per direction
+                num_layers=self.num_layers,
                 batch_first=True,
                 bidirectional=True,
             )
 
         # Dense output layer
         self.dense = nn.Linear(
-            256 if self.cr2 else 512, num_classes
+            encoder_hidden_size if self.cr2 else 2 * encoder_hidden_size, num_classes
         )  # GRU outputs 256 if cr2, 512 if cr1
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:

@@ -1,4 +1,3 @@
-import autorootcwd
 import torch
 
 
@@ -18,3 +17,6 @@ class BaseACR(torch.nn.Module):
         """
         output = self(features)
         return torch.argmax(output, dim=-1)
+
+    def __str__(self):
+        raise NotImplementedError()

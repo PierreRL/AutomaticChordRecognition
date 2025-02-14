@@ -29,6 +29,10 @@ class TrainingArgs:
         validate_every: int = 5,
         mask_X: bool = True,
         use_weighted_loss: bool = False,
+        weight_decay: float = 0.0,
+        optimiser: str = "adam",
+        momentum: float = 0.9,
+        lr_scheduler: str = "cosine",
         hop_length: int = 4096,
         save_dir: str = "data/models/",
         save_filename: str = "best_model.pth",
@@ -39,11 +43,15 @@ class TrainingArgs:
         self.batch_size = batch_size
         self.segment_length = segment_length
         self.validate_every = validate_every
-        self.early_stopping = early_stopping // validate_every  # Divide to match freq
+        self.early_stopping = early_stopping
         self.decrease_lr_factor = decrease_lr_factor
-        self.decrease_lr_epochs = decrease_lr_epochs // validate_every  # Ditto
+        self.decrease_lr_epochs = decrease_lr_epochs
         self.mask_X = mask_X
         self.use_weighted_loss = use_weighted_loss
+        self.weight_decay = weight_decay
+        self.optimiser = optimiser
+        self.momentum = momentum
+        self.lr_scheduler = lr_scheduler
         self.hop_length = hop_length
         self.save_dir = save_dir
         self.save_filename = save_filename
@@ -55,13 +63,17 @@ class TrainingArgs:
             "lr": self.lr,
             "batch_size": self.batch_size,
             "segment_length": self.segment_length,
+            "hop_length": self.hop_length,
             "early_stopping": self.early_stopping,
-            "decrease_lr_factor": self.decrease_lr_factor,
-            "decrease_lr_epochs": self.decrease_lr_epochs,
             "validate_every": self.validate_every,
             "mask_X": self.mask_X,
             "weight_loss": self.use_weighted_loss,
-            "hop_length": self.hop_length,
+            "weight_decay": self.weight_decay,
+            "optimiser": self.optimiser,
+            **({"momentum": self.momentum} if self.optimiser == "sgd" else {}),
+            "lr_scheduler": self.lr_scheduler,
+            "decrease_lr_factor": self.decrease_lr_factor,
+            "decrease_lr_epochs": self.decrease_lr_epochs,
         }
 
 
@@ -84,45 +96,75 @@ def train_model(
         dict: A dictionary containing the training history.
     """
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(
-        val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn
-    )
-    if args.early_stopping is not None:
-        early_stopper = EarlyStopper(args.early_stopping)
-
     if args.device is None:
         # Use GPU if available, check for cuda and mps
         device = get_torch_device()
         print("Using device:", device)
 
     model = model.to(device)
+
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn
+    )
+
+    # Loss function
     if args.use_weighted_loss:
         weights = train_dataset.full_dataset.get_class_weights()
         weights = weights.to(device)
     else:
         weights = None
-
     criterion = nn.CrossEntropyLoss(ignore_index=-1, weight=weights)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer,
-        mode="min",
-        factor=args.decrease_lr_factor,
-        patience=args.decrease_lr_epochs,
-    )
-    prev_lr = args.lr
+
+    # Optimiser
+    if args.optimiser == "adam":
+        optimiser = optim.Adam(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+        )
+    elif args.optimiser == "sgd":
+        optimiser = optim.SGD(
+            model.parameters(),
+            lr=args.lr,
+            momentum=args.momentum,
+            weight_decay=args.weight_decay,
+        )
+    else:
+        raise ValueError("Invalid optimiser")
+
+    # Learning rate scheduler
+    if args.lr_scheduler == "cosine":
+        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimiser,
+            T_max=args.epochs,
+            eta_min=args.lr / 10,
+        )
+    elif args.lr_scheduler == "plateau":
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimiser,
+            mode="min",
+            factor=args.decrease_lr_factor,
+            patience=args.decrease_lr_epochs // args.validate_every,
+        )
+    elif args.lr_scheduler == "none":
+        lr_scheduler = None
+    else:
+        raise ValueError("Invalid lr_scheduler")
+
+    # Early stopping
+    if args.early_stopping is not None:
+        early_stopper = EarlyStopper(args.early_stopping // args.validate_every)
 
     val_losses = []
     val_accuracies = []
     train_losses = []
+    learning_rates = [optimiser.param_groups[0]["lr"]]
 
     for epoch in tqdm(range(args.epochs)):
         model.train()
         train_loss = 0.0
         for i, (features, labels) in enumerate(train_loader):
             features, labels = features.to(device), labels.to(device)
-            optimizer.zero_grad()
+            optimiser.zero_grad()
             outputs = model(features)
 
             # Flatten the outputs and labels
@@ -132,7 +174,7 @@ def train_model(
             # Compute the loss and backpropagate
             loss = criterion(outputs, labels)
             loss.backward()
-            optimizer.step()
+            optimiser.step()
             train_loss += loss.item()
 
         train_loss /= len(train_loader)
@@ -179,17 +221,21 @@ def train_model(
             torch.save(model.state_dict(), save_file)
 
         # Reduce learning rate if not improved in the last # epochs
-        if args.decrease_lr_epochs is not None:
-            scheduler.step(val_loss)
-            if optimizer.param_groups[0]["lr"] < prev_lr:
-                prev_lr = optimizer.param_groups[0]["lr"]
-                print(f"Reducing learning rate to {prev_lr}")
+        if lr_scheduler is not None:
+            if args.lr_scheduler == "plateau":
+                lr_scheduler.step(val_loss)
+            else:
+                lr_scheduler.step()
+
+        learning_rates.append(optimiser.param_groups[0]["lr"])
 
         torch.set_grad_enabled(True)
+
         # Early stopping if not improved in the last # epochs
         if args.early_stopping is None:
             continue
-        elif early_stopper(val_loss):
+
+        if early_stopper(val_loss):
             print("Early stopping triggered at epoch ", epoch)
             break
 
@@ -197,6 +243,7 @@ def train_model(
         "train_losses": train_losses,
         "val_losses": val_losses,
         "val_accuracies": val_accuracies,
+        "learning_rates": learning_rates,
     }
     return history
 

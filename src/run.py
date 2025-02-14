@@ -5,12 +5,9 @@ from datetime import datetime
 import torch
 
 from src.train import train_model, TrainingArgs
-from src.data.dataset import (
-    FixedLengthRandomChordDataset,
-    FixedLengthChordDataset,
-    FullChordDataset,
-)
+from src.data.dataset import generate_datasets
 from src.models.ismir2017 import ISMIR2017ACR
+from src.models.logistic_regressor import LogisticACR
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
@@ -40,9 +37,39 @@ def main():
         default="experiments",
         help="Directory to store the experiment results.",
     )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="ismir2017",
+        help="Model to train. Values: ismir2017, logistic, transformer.",
+    )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
-        "--epochs", type=int, default=150, help="Number of epochs to train."
+        "--epochs", type=int, default=200, help="Number of epochs to train."
+    )
+    parser.add_argument(
+        "--batch_size", type=int, default=64, help="Batch size for training."
+    )
+    parser.add_argument(
+        "--early_stopping", type=int, default=40, help="Early stopping patience."
+    )
+    parser.add_argument(
+        "--no_early_stopping", action="store_true", help="Disable early stopping."
+    )
+    parser.add_argument(
+        "--weight_decay", type=float, default=0, help="Weight decay for optimizer."
+    )
+    parser.add_argument(
+        "--lr_scheduler",
+        type=str,
+        default="cosine",
+        help="Learning rate scheduler. Values: cosine, plateau, none.",
+    )
+    parser.add_argument(
+        "--validate_every",
+        type=int,
+        default=5,
+        help="Frequency of validation evaluation in epochs.",
     )
     parser.add_argument(
         "--decrease_lr_epochs",
@@ -57,7 +84,13 @@ def main():
         help="Factor by which to decrease LR.",
     )
     parser.add_argument(
-        "--early_stopping", type=int, default=40, help="Early stopping patience."
+        "--optimiser",
+        type=str,
+        default="adam",
+        help="Optimizer to use. Values: adam, sgd.",
+    )
+    parser.add_argument(
+        "--momentum", type=float, default=0.9, help="Momentum for SGD optimizer."
     )
     parser.add_argument(
         "--random_pitch_shift",
@@ -67,7 +100,19 @@ def main():
     parser.add_argument(
         "--cr2",
         action="store_true",
-        help="Whether to use the cr2 version of ISMIR2017.",
+        help="Whether to use the cr2 version of ISMIR2017, with comparable model size.",
+    )
+    parser.add_argument(
+        "--hidden_size",
+        type=int,
+        default=256,
+        help="Hidden size of the GRU layers.",
+    )
+    parser.add_argument(
+        "--num_layers",
+        type=int,
+        default=1,
+        help="Number of layers in the GRU.",
     )
     parser.add_argument(
         "--hop_length",
@@ -116,42 +161,42 @@ def main():
     train_filenames, val_filenames, test_filenames = get_split_filenames()
 
     # Create datasets
-    train_dataset = FixedLengthRandomChordDataset(
-        filenames=train_filenames,
-        random_pitch_shift=args.random_pitch_shift,
-        hop_length=args.hop_length,
-        mask_X=args.mask_X,
-        segment_length=args.segment_length,
-        input_dir=args.input_dir,
+    train_dataset, val_dataset, test_dataset, val_final_test_dataset = (
+        generate_datasets(
+            train_filenames,
+            val_filenames,
+            test_filenames,
+            input_dir=args.input_dir,
+            segment_length=args.segment_length,
+            random_pitch_shift=args.random_pitch_shift,
+            hop_length=args.hop_length,
+            mask_X=args.mask_X,
+            subset_size=(10 if args.fdr else None),  # We subset for FDR
+        )
     )
-    val_dataset = FixedLengthChordDataset(
-        filenames=val_filenames,
-        segment_length=args.segment_length,
-        hop_length=args.hop_length,
-        input_dir=args.input_dir,
-    )
-    test_dataset = FullChordDataset(
-        filenames=test_filenames, hop_length=args.hop_length, input_dir=args.input_dir
-    )
-    val_final_test_dataset = FullChordDataset(
-        filenames=val_filenames, hop_length=args.hop_length, input_dir=args.input_dir
-    )
+
+    # Params for Fast Development Run (FDR)
+    if args.fdr:
+        args.validate_every = 1
+        args.epochs = 1
 
     # Initialize the model
-    model = ISMIR2017ACR(
-        input_features=N_BINS,
-        num_classes=NUM_CHORDS,
-        cr2=args.cr2,
-    )
-
-    if args.fdr:
-        train_dataset = torch.utils.data.Subset(train_dataset, range(10))
-        val_dataset = torch.utils.data.Subset(val_dataset, range(4))
-        test_dataset = torch.utils.data.Subset(test_dataset, range(4))
-        val_final_test_dataset = torch.utils.data.Subset(
-            val_final_test_dataset, range(4)
+    if args.model == "ismir2017":
+        model = ISMIR2017ACR(
+            input_features=N_BINS,
+            num_classes=NUM_CHORDS,
+            cr2=args.cr2,
+            hidden_size=args.hidden_size,
+            num_layers=args.num_layers,
         )
-        args.epochs = 1
+    elif args.model == "logistic":
+        model = LogisticACR(input_features=N_BINS, num_classes=NUM_CHORDS)
+    elif args.model == "transformer":
+        raise NotImplementedError("Transformer model not implemented yet.")
+    else:
+        raise ValueError(
+            f"Invalid model type {args.model}. Must be one of ismir2017, logistic, transformer."
+        )
 
     # Save the experiment name and time
     run_metadata = {
@@ -170,12 +215,19 @@ def main():
     training_args = TrainingArgs(
         epochs=args.epochs,
         lr=args.lr,
+        batch_size=args.batch_size,
+        hop_length=args.hop_length,
         segment_length=args.segment_length,
+        validate_every=args.validate_every,
         decrease_lr_epochs=args.decrease_lr_epochs,
         decrease_lr_factor=args.decrease_lr_factor,
         mask_X=args.mask_X,
         use_weighted_loss=args.weight_loss,
-        early_stopping=args.early_stopping,
+        weight_decay=args.weight_decay,
+        lr_scheduler=args.lr_scheduler,
+        optimiser=args.optimiser,
+        momentum=args.momentum,
+        early_stopping=args.early_stopping if not args.no_early_stopping else None,
         save_dir=f"{DIR}/",
         save_filename="best_model.pth",
     )
