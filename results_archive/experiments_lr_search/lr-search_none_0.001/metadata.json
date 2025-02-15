@@ -1,0 +1,1 @@
+{"experiment_name": "lr-search_none_0.001", "time": "2025-02-15 14:59:30.367360", "model": "ISMIR2017ACR(cr2:False)", "dataset": {"train_size": 726, "val_size": 5478, "test_size": 244, "NUM_CHORDS": 170}}

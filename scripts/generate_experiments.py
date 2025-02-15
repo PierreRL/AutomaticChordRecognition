@@ -13,10 +13,16 @@ DATA_HOME = f"{REPO_HOME}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={SCRATCH_HOME}/experiments --no_early_stopping"
 
-learning_rates = [1e-5, 1e-4, 1e-3, 1e-2]
-schedulers = ["cosine", "plateau", "none"]
-params = [(lr, sched) for lr in learning_rates for sched in schedulers]
-nr_expts = len(learning_rates) * len(schedulers)
+segment_lengths = [10, 20, 30, 60]
+layers = [1, 2, 3]
+hidden_sizes = [128, 256, 512]
+params = [
+    (segment_length, layer, hidden_size)
+    for segment_length in segment_lengths
+    for layer in layers
+    for hidden_size in hidden_sizes
+]
+nr_expts = len(params)
 
 nr_servers = 10
 avg_expt_time = 20  # mins
@@ -25,12 +31,14 @@ print(f"Estimated time = {(nr_expts / nr_servers * avg_expt_time)/60} hrs")
 
 output_file = open("./scripts/experiments.txt", "w")
 
-for lr, sched in params:
+for segment_length, layer, hidden_size in params:
     # Note that we don't set a seed for rep - a seed is selected at random
     # and recorded in the output data by the python script
     expt_call = (
         f"{base_call} "
-        f"--lr={lr} --lr_scheduler={sched} --exp_name=lr-search_{sched}_{lr}"
+        f"--segment_length={segment_length} "
+        f"--num_layers={layer} "
+        f"--hidden_size={hidden_size} "
     )
     print(expt_call, file=output_file)
 

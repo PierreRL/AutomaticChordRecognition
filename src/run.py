@@ -45,7 +45,7 @@ def main():
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
-        "--epochs", type=int, default=200, help="Number of epochs to train."
+        "--epochs", type=int, default=150, help="Number of epochs to train."
     )
     parser.add_argument(
         "--batch_size", type=int, default=64, help="Batch size for training."
