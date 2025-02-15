@@ -1,0 +1,1 @@
+{"num_epochs": 100, "lr": 1e-05, "batch_size": 64, "segment_length": 10, "early_stopping": 20, "decrease_lr_factor": 0.5, "decrease_lr_epochs": 10, "do_validation": true}

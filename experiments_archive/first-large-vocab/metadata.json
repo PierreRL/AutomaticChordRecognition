@@ -1,0 +1,1 @@
+{"experiment_name": "first-large-vocab", "time": "2025-01-16 11:12:08.957675", "model": "ISMIR2017ACR(cr2:False)", "dataset": {"train_size": 970, "val_size": 242, "test_size": 243, "NUM_CHORDS": 170}}

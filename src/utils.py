@@ -640,6 +640,7 @@ def write_json(dictionary: dict, file: str):
     Returns:
         None
     """
+    os.makedirs(os.path.dirname(file), exist_ok=True)  # Ensure directory exists
     with open(file, "w") as f:
         json.dump(dictionary, f)
 
@@ -655,6 +656,7 @@ def write_text(file: str, text: str):
     Returns:
         None
     """
+    os.makedirs(os.path.dirname(file), exist_ok=True)  # Ensure directory exists
     with open(file, "w") as f:
         f.write(text)
 

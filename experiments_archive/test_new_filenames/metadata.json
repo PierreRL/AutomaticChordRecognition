@@ -1,0 +1,1 @@
+{"experiment_name": "test_new_filenames", "time": "2025-02-11 10:51:01.983508", "model": "ISMIR2017ACR(cr2:False)", "dataset": {"train_size": 970, "val_size": 242, "test_size": 243, "NUM_CHORDS": 170}}

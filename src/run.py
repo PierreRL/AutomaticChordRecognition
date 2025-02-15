@@ -179,6 +179,7 @@ def main():
     if args.fdr:
         args.validate_every = 1
         args.epochs = 1
+        args.output_dir = "experiments_fdr"
 
     # Initialize the model
     if args.model == "ismir2017":
