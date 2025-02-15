@@ -73,7 +73,7 @@ mkdir -p ${dest_path}  # make it if required
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # Empty the output directory
-rm -rf ${SCRATCH_HOME}/experiments
+# rm -rf ${SCRATCH_HOME}/experiments
 mkdir -p ${SCRATCH_HOME}/experiments
 
 echo "Running script"
@@ -99,7 +99,7 @@ dest_path=${repo_home}/experiments/
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # Clean up the node's scratch disk
-rm -r ${SCRATCH_HOME}
+# rm -r ${SCRATCH_HOME}
 
 
 # =========================
