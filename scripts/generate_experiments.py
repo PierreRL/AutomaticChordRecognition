@@ -39,6 +39,7 @@ for segment_length, layer, hidden_size in params:
         f"--segment_length={segment_length} "
         f"--num_layers={layer} "
         f"--hidden_size={hidden_size} "
+        f"--exp_name=segment_length_{segment_length}_layers_{layer}_hidden_size_{hidden_size}"
     )
     print(expt_call, file=output_file)
 
