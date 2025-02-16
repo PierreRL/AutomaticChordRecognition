@@ -7,3 +7,4 @@ report/*
 !report/references.bib
 *.pyc
 __pycache__/
+results_archive/*
