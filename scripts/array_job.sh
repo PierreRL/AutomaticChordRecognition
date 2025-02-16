@@ -22,7 +22,7 @@
 #SBATCH --cpus-per-task=1
 
 # Maximum time for the job to run, format: days-hours:minutes:seconds
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 
 echo "Starting job $SLURM_JOB_ID"
 echo "Running on $SLURM_JOB_NODELIST"
