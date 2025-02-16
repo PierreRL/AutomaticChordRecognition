@@ -161,18 +161,22 @@ def main():
     train_filenames, val_filenames, test_filenames = get_split_filenames()
 
     # Create datasets
-    train_dataset, val_dataset, test_dataset, val_final_test_dataset = (
-        generate_datasets(
-            train_filenames,
-            val_filenames,
-            test_filenames,
-            input_dir=args.input_dir,
-            segment_length=args.segment_length,
-            random_pitch_shift=args.random_pitch_shift,
-            hop_length=args.hop_length,
-            mask_X=args.mask_X,
-            subset_size=(10 if args.fdr else None),  # We subset for FDR
-        )
+    (
+        train_dataset,
+        val_dataset,
+        test_dataset,
+        train_final_test_dataset,
+        val_final_test_dataset,
+    ) = generate_datasets(
+        train_filenames,
+        val_filenames,
+        test_filenames,
+        input_dir=args.input_dir,
+        segment_length=args.segment_length,
+        random_pitch_shift=args.random_pitch_shift,
+        hop_length=args.hop_length,
+        mask_X=args.mask_X,
+        subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
     # Params for Fast Development Run (FDR)
@@ -269,6 +273,11 @@ def main():
         print("Evaluating model on test...")
         test_metrics = evaluate_model(model, test_dataset)
         write_json(test_metrics, f"{DIR}/test_metrics.json")
+
+        # Train set
+        print("Evaluating model on train...")
+        train_metrics = evaluate_model(model, train_final_test_dataset)
+        write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     except Exception as e:
         print(f"Evaluation Error: {e}")

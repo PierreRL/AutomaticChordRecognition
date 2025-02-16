@@ -28,6 +28,7 @@ class ISMIR2017ACR(BaseACR):
         hidden_size: int = 256,
         num_layers: int = 1,
         cr2: bool = True,
+        activation: str = "relu",
     ):
         """
         Initializes the ISMIR2017ACR model.
@@ -36,12 +37,18 @@ class ISMIR2017ACR(BaseACR):
             input_features (int): Number of input frequency bins (e.g., 216 for CQT features).
             num_classes (int): Number of chord classes in the vocabulary.
             cr2 (bool): If True, the model uses the CR2 variant, cr1 otherwise.
+            hidden_size (int): Hidden size of the GRU layers.
+            num_layers (int): Number of layers in the GRU.
+            activation (str): Activation function to use (relu or prelu).
         """
         super(ISMIR2017ACR, self).__init__()
         self.cr2 = cr2
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_layers = num_layers
+        self.activation = activation
+        if self.activation not in ["relu", "prelu"]:
+            raise ValueError(f"Invalid activation function: {self.activation}")
 
         self.batch_norm = nn.BatchNorm2d(
             1
@@ -54,6 +61,7 @@ class ISMIR2017ACR(BaseACR):
             kernel_size=(5, 5),
             padding="same",  # Keep output size same as input
         )
+        self.activation1 = nn.ReLU() if activation == "relu" else nn.PReLU()
 
         # 1xF convolution (full-height filter bank with 36 filters)
         self.conv2 = nn.Conv2d(
@@ -62,6 +70,7 @@ class ISMIR2017ACR(BaseACR):
             kernel_size=(1, input_features),  # Full-height filter
             padding=(0, 0),  # Valid padding to reduce frequency dimension to 1
         )
+        self.activation2 = nn.ReLU() if activation == "relu" else nn.PReLU()
 
         encoder_hidden_size = self.hidden_size // 2 if self.cr2 else self.hidden_size
 
@@ -106,10 +115,10 @@ class ISMIR2017ACR(BaseACR):
         x = self.batch_norm(x)  # (B, 1, frames, features)
 
         # First convolutional layer (5x5)
-        x = F.relu(self.conv1(x))  # (B, 1, frames, features)
+        x = self.activation1(self.conv1(x))  # (B, 1, frames, features)
 
         # Second convolutional layer (1xF) with 36 filters
-        x = F.relu(self.conv2(x))  # (B, 36, frames, 1)
+        x = self.activation2(self.conv2(x))  # (B, 36, frames, 1)
 
         # Remove frequency dimension
         x = x.squeeze(-1)  # (B, 36, frames)

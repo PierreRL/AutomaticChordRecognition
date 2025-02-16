@@ -343,13 +343,25 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
     )
+    train_final_test_dataset = FullChordDataset(
+        filenames=train_filenames,
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+    )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
     )
-    return train_dataset, val_dataset, test_dataset, val_final_test_dataset
+    return (
+        train_dataset,
+        val_dataset,
+        test_dataset,
+        train_final_test_dataset,
+        val_final_test_dataset,
+    )
 
 
 def main():
