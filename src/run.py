@@ -155,7 +155,7 @@ def main():
 
     # Create a directory to store the experiment results
     DIR = f"{args.output_dir}/{args.exp_name}"
-    os.makedirs(DIR)
+    os.makedirs(DIR, exist_ok=True)
 
     # Load the dataset filenames
     train_filenames, val_filenames, test_filenames = get_split_filenames()
