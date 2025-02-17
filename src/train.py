@@ -180,6 +180,9 @@ def train_model(
         train_loss /= len(train_loader)
         train_losses.append(train_loss)
 
+        if lr_scheduler is not None and args.lr_scheduler != "plateau":
+            lr_scheduler.step()
+
         # Validation every 5 epochs
         if (epoch + 1) % args.validate_every != 0:
             continue
@@ -221,11 +224,8 @@ def train_model(
             torch.save(model.state_dict(), save_file)
 
         # Reduce learning rate if not improved in the last # epochs
-        if lr_scheduler is not None:
-            if args.lr_scheduler == "plateau":
-                lr_scheduler.step(val_loss)
-            else:
-                lr_scheduler.step()
+        if lr_scheduler is not None and args.lr_scheduler == "plateau":
+            lr_scheduler.step(val_loss)
 
         learning_rates.append(optimiser.param_groups[0]["lr"])
 
