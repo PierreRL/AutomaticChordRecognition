@@ -1,1 +1,0 @@
-{"epochs": 200, "lr": 1e-05, "batch_size": 64, "segment_length": 10, "hop_length": 4096, "early_stopping": null, "validate_every": 5, "mask_X": false, "weight_loss": false, "weight_decay": 0, "optimiser": "adam", "lr_scheduler": "plateau", "decrease_lr_factor": 0.5, "decrease_lr_epochs": 10}
