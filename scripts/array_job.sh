@@ -63,7 +63,7 @@ pip install -r ~/LeadSheetTranscription/requirements.txt
 # Move data
 # echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
-# repo_home=/home/${USER}/LeadSheetTranscription
+repo_home=/home/${USER}/LeadSheetTranscription
 # src_path=${repo_home}/data/processed
 
 # # input data directory path on the scratch disk of the node
