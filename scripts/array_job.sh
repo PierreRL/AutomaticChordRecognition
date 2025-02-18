@@ -61,20 +61,20 @@ pip install -r ~/LeadSheetTranscription/requirements.txt
 
 
 # Move data
-echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
+# echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
-repo_home=/home/${USER}/LeadSheetTranscription
-src_path=${repo_home}/data/processed
+# repo_home=/home/${USER}/LeadSheetTranscription
+# src_path=${repo_home}/data/processed
 
-# input data directory path on the scratch disk of the node
-dest_path=${SCRATCH_HOME}/data/processed
-mkdir -p ${dest_path}  # make it if required
+# # input data directory path on the scratch disk of the node
+# dest_path=${SCRATCH_HOME}/data/processed
+# mkdir -p ${dest_path}  # make it if required
 
-rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
+# rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
-# Empty the output directory
-# rm -rf ${SCRATCH_HOME}/experiments
-mkdir -p ${SCRATCH_HOME}/experiments
+# # Empty the output directory
+# # rm -rf ${SCRATCH_HOME}/experiments
+# mkdir -p ${SCRATCH_HOME}/experiments
 
 echo "Running script"
 cd ${repo_home}
