@@ -94,9 +94,9 @@ echo "Command ran successfully!"
 
 echo "Moving output data back to DFS"
 
-src_path=${SCRATCH_HOME}/experiments
-dest_path=${repo_home}/experiments/
-rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
+# src_path=${SCRATCH_HOME}/experiments
+# dest_path=${repo_home}/experiments/
+# rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # Clean up the node's scratch disk
 # rm -r ${SCRATCH_HOME}

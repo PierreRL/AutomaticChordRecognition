@@ -12,7 +12,7 @@ SCRATCH_HOME = f"{SCRATCH_DISK}/{USER}"
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{REPO_HOME}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={SCRATCH_HOME}/experiments/hparams_random --no_early_stopping"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/hparams_random --no_early_stopping"
 
 segment_range = [10, 60]
 layers = [1, 2, 3]
