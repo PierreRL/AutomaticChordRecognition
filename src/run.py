@@ -54,7 +54,7 @@ def main():
         "--early_stopping", type=int, default=40, help="Early stopping patience."
     )
     parser.add_argument(
-        "--no_early_stopping", action="store_true", help="Disable early stopping."
+        "--enable_early_stopping", action="store_true", help="Enable early stopping."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0, help="Weight decay for optimizer."
@@ -105,7 +105,7 @@ def main():
     parser.add_argument(
         "--hidden_size",
         type=int,
-        default=256,
+        default=201,
         help="Hidden size of the GRU layers.",
     )
     parser.add_argument(
@@ -123,7 +123,7 @@ def main():
     parser.add_argument(
         "--segment_length",
         type=int,
-        default=10,
+        default=28,
         help="Segment length for training dataset in seconds.",
     )
     parser.add_argument(
@@ -232,7 +232,7 @@ def main():
         lr_scheduler=args.lr_scheduler,
         optimiser=args.optimiser,
         momentum=args.momentum,
-        early_stopping=args.early_stopping if not args.no_early_stopping else None,
+        early_stopping=args.early_stopping if args.enable_early_stopping else None,
         save_dir=f"{DIR}/",
         save_filename="best_model.pth",
     )
