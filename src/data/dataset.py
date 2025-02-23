@@ -12,6 +12,7 @@ from src.utils import (
     NUM_CHORDS,
     HOP_LENGTH,
     SR,
+    BINS_PER_OCTAVE,
 )
 
 
@@ -206,9 +207,7 @@ class FixedLengthRandomChordDataset(Dataset):
 
         if self.random_pitch_shift:
             semitones = torch.randint(-5, 6, (1,)).item()
-            cqt_patch = pitch_shift_cqt(
-                cqt_patch, semitones, self.full_dataset.bins_per_octave
-            )
+            cqt_patch = pitch_shift_cqt(cqt_patch, semitones, BINS_PER_OCTAVE)
             chord_ids_patch = transpose_chord_id_vector(chord_ids_patch, semitones)
 
         return cqt_patch, chord_ids_patch
