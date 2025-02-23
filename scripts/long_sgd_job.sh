@@ -80,7 +80,7 @@ echo "Running script"
 cd ${repo_home}
 
 # Run script
-python ${repo_home}/src/run.py --exp_name=long_sgd --input_dir=${dest_path} --output_dir=${repo_home}/experiments/long_sgd --epochs=2000 --no_early_stopping --optimiser=sgd
+python ${repo_home}/src/run.py --exp_name=long_sgd --input_dir=${dest_path} --output_dir=${repo_home}/experiments/long_sgd --epochs=2000 --optimiser=sgd
 
 # ======================================
 # Move output data from scratch to DFS
