@@ -137,6 +137,12 @@ def main():
         help="Whether to use weighted loss.",
     )
     parser.add_argument(
+        "--weight_alpha",
+        type=float,
+        default=0.65,
+        help="Alpha smoothing parameter for the weighted loss.",
+    )
+    parser.add_argument(
         "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
         action="store_true",
         help="Run a single batch of training and validation and small evaluation set.",
@@ -228,6 +234,7 @@ def main():
         decrease_lr_factor=args.decrease_lr_factor,
         mask_X=args.mask_X,
         use_weighted_loss=args.weight_loss,
+        weight_alpha=args.weight_alpha,
         weight_decay=args.weight_decay,
         lr_scheduler=args.lr_scheduler,
         optimiser=args.optimiser,

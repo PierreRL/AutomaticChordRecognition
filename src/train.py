@@ -29,6 +29,7 @@ class TrainingArgs:
         validate_every: int = 5,
         mask_X: bool = True,
         use_weighted_loss: bool = False,
+        weight_alpha: float = 0.65,
         weight_decay: float = 0.0,
         optimiser: str = "adam",
         momentum: float = 0.9,
@@ -48,6 +49,7 @@ class TrainingArgs:
         self.decrease_lr_epochs = decrease_lr_epochs
         self.mask_X = mask_X
         self.use_weighted_loss = use_weighted_loss
+        self.weight_alpha = weight_alpha
         self.weight_decay = weight_decay
         self.optimiser = optimiser
         self.momentum = momentum
@@ -68,6 +70,7 @@ class TrainingArgs:
             "validate_every": self.validate_every,
             "mask_X": self.mask_X,
             "weight_loss": self.use_weighted_loss,
+            "weight_alpha": self.weight_alpha,
             "weight_decay": self.weight_decay,
             "optimiser": self.optimiser,
             **({"momentum": self.momentum} if self.optimiser == "sgd" else {}),
@@ -110,7 +113,7 @@ def train_model(
 
     # Loss function
     if args.use_weighted_loss:
-        weights = train_dataset.full_dataset.get_class_weights()
+        weights = train_dataset.full_dataset.get_class_weights(alpha=args.weight_alpha)
         weights = weights.to(device)
     else:
         weights = None
