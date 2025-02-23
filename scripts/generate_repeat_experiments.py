@@ -13,8 +13,8 @@ base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME}"
 output_file = open("./scripts/experiments.txt", "w")
 
 args_set = [
-    f"--weight_loss --output_dir={REPO_HOME}/experiments/weight_loss_on ",
-    f" --output_dir={REPO_HOME}/experiments/weight_loss_off ",
+    f"--random_pitch_shift --output_dir={REPO_HOME}/experiments/random_pitch_shift_on ",
+    f" --output_dir={REPO_HOME}/experiments/random_pitch_shift_off ",
 ]
 n = 10
 
