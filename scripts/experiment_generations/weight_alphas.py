@@ -28,7 +28,8 @@ for alpha in alphas:
     # Note that we don't set a seed for rep - a seed is selected at random
     # and recorded in the output data by the python script
     expt_call = (
-        f"{base_call} " f"--weight_alpha={alpha} --exp_name=weight_alpha_{alpha}"
+        f"{base_call} "
+        f"--weight_loss --weight_alpha={alpha} --exp_name=weight_alpha_{alpha}"
     )
     print(expt_call, file=output_file)
 
