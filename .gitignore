@@ -1,7 +1,7 @@
 data/*
 experiments/*
 .python-version
-report/*
+report/tex_build/*
 !report/dissertation.pdf
 !report/dissertation.tex
 !report/references.bib

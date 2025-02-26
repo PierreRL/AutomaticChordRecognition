@@ -103,6 +103,7 @@ def get_cqt(
     bins_per_octave: int = BINS_PER_OCTAVE,
     fmin: float = librosa.note_to_hz("C1"),
     absolute: bool = True,
+    return_as_tensor: bool = True,
 ) -> torch.Tensor:
     """
     Compute the log CQT of an audio file.
@@ -136,7 +137,9 @@ def get_cqt(
 
     cqt = librosa.amplitude_to_db(cqt)
 
-    return torch.tensor(cqt, dtype=torch.float32).T
+    if return_as_tensor:
+        return torch.tensor(cqt, dtype=torch.float32).T
+    return cqt.T
 
 
 def pitch_shift_cqt(

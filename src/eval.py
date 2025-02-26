@@ -141,13 +141,14 @@ def evaluate_model(
             device
         )
         predictions = model.predict(batch_features).to(device)
-        all_hypotheses.extend(predictions.cpu().numpy())
-        all_references.extend(batch_labels.cpu().numpy())
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
             valid_mask = batch_labels[i] != -1
             filtered_references = batch_labels[i][valid_mask].cpu().numpy()
             filtered_hypotheses = predictions[i][valid_mask].cpu().numpy()
+
+            all_hypotheses.extend(filtered_hypotheses)
+            all_references.extend(filtered_references)
 
             ref_labels = id_to_chord_table[filtered_references]
             hyp_labels = id_to_chord_table[filtered_hypotheses]
@@ -199,34 +200,47 @@ def evaluate_model(
 
 
 def main():
+    # Testing the seventh chords on C major
+    chord1 = "C:maj7"
+    chord2 = "C:maj"
+    chord3 = "C:min"
+    chord4 = "C:min7"
+    chord5 = "C:7"
+    chord6 = "C:dim"
 
-    from torch.utils.data import random_split
+    # print(EvalMetric.ROOT.evaluate([chord1], [chord2]))
+    # print(EvalMetric.ROOT.evaluate([chord1], [chord3]))
+    print(EvalMetric.SEVENTH.evaluate([chord1], [chord1]))
+    print(EvalMetric.SEVENTH.evaluate([chord1], [chord2]))
+    print(EvalMetric.SEVENTH.evaluate([chord2], [chord1]))
 
-    full_length_dataset = FullChordDataset()
+    # from torch.utils.data import random_split
 
-    # Split the dataset into train and test
-    train_size = int(0.8 * len(full_length_dataset))
-    test_size = len(full_length_dataset) - train_size
+    # full_length_dataset = FullChordDataset()
 
-    torch.manual_seed(42)
-    train_dataset, test_dataset = random_split(
-        full_length_dataset, [train_size, test_size]
-    )
+    # # Split the dataset into train and test
+    # train_size = int(0.8 * len(full_length_dataset))
+    # test_size = len(full_length_dataset) - train_size
 
-    # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
+    # torch.manual_seed(42)
+    # train_dataset, test_dataset = random_split(
+    #     full_length_dataset, [train_size, test_size]
+    # )
 
-    # Initialize the model architecture
-    model = ISMIR2017ACR(
-        input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
-    )
+    # # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
 
-    # Load the trained weights
-    exp_name = "large-vocab-fewer-X"
-    save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
-    model.load_state_dict(torch.load(save_path, weights_only=True))
+    # # Initialize the model architecture
+    # model = ISMIR2017ACR(
+    #     input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
+    # )
 
-    metrics = evaluate_model(model, test_dataset, batch_size=32)
-    print(metrics)
+    # # Load the trained weights
+    # exp_name = "large-vocab-fewer-X"
+    # save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
+    # model.load_state_dict(torch.load(save_path, weights_only=True))
+
+    # metrics = evaluate_model(model, test_dataset, batch_size=32)
+    # print(metrics)
 
 
 if __name__ == "__main__":
