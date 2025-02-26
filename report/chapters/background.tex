@@ -22,11 +22,11 @@ Lead sheets do not contain all the information of a full score, such as dynamics
 
 \subsection{Automatic Music Transcription}
 
-Automatic Music Transcription (AMT) is a field within Music Information Retrieva (MIR) that aims to construct models that convert musical audio into symbolic representations.~\citep{ComprehensiveReviewMusicTranscription} provide a comprehensive review of different forms of transcription. For lead sheet transcription, we are interested in their highest level of transcription: notation-level. We want to be able to take an audio recording of a song and generate a lead sheet that contains the melody and harmony of the song. This is a challenging task, as it requires the model to isolate and transcribe a melody, transcribe the chordal information, and then combine these two elements into a coherent lead sheet where the melody and harmony are aligned in time/beat.
+Automatic Music Transcription (AMT) is a field within Music Information Retrieval (MIR) that aims to construct models that convert musical audio into symbolic representations.~\citep{ComprehensiveReviewMusicTranscription} provide a comprehensive review of different forms of transcription. For lead sheet transcription, we are interested in their highest level of transcription: notation-level. We want to be able to take an audio recording of a song and generate a lead sheet that contains the melody and harmony of the song. This is a challenging task, as it requires the model to isolate and transcribe a melody, transcribe the chordal information, and then combine these two elements into a coherent lead sheet where the melody and harmony are aligned in time/beat.
 
 There are three sub-fields of musical transcription that are of interest to lead sheet generation: Automatic Chord Recognition (ACR), Melody Transcription (previously called F0 estimation) and Beat Detection.
 
-\subsection{Music Features}
+\subsection{Music Features}\label{sec:background-features}
 
 Recorded music can be represented in a variety of ways as input to a machine learning model. The simplest way is to leave the data as a waveform: a time-series vector of amplitudes. Data in the raw audio domain has seen successful use in generative models such as Jukebox~\citep{Jukebox} and RAVE~\citep{RAVE}.
 
@@ -48,13 +48,13 @@ Older work has attempted to automatically produce lead sheets~\citep{LeadSheet20
 
 The authors found the use of these generative pre-trained features to be beneficial for melody transcription. However, they use community-submitted annotations from an online forum, presumably for lack of a better alternative, whose quality and variety may be lacking. The nature of this data means that the model is only trained on 24 second audio clips, which limits performance on longer segments of audio. The authors claim that the overall model performs well, especially in the verses and choruses of pop music where vocal lines are loud and clear, and that performance across genres is surprisingly good given the pop-centric dataset. However, further analysis is ommitted and if the dataset contains music with few songs with more complex harmonic structures such as jazz music, then the model will produce overly simplistic representations of the chords. Crucially, the work does not explore ACR models beyond simply copying their method and dataset used in melody transcription and there is no quantitative evaluation of performance in ACR. Furthermore, the system can struggle with melody lines shifting between instruments, quiet vocal lines
 
-\subsection{Automatic Chord Recognition}
+\subsection{Automatic Chord Recognition}\label{sec:background-acr}
 
 \cite{20YearsofACR} provides an overview of ACR since its inception in 1999 with the work of~\citet{FujishimaACR} up to 2019, and provide suggestions for future avenues of research. Among them are the lack of exploration of feature and chord representations and the imbalance with chords classes present in chord datasets.
 
 Datasets that have seen common use in ACR over the last decade include:
 \begin{itemize}
-    \item Mcgill \emph{Billboard}: 890 chord annotations of songs randomly selected from the Billboard `Hot 100' Chart bnetween 1958 anmd 1991.~\citep{McgillBillboard}
+    \item \emph{Mcgill Billboard}: 890 chord annotations of songs randomly selected from the Billboard `Hot 100' Chart bnetween 1958 anmd 1991.~\citep{McgillBillboard}
     \item \emph{Isophonics}: 300 annotations of songs from albums by The Beatles, Carole King and Zweieck.~\citep{Isophonics}
     \item \emph{RWC-Pop}: 100 pop songs with annotations available\footnote{\url{https://github.com/tmc323/Chord-Annotations}} for chords.~\citep{RWC}
     \item \emph{USPop}: 195 annotations of a larger dataset with artists chosen for popularity.~\citep{USPop}
@@ -63,13 +63,10 @@ Datasets that have seen common use in ACR over the last decade include:
 
 Other, small datasets, also exist, and have been compiled together into the \emph{Chord Corpus} by \citet{Choco}, with standardised annotation formats.
 
-A variety of machine learning methods have been applied to such datasets. Older methods such as ~\cite{ACRHMM} use HMMs, but more recent methods use deep learning. Often, CNNs and RNNs are used in combination~\citep{ACRCNNRNN1,ACRLargeVocab1,ACRLargeVocab2} with CNNs performing feature extraction from a spectrogram feature, and an RNN (normally Bi-LSTM or Bi-GRU) predicts chord sequences. More recently, transformers have been applied to the entire process~\citet{MelodyTranscriptionViaGenerativePreTraining} and~\citet{HarmonyTransformer,AttendToChords}.
+A variety of machine learning methods have been applied to such datasets. Older methods such as ~\cite{ACRHMM} use HMMs, but more recent methods use deep learning. Often, CNNs and RNNs are used in combination~\citep{ACRCNNRNN1,ACRLargeVocab1,StructuredTraining} with CNNs performing feature extraction from a spectrogram feature, and an RNN (normally Bi-LSTM or Bi-GRU) predicts chord sequences. More recently, transformers have been applied to the entire process~\citet{MelodyTranscriptionViaGenerativePreTraining} and~\citet{HarmonyTransformer,AttendToChords}.
 
 Evaluation is typically done using accuracy and recall of correct chord predictions, or more music-aware measures such as the correct root note, 3rd or the MIREX metric which measures that chords have at least 3 notes in common. These are all implemented by \citet{MIREVAL} in the \texttt{mir\_eval} library~\footnote{\url{https://mir-evaluation.github.io/mir_eval/}}. Qualitative evaluation is also often carried out.
 
 A big problem frequently encountered in ACR is the lack of labelled data. This work uses 1200 labelled songs with audio. This is due to the difficulty and time associated with labelling data aligned in time and the legal sensitivity of the data involved.Data has been scaled up using augmentation and semi-supervised learning~\citep{ScalingUpSemiSupervisedLearning} with some success. Research has been done into the use of synthetic data~\citep{MusicGenTrainingData,AnnotationFreeSyntheticData} and supervised learning~\citep{MERTSupervisedLearning} for MIR tasks, but not for ACR.
 
-Another problem is that the existing data is often imbalanced, with a large number of scommon chords like major and minor chords and fewer chords like diminished and augmented chords, or chords with upper extensions and inversions. This can lead to models that are biased towards predicting major and minor chords. Attempts to address this have been made by re-weighting classes~\citep{ACRLargeVocab1} or adjusting the sampling of training examples to balance chord classes~\citep{BalanceRandomForestACR}.
-
-
-\subsection{Melody/Vocal Transcription}
+Another problem is that the existing data is often imbalanced, with a large number of common chords like major and minor chords and fewer chords like diminished and augmented chords, or chords with upper extensions and inversions. This can lead to models that are biased towards predicting major and minor chords. Attempts to address this have been made by re-weighting classes~\citep{ACRLargeVocab1} or adjusting the sampling of training examples to balance chord classes~\citep{BalanceRandomForestACR}.

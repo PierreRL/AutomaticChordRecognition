@@ -1,0 +1,69 @@
+\chapter{Experimental Setup}
+
+This chapter outlines the datasets used in this work, the preprocessing applied to the audio and chord annotations, the evaluation metrics used to compare the models and details of the training process used throughout.
+
+\section{Datasets}
+
+Two ACT datasets are used in this work. The first dataset is simply referred to as the '\emph{Pop} dataset, as much of the music in the dataset comes from the Billboard Hot 100 charts, or other popular bands. The second dataset is the \emph{JAAH} (Jazz Annotations and Analysis of Harmony) dataset mentioned in Section~\ref{sec:background-acr}. While the chords annotations are publicly available on Github\footnote{https://github.com/smashub/choco}, the audio was kindly given to me by Andrea Poltronieri, a PhD student at the University of Bologna and the author of 'ChoCo' (the Chord Corpus).
+
+This rest of this chapter explains processing applied to the audio and chord annotations common to both datasets, before discussing the details of both the \emph{Pop} and \emph{JAAH} datasets in detail.
+
+\subsection{Preprocessing}
+
+\subsubsection{Audio to CQT}\label{sec:audio-to-cqt}
+
+The audio was first converted to a Constant-Q Transform (CQT) representation explained in Section~\ref{sec:background-features}. The CQT is computed using the \texttt{librosa} library~\cite{librosa}, using the \texttt{.cqt} function. A sampling rate of 44100Hz was used, with a hop size of 4096, and 36 bins per octave, 3 octaves and a fundamental frequency corresponding to the note \texttt{C1}. This returns a complex-valued matrix containing phase, frequency and amplitude information. Phase information is discarded by taking the absolute value, before being converted from amplitude to dB, equivalent to taking the log.  These default parameters were chosen to be consistent with previous works~\cite{StructuredTraining}. However, the hop size was varied in order to investigate the effect of different frame lengths on performance.
+
+To save on computational time, the CQT was pre-computed into a cached dataset rather than re-computing each CQT on the fly on every run. This was done for each hop size used.
+
+\subsubsection{Chord Annotations}
+
+The chord annotations are represented as a sorted list of observations, each containing the chord, start time and duration. The chord itself is represented as a string in Harte notation~\cite{HarteNotation}. For example, C major 7 is \texttt{C:maj7} and A half diminished 7 in its second inversion \texttt{A:hdim7/5}. However, chords in the dataset are not this complicated. The notation also includes \texttt{N} representing no chord.
+
+This flexible annotation however is far too flexible. This would lead to thousands of chords. Instead, we define two chord vocabularites. The first is a simple chord vocabulary, which contains only major, minor for each root and a no chord symbol \texttt{N}. Then this vocabulary has 25 labels. Chords outside the vocabulary are mapped to \texttt{N}. For example, \texttt{C:maj7} would be mapped to \texttt{C:maj}, while \texttt{A:hdim7/5} would be mapped to \texttt{N}. The second is a more complex vocabulary, which contains 14 qualities for each root: major, minor, diminished, augmented, minor 6, major 6, minor 7, minor-major 7, major 7, dominant 7, diminished 7, half diminished 7, suspended 2, suspended 4. Additionally, there is a no chord \texttt{N} and a dedicated out of gamut chord symbol \texttt{X}, totalling $12*14 + 2 = 170$ chord labels. This vocabulary or very similar vocabularies have been used by much of the literature~\cite{StructuredTraining,FourTimelyInsights,ACRLargeVocab1}.
+
+Chords in Harte notation are mapped to this vocabualry by first converting them to a tuple of integers in the range 0-11 representing pitch classes using the Harte library. These are transposed that 0 is the root. These pitch classes are then matched to a of template identifying the quality of the chord, as decribed in~\cite{StructuredTraining}. However, for some chords this was not sufficient. For example, a \texttt{C:maj6(9)} chord would not fit perfectly with any of these templates due to the added 9th. Therefore, the chord is also passed through Music21's~\cite{music21} chord quality function which matches chords such as the one above to major. This function would not work alone as its list of qualities is not as rich as the one defined above. If the chord is still not matched, it is mapped to \texttt{X}. This additional step is not done in the literature, but gives more meaningful labels to roughly 1/3 of the chords previously mapped to \texttt{X}.
+
+\subsection{Pop}
+
+The \emph{Pop} dataset consists of songs from the \emph{Mcgill Billboard}, \emph{Isophonics}, \emph{RWC-Pop} and \emph{USPop} datasets mentioned in Section~\ref{sec:background-acr}. This collection was originally proposed in work by Humphrey et. al~\cite{FourTimelyInsights} in order to bring together most of the known datasets for chord recognition. The dataset consists of 1,217 songs, filtered for duplicates and selected for those with annotations available. The dataset was provided with obfuscated filenames and audio as \texttt{.mp3} files, and annotations as \texttt{.jams} files~\citep{JAMS}. 
+
+\subsubsection{Data Integrity}
+
+Several possible sources of error in the dataset were investigated.
+
+\textbf{Duplicates:} Files were renamed using provided metadata identifying them by artist and song title. This was done to identify duplicates in the dataset. The dataset was first filtered for duplicates, of which there was one - Blondie's 'One Way or Another', which had two different versions. The duplicate was removed from the dataset. Further duplicates may exist under different names but the songs were listened to throughout the project and no othe rduplicates were found. Automatic analysis of the audio could help, although cannot be guaranteed to find different versions of the same song, as above.
+
+\textbf{Chord-Audio Alignment:} 10 songs were manually investigated for alignment issues. This was done by listening to the audio and comparing it to the annotations directly at various points in the song, with a focus on the beginning. It became apparent that precise timings of chord changes are ambiguous. The annotations aired on the side of being slightly early but were all certainly good annotations, with detailed chord labelings including inversions and upper extensions. This observation was borne in mind later when analysing performance of the models at transition frames in Section~[XX].
+
+Automatic analysis of the alignment of the audio and chord annotations was also done using cross-correlation of the derivative of the CQT features of the audio over time and the chord annotations, varying a time lag. A maximum correlation at a lag of zero would indicate good alignment as the audio changes at the same time as the annotation changes. First, the CQT of the audio was computed following the procedure defined in Section~\ref{sec:audio-to-cqt}. The derivative of the CQT in the time dimension was then estimated using \texttt{librosa}'s \texttt{librosa.feature.delta} function. The chord annotations were converted to a binary vector, where each element corresponds to a frame in the CQT, and is 1 if a chord change occurs at that frame, and 0 otherwise. Both the CQT derivatives and binary vectors were normalised by subtracting the mean and dividing by the standard deviation. Finally, cross-correlation was computed using \texttt{numpy}'s \texttt{numpy.correlate} function. A typical cross-correlation for a song is shown in Figure~\ref{fig:cross-correlation}.
+
+We can see that the cross-correlation repeats every 100 frames or so. Listening to the song, we can interpret this as 4 bars repeating. In particular, the transients of the drum beat are likely to be very similar every 4 bars. To check alignment across the dataset, we can plot the lag of the maximum cross-correlations as a histogram. This is shown in Figure~\ref{fig:cross-correlation-histogram}. If we assume that the annotations are not incorrect by more than approximately 10 seconds, this would mean we could restrict our maximum correlation search to a window of 100 frames either side of 0. A second histogram, with the maximums reduced to a 100 frame window around 0 is shown in Figure~\ref{fig:cross-correlation-histogram-zoomed}. XX We see that...
+
+A final simple check was done by looking at the lengths of the audio and chord annotations. A histogram of difference in length is shown in Figure~\ref{fig:length-histogram}. The majority of songs have a difference of 0, with a few having a difference of 1. There are some outliers, but not enough to warrant further investigation.
+
+\textbf{Incorrect and Subjective Annotations:} Throughout manual listening, no obviously wrong annotations were found. However, looking at songs which the first trained models perform the worst on, 'Lovely Rita' by the Beatles sticks out. The model consistently guessed chords one semitone off, as if it thought the song was in a different key. Upon listening, it became clear that recording's tuning was not in standard A440 and so the song was removed. No other songs were found to have such issues.
+
+Chord annotations are inherently subjective to some extent. Detailed examples in this dataset are given by Humphrey et. al~\cite{FourTimelyInsights}. They also note that there are several songs in the dataset with questionable relevance, as the music itself is not well-explained by chord annotations. However, these are kept in for consistency with other works as this dataset is often used in the literature. Some works~\cite{StructuredTraining} decide to use the median as opposed to the mean accuracy in their evaluations in order to counteract the effect of such songs.
+
+\subsubsection{Chord Distribution}
+
+Much of the recent literature has focused on the long tail of the chord distribution [XX], using a variety of methods to attempt to address the issue. It is first helpful to understand the distrbution of chords in the datasets, shown in Figure~\ref{fig:chord-distribution}. The distribution is broken down both by root and by quality, only for the larger chord vocabualary as the smaller vocabualary does not have the same long-tailed distribution. We can see that [XX]..
+
+
+\subsection{JAAH Dataset}
+I was warned by Andrea that the JAAH dataset has not been as commonly used as dataset the Billboard dataset. Therefore he could not guarantee that the audio was aligned for this dataset.
+
+- As yet, JAAH is unused in this work
+- Data was received as .flac files which were first converted to .mp3 to be in line with the Billboard dataset
+- Comparison of the two datasets
+- Description of the JAAH dataset and its use in this work
+- Intended to be used as a test set to test the synthetic data generation.
+
+\section{Evaluation}
+ 
+Evaluation is done using the \emph{mir\_eval} library~\cite{mir_eval}. This library provides a variety of metrics for evaluating the performance of chord recognition models. The metrics used in this work follow the literature in using \emph{root}, \emph{third}, \emph{seventh} and \emph{triad} accuracies. For a given hypothesis chord and reference chord, these metrics each return 1 if the root/third/seventh/triad of the chord match and 0 otherwise. They return -1 if the true label is \texttt{X} and as such are ignored during evaluation. Two further metrics from \emph{mir\_eval} are used. The first is \emph{majmin} which returns 1 when the chords match in  
+
+For the above metrics, both the mean and median are computed, although were found to not be very different. In the vast majority of cases, the median was slightly higher, likely due to there being many more negative outliers than positive outliers. Some of these outliers could be those songs identified as being unsuitable for chordal analysis~\cite{FourTimelyInsights}. For the majority of experiments, the metrics on validation set is used to assess performance. The test set is used only to compare the final performances of various model.
+
+\section{Training}
