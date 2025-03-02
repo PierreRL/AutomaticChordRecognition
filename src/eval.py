@@ -13,7 +13,13 @@ from sklearn.metrics import accuracy_score
 from src.models.ismir2017 import ISMIR2017ACR
 from src.models.base_model import BaseACR
 from src.data.dataset import FullChordDataset
-from src.utils import id_to_chord_table, get_torch_device, collate_fn, NUM_CHORDS
+from src.utils import (
+    id_to_chord_table,
+    get_torch_device,
+    collate_fn,
+    NUM_CHORDS,
+    chord_to_id_map,
+)
 
 
 class EvalMetric(Enum):
@@ -143,7 +149,9 @@ def evaluate_model(
         predictions = model.predict(batch_features).to(device)
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
-            valid_mask = batch_labels[i] != -1
+            valid_mask = torch.logical_and(
+                batch_labels[i] != -1, batch_labels[i] != chord_to_id_map["X"]
+            )
             filtered_references = batch_labels[i][valid_mask].cpu().numpy()
             filtered_hypotheses = predictions[i][valid_mask].cpu().numpy()
 
@@ -176,8 +184,8 @@ def evaluate_model(
         metrics["median"][eval.value] = np.median(song_scores)
 
     # Flatten along song dimension
-    all_hypotheses = np.concatenate(all_hypotheses)
-    all_references = np.concatenate(all_references)
+    all_hypotheses = np.array(all_hypotheses)
+    all_references = np.array(all_references)
 
     if frame_wise_acc:
         metrics["frame_wise_acc"] = accuracy_score(all_references, all_hypotheses)

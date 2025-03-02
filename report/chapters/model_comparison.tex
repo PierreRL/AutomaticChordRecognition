@@ -1,24 +1,45 @@
 \chapter{Model Comparison}
 
-In this section, we compare various model in the \emph{Pop} dataset. We start by describing
+In this section, we compare various model on the \emph{Pop} dataset. We start by describing a baseline model. We then implemement a CRNN from the literature and investigate its behaviour. We also look at weighting the loss function, training on a more structured loss function, and performance of a transformer model. Finally, we investigate the use of generative features in the model and compare the best models on the held-out test set.
 
-\section{Baseline}
+\section{Logistic Baseline}
 
-- Simple logistic regression, single-layer NN.
+As a simple baseline, we consider a single layer NN which treats each frame independently. Then the layer takes input of size $216$ and outputs a $V$-dimensional vector, where $V$ is the cardinality of the chord vocabulary. The outputs are then passed through a softmax layer to get the probability of each chord and the cross-entropy loss is calculated. We call this model \emph{Logistic}.This can effectively be seen as a logistic regression model trained using SGD. We could have used a logistic regression model implemented in \texttt{sklearn} for example which may have found better minima but implementing it as a neural network was fast and easy and unlikely to yield significantly different results.
+
+A grid search on learning rates and learning rate schedulers was conducted on the sets \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[Cosine, ReduceLROnPlateau, None]} respectively. The best model was found to be a learning rate of $0.01$ with a \texttt{Cosine} scheduler. This best model was chosen for having the highest score on the most of the metrics in validation set. All models with learning rates of $0.01$ or $0.001$ converged within 150 epochs. Although the best model had learning rate $0.01$, a learning rate of $0.001$ over 150 epochs had a more stable validation accuracy. The model's results can be seen in Table \ref{tab:baseline_results}. Full results are ommitted as they are not relevant to the main discussion. The model serves simply as a baseline to compare the more complex models to. These results give us the first empirical evidence that the task is non-trivial. The model is only able to predict the root of the chord with a mean frame-wise accuracy of $0.64$ and a mirex of $0.65$. The model identifies both the root and the third with an accuracy of $0.56$ but struggles more with the seventh with an accuracy of $0.44$. The lowest scores are on class-wise accuracies able to predict the class of the chord with \texttt{class}\textsubscript{mean}$=0.13$ and \texttt{class}\textsubscript{median}$=0.03$. This gives us the first insight into each of the evaluation metrics and what we can hope from more complex models and other improvements.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcccccccc}
+        \toprule
+        Model & frame & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\  
+        \midrule
+        \emph{Logistic} & 0.42 & 0.64 & 0.56 & 0.44 & 0.65 & 0.13 & 0.03 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Baseline model results}
+    \label{tab:baseline_results}
+\end{table}
 
 \section{CRNN}
+\subsection{Model Description}
 - Describe simple model from CQT through CNNs and RNNs
+\subsection{Small to Large Vocabualary}
+\subsection{Analysis}
 - Transition frame analysis
 - Incorrect region analysis
+\subsection{Hyperparameter Tuning}
+- Random search
 - Hop length
-- Re-weighting loss
+
+\section{Weighted Loss}
+
+\section{Pitch Augmentation}
 
 \section{Structured Training}
 
 \section{Transformer}
-- Transformer expansion
 
 \section{Using Generative Features}
-- Using generative features
 
-\section{Comparison}
+\section{Results on Test Set}

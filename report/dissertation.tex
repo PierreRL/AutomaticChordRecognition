@@ -1,18 +1,23 @@
 \documentclass[logo,bsc,singlespacing,parskip,online]{infthesis}
 \usepackage{ugcheck}
-
-\usepackage{microtype} % recommended, but you can remove 
-\usepackage[numbers]{natbib} 
-% \usepackage{cite}
+\usepackage{microtype} 
+\usepackage{natbib} 
+\setcitestyle{authoryear, open={(},close={)}}
 \usepackage{hyperref} 
+% \hypersetup{colorlinks=true,allcolors=[rgb]{0.13,0.2,0.57}}
 \usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bbm}
+
 
 \begin{document}
 
 \input{chapters/preliminaries}
 \input{chapters/introduction}
 \input{chapters/background}
-\input{chapters/data}
+\input{chapters/experimental_setup}
 \input{chapters/model_comparison}
 \input{chapters/synthetic_data}
 \input{chapters/conclusions}
