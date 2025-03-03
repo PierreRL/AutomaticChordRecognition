@@ -51,7 +51,7 @@ def main():
         "--batch_size", type=int, default=64, help="Batch size for training."
     )
     parser.add_argument(
-        "--early_stopping", type=int, default=40, help="Early stopping patience."
+        "--early_stopping", type=int, default=25, help="Early stopping patience."
     )
     parser.add_argument(
         "--enable_early_stopping", action="store_true", help="Enable early stopping."
