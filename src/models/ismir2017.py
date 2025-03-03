@@ -43,6 +43,7 @@ class ISMIR2017ACR(BaseACR):
         """
         super(ISMIR2017ACR, self).__init__()
         self.cr2 = cr2
+        self.input_features = input_features
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_layers = num_layers
@@ -67,7 +68,7 @@ class ISMIR2017ACR(BaseACR):
         self.conv2 = nn.Conv2d(
             in_channels=1,
             out_channels=36,
-            kernel_size=(1, input_features),  # Full-height filter
+            kernel_size=(1, self.input_features),  # Full-height filter
             padding=(0, 0),  # Valid padding to reduce frequency dimension to 1
         )
         self.activation2 = nn.ReLU() if activation == "relu" else nn.PReLU()
