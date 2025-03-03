@@ -141,6 +141,17 @@ class ISMIR2017ACR(BaseACR):
     def __str__(self):
         return f"ISMIR2017ACR(cr2:{self.cr2})"
 
+    def to_dict(self):
+        return {
+            "model": "ISMIR2017ACR",
+            "input_features": self.input_features,
+            "num_classes": self.num_classes,
+            "hidden_size": self.hidden_size,
+            "num_layers": self.num_layers,
+            "cr2": self.cr2,
+            "activation": self.activation,
+        }
+
 
 def main():
     model = ISMIR2017ACR(input_features=216, num_classes=25)

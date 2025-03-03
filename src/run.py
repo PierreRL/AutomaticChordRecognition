@@ -7,7 +7,7 @@ import torch
 from src.train import train_model, TrainingArgs
 from src.data.dataset import generate_datasets
 from src.models.ismir2017 import ISMIR2017ACR
-from src.models.logistic_regressor import LogisticACR
+from models.logistic_acr import LogisticACR
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
@@ -213,7 +213,7 @@ def main():
     run_metadata = {
         "experiment_name": args.exp_name,
         "time": str(datetime.now()),
-        "model": str(model),
+        "model": model.to_dict(),
         "dataset": {
             "train_size": len(train_dataset),
             "val_size": len(val_dataset),

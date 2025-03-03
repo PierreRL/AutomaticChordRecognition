@@ -20,3 +20,6 @@ class BaseACR(torch.nn.Module):
 
     def __str__(self):
         raise NotImplementedError()
+
+    def to_dict(self):
+        raise NotImplementedError()

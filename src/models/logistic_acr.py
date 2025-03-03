@@ -43,3 +43,10 @@ class LogisticACR(BaseACR):
 
     def __str__(self):
         return f"LogisticACR(input_features={self.linear.in_features}, num_classes={self.linear.out_features})"
+
+    def to_dict(self):
+        return {
+            "model": "LogisticACR",
+            "input_features": self.linear.in_features,
+            "num_classes": self.linear.out_features,
+        }

@@ -21,3 +21,6 @@ class RandomACR(BaseACR):
 
     def __str__(self):
         return f"RandomACR(chord_vocab_size={self.chord_vocab_size})"
+
+    def to_dict(self):
+        return {"model": "RandomACR", "chord_vocab_size": self.chord_vocab_size}
