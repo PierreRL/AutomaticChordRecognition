@@ -11,7 +11,7 @@ SCRATCH_HOME = f"{SCRATCH_DISK}/{USER}"
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{REPO_HOME}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/lr_search "
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/small_vocab"
 output_file = open("./scripts/experiments.txt", "w")
 
 expt_call = (
