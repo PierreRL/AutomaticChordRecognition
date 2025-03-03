@@ -30,11 +30,29 @@ The authors of the model also propose using second GRU as a decoder before the f
 
 \subsection{Small to Large Vocabualary}
 
-Initial experiments were conducted on the simpler chord vocabualary with $V=25$. Only if the model could somewhat accurately classify the smaller vocabulary and if performance did not decrease on the smaller chord vocabualary when trained on the larger vocabulary, would we proceed to using the larger vocabualary. In keeping with with the methodology in~\citet{StructuredTraining}, we initially run with a learning rate of $0.001$. We also reduce the learning rate to half its previous value if the validation loss hasn't improved in 10 epochs and stop training if it has not improved after 25 epochs, with a maximum of 100 epochs. Model convergence was manually checked using the validation and training losses over epochs. 
+Initial experiments were conducted on the simpler chord vocabualary with $V=25$. Only if the model could somewhat accurately classify the smaller vocabulary and if performance did not decrease on the smaller chord vocabualary when trained on the larger vocabulary, would we proceed to using the larger vocabualary. In keeping with with the methodology in~\citet{StructuredTraining}, we initially run with a learning rate of $0.001$. We also reduce the learning rate to half its previous value if the validation loss hasn't improved in 10 epochs and stop training if it has not improved after 25 epochs, with a maximum of 100 epochs. Model convergence was manually checked using the validation and training losses over epochs. A plot of the trainin history is shown in Figure~\ref{fig:crnn_small_vocab_loss}.
 
-Results are shown in Table~\ref{tab:crnn_small_vocab}. A confusion matrix over chord roots is shown in Figure~\ref{fig:crnn_small_vocab_cm}. We see that...
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/small_vocab_training_plot.png}
+    \caption{CRNN model training history on small vocabualary. We see the training loss and the validation loss and accuracy. The accuracy here is over all chord labels, not ignoring \texttt{X} as in final metric calculations. Training was stopped early at epoch 79. We can see the validation loss flattening out after around epoch 50. However, the model could have continued to be trained as it has not started overfitting yet. This behaviour later contributed to the argument for the removal of early stopping.}\label{fig:crnn_small_vocab_loss}
+\end{figure}
 
-Transition to first large vocab experiments. Compare performance across the two.
+Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table also shows the performance of the same model trained with the large vocabulary, $V=170$ and its predictions mapped back to the smaller vocabualary. A confusion matrix over chord roots of the model trained on $V=25$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. We see that...
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcccccc}
+        \toprule
+        Model & $V$ for training & frame & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
+        \midrule
+        \emph{CRNN} & 25 & 0.72 & 0.81 & 0.76 & 0.70 & 0.71 \\
+        \emph{CRNN} & 170 & 0.72 & 0.81 & 0.76 & 0.70 & 0.71 \\
+        \bottomrule
+    \end{tabular}
+    \caption{CRNN model results on the small vocabualary with $V=25$. Other metrics are omitted for lack of relevance to the small vocabualary task.}
+    \label{tab:crnn_small_vocab}
+\end{table}
 
 While some other works [XX] continue to measure performance on the smaller vocabualary, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the inherent ambiguity of whether a chord should be present in the smaller vocabualary will always lead to some chords being misclassified. We therefore only measure performance on the larger vocabualary.
 
