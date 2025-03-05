@@ -18,11 +18,11 @@ def main(hop_length, create_cqts):
             cqt = get_cqt(filename, hop_length=dataset.hop_length)
             torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
 
-        chord_one_hot = get_chord_annotation(
+        chord_ids = get_chord_annotation(
             filename,
             frame_length=hop_length / SR,
         )
-        torch.save(chord_one_hot, f"{dataset.chord_cache_dir}/{filename}.pt")
+        torch.save(chord_ids, f"{dataset.chord_cache_dir}/{filename}.pt")
 
 
 if __name__ == "__main__":

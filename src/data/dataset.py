@@ -8,6 +8,8 @@ from typing import Tuple, List
 from src.utils import (
     pitch_shift_cqt,
     transpose_chord_id_vector,
+    get_cqt,
+    get_chord_annotation,
     SMALL_VOCABULARY,
     NUM_CHORDS,
     HOP_LENGTH,
@@ -25,6 +27,7 @@ class FullChordDataset(Dataset):
         mask_X: bool = False,
         input_dir: str = "./data/processed/",
         small_vocab: bool = SMALL_VOCABULARY,
+        override_cache: bool = False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -46,6 +49,7 @@ class FullChordDataset(Dataset):
         self.filenames = filenames
         self.hop_length = hop_length
         self.mask_X = mask_X
+        self.override_cache = override_cache
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
@@ -58,24 +62,20 @@ class FullChordDataset(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        if not self.mask_X:
-            return self.__get_cached_item(idx)
+        if self.override_cache:
+            cqt, chord_ids = self.__load_data(idx)
+        else:
+            cqt, chord_ids = self.__get_cached_item(idx)
+        if self.mask_X:
+            chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
-        cqt, chord_ids = self.__get_cached_item(idx)
-        # print number of 1s in chord_ids in originla and masked
-        # print(torch.sum(chord_ids == 1))
-        # print(torch.sum(self.mask_X_chords(chord_ids) == 1))
-        chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
+        return self.get_minimum_length_frame(cqt, chord_ids)
+
+    def __load_data(self, idx) -> Tuple[Tensor, Tensor]:
+        filename = self.filenames[idx]
+        cqt = get_cqt(filename)
+        chord_ids = get_chord_annotation(filename, frame_length=HOP_LENGTH / SR)
         return cqt, chord_ids
-
-        # Legacy code
-        # filename = self.filenames[idx]
-
-        # # Load the log CQT and chord annotation
-        # cqt = get_cqt(filename)
-        # chord_ids = get_chord_annotation(filename, frame_length=HOP_LENGTH / SR)
-
-        # return self.get_minimum_length_frame(cqt, chord_ids)
 
     def get_minimum_length_frame(
         self, cqt: Tensor, chord_ids: Tensor
@@ -85,11 +85,11 @@ class FullChordDataset(Dataset):
 
         Args:
             cqt (Tensor): The log CQT.
-            chord_one_hot (Tensor): The chord annotation.
+            chord_ids (Tensor): The chord annotation.
 
         Returns:
             cqt (Tensor): The log CQT with the minimum length.
-            chord_one_hot (Tensor): The chord annotation with the minimum length.
+            chord_ids (Tensor): The chord annotation with the minimum length.
         """
         minimum_length_frames = min(cqt.shape[0], chord_ids.shape[0])
         return cqt[:minimum_length_frames], chord_ids[:minimum_length_frames]
@@ -135,10 +135,10 @@ class FullChordDataset(Dataset):
     def __get_cached_item(self, idx):
         filename = self.filenames[idx]
         cqt = torch.load(f"{self.cqt_cache_dir}/{filename}.pt", weights_only=True)
-        chord_one_hot = torch.load(
+        chord_ids = torch.load(
             f"{self.chord_cache_dir}/{filename}.pt", weights_only=True
         )
-        return self.get_minimum_length_frame(cqt, chord_one_hot)
+        return cqt, chord_ids
 
     def get_filename(self, idx):
         return self.filenames[idx]
