@@ -51,9 +51,15 @@ Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table
         \emph{CRNN} & 170 & 0.75 & 0.72 & 0.71 & 0.73 \\
         \bottomrule
     \end{tabular}
-    \caption{CRNN model results on the small vocabualary with $V=25$. Other metrics are omitted as they are identical for classification with $V=25$.}
+    \caption{CRNN model results on the small vocabualary with $V=25$. The other metrics are omitted as they are identical to \texttt{third} for classification with $V=25$.}
     \label{tab:crnn_small_vocab}
 \end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/small_vocab_root_cm.png}
+    \caption{Confusion matrix over roots of the CRNN model trained on the small vocabualary. The outlier is the model's worse accuarcy with the label \texttt{N}.}\label{fig:crnn_small_vocab_cm}
+\end{figure}
 
 While some other works continue to measure performance on the smaller vocabualary~\citep{BTC}, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the inherent ambiguity of whether a chord should be present in the smaller vocabualary will always lead to some chords being misclassified. We therefore only measure performance on the larger vocabualary from now on.
 
@@ -63,7 +69,7 @@ After progressing to the larger vocabualary, we thought it a good time to conduc
 
 \subsubsection{Learning rates}
 
-The first set of hyperparameters experiments was a gridsearch on learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, ReduceLROnPlateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. We report a subset of metrics in Table~\ref{tab:crnn_lr}. A sample of training histories are shown in Figure~\ref{fig:crnn_lr}. These figures, alongside Figure~\ref{fig:crnn_small_vocab_loss}, show that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved valiation loss, we conclude that early stopping is not necessary. We therefore conduct future experiments without early stopping and with the above learning rate and scheduler.
+The first set of hyperparameters experiments was a gridsearch on learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, ReduceLROnPlateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. We report a subset of metrics in Table~\ref{tab:crnn_lr}. A sample of training histories are shown in Figure~\ref{fig:crnn_lr}. These figures, alongside Figure~\ref{fig:crnn_small_vocab_loss}, show that the validation loss does not get worse for a long time. We conclude that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved valiation loss, we decided to remove early stopping. We therefore conduct future experiments without early stopping and with \texttt{lr=0.001} and \texttt{Cosine} scheduling.
 
 \subsubsection{Model Hyperparameters}
 
@@ -77,9 +83,8 @@ With this learning rate and learning rate scheduler fixed, we perform a random s
 - Convergence found to be sometimes better with a long run with SGD [XX]
 - Results:
 \subsection{Hop Length}
-
-- Couldn't test on some of the smaller hop lengths due to Nyquist frequency.
-- Instead, tested on 4096, 8192, 16384 and also one smaller on 2896 which is 4096/sqrt(2). 
+- Results on different hop lengths.
+- Metrics aren't directly comparable due to different number of frames.
 
 \section{Weighted Loss}
 

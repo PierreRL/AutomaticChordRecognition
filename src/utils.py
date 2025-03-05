@@ -18,14 +18,14 @@ import jams
 from harte.harte import Harte
 
 # Constants
-SMALL_VOCABULARY = False
+SMALL_VOCABULARY = True
 SR = 44100
 HOP_LENGTH = 4096
 BINS_PER_OCTAVE = 36
 N_BINS = BINS_PER_OCTAVE * 6
 
 if SMALL_VOCABULARY:
-    NUM_CHORDS = 25
+    NUM_CHORDS = 26
 else:
     NUM_CHORDS = 170
 
@@ -258,7 +258,7 @@ def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
     if chord == "N":
         return 0
     if chord == "X":
-        return 1 if not use_small_vocab else 0
+        return 1
 
     # Parse the chord using the Harte library
     try:
@@ -276,9 +276,9 @@ def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
         elif quality == "minor":
             quality = 1
         else:
-            return 0  # Map unknown chords to N
+            return 1  # Map unknown chords to X
 
-        return root + 12 * quality + 1
+        return root + 12 * quality + 2
 
     else:
         # Large vocabulary (0-170)
@@ -332,14 +332,17 @@ def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
     """
     if use_small_vocab:
         # Small vocabulary (0-24)
-        if id < 0 or id > 24:
+        if id < 0 or id > 25:
             raise ValueError("Chord id must be in the range 0-24.")
 
         if id == 0:
             return "N"
 
+        if id == 1:
+            return "X"
+
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        root = root_name[(id - 1) % 12]
+        root = root_name[(id - 2) % 12]
 
         return root
 
@@ -378,13 +381,16 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
     """
     if use_small_vocab:
         # Small vocabulary (0-24)
-        if id < 0 or id > 24:
+        if id < 0 or id > 25:
             raise ValueError("Chord id must be in the range 0-24.")
 
         if id == 0:
             return "N"
 
-        quality = "maj" if (id - 1) // 12 == 0 else "min"
+        if id == 1:
+            return "X"
+
+        quality = "maj" if (id - 2) // 12 == 0 else "min"
         return quality
 
     else:
@@ -439,13 +445,16 @@ def id_to_chord(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
     """
     if use_small_vocab:
         # Small vocabulary (0-24)
-        if chord_id < 0 or chord_id > 24:
+        if chord_id < 0 or chord_id > 25:
             raise ValueError("Chord id must be in the range 0-24.")
 
         if chord_id == 0:
             return "N"
 
-        root = (chord_id - 1) % 12
+        if chord_id == 1:
+            return "X"
+
+        root = (chord_id - 2) % 12
         quality = "maj" if (chord_id - 1) // 12 == 0 else "min"
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -517,10 +526,11 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
     if semitones < -5 or semitones > 6:
         raise ValueError("Semitones must be in the range -5 to 6.")
 
+    chord_id -= 2  # Offset by 2 for N and X
     chord_quality = chord_id // 12
     chord_root = chord_id % 12
     chord_root_shifted = (chord_root + semitones) % 12
-    chord_id_shifted = chord_root_shifted + chord_quality * 12
+    chord_id_shifted = chord_root_shifted + chord_quality * 12 + 2
 
     return chord_id_shifted
 

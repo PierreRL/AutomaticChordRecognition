@@ -6,7 +6,7 @@ This chapter outlines the datasets used in this work, the preprocessing applied 
 
 Two ACT datasets are used in this work. The first dataset is simply referred to as the \emph{Pop} dataset, as much of the music in the dataset comes from the Billboard Hot 100 charts, or other popular bands. The second dataset is the \emph{JAAH} (Jazz Annotations and Analysis of Harmony) dataset mentioned in Section~\ref{sec:background-acr}. While the chords annotations are publicly available on Github\footnote{https://github.com/smashub/choco}, the audio was kindly given to me by Andrea Poltronieri, a PhD student at the University of Bologna and the author of 'ChoCo' (the Chord Corpus)~\citep{Choco}. I spent the first weeks of the project contacting authors of several papers which have used these or other datasets and he was the only one helpful enough to provide me with the audio.
 
-This rest of this chapter explains processing applied to the audio and chord annotations common to both datasets, before discussing details of the \emph{Pop} and \emph{JAAH} datasets relevant to each.
+The rest of this chapter explains processing applied to the audio and chord annotations common to both datasets, before discussing details of the \emph{Pop} and \emph{JAAH} datasets relevant to each.
 
 \subsection{Preprocessing}
 
@@ -85,7 +85,7 @@ For the above metrics, the mean is computed for each song, and both the mean and
 
 \[ M(f) = \frac{1}{N} \sum_{i=1}^{N} \frac{1}{|\{t\in T : y_{i,t} \neq \texttt{X}\}|} \sum_{t\in T : y_{i,t} \neq \texttt{X}} f(y_{i,t}, \hat{y}_{i,t})\]
 
-where $M$ is the metric in question, $f$ is a function which calculates the metric for a pair of reference and hypothesis chord labels, defined for each metric as above. $N$ is the number of songs, $T$ is the number of frames in a song, $y_{i,t}$ is the true chord at frame $t$ of song $i$, and $\hat{y}_{i,t}$ is the predicted chord at frame $t$ of song $i$.
+where $M$ is the metric in question, $f$ is a function which calculates the metric for a pair of reference and hypothesis chord labels, defined for each metric as above. $N$ is the number of songs, $T$ is the set of frames in a song, $y_{i,t}$ is the true chord at frame $t$ of song $i$, and $\hat{y}_{i,t}$ is the predicted chord at frame $t$ of song $i$.
 
 For some experiments, we looked at three more metrics. The first is the overall frame-wise accuracy, calculated across the entire evaluation dataset rather than on a per-song basis, still ignoring \texttt{X} chords, called \texttt{frame}\textsubscript{all}. The second and third are the mean and median class-wise accuracies, called \texttt{class}\textsubscript{mean} and \texttt{class}\textsubscript{median} respectively. These are the mean/median accuracy over each chord class. These metrics are formally defined as follows:
 
