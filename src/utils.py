@@ -63,7 +63,7 @@ def get_split_filenames() -> Tuple[List, List, List]:
 
 
 @lru_cache(maxsize=None)
-def get_raw_chord_annotation(filename):
+def get_raw_chord_annotation(filename, override_dir=None):
     """
     Retrieves the raw chord annotation data from a JAMS file.
 
@@ -73,7 +73,10 @@ def get_raw_chord_annotation(filename):
     Returns:
         chord_annotation (SortedKeyDict): An ordered dict of chord annotations.
     """
-    jam = jams.load(os.path.join("./data/processed/chords/", f"{filename}.jams"))
+    if override_dir is not None:
+        jam = jams.load(os.path.join(f"{override_dir}/chords/", f"{filename}.jams"))
+    else:
+        jam = jams.load(os.path.join("./data/processed/chords/", f"{filename}.jams"))
     chord_ann = jam.annotations.search(namespace="chord")[0]
     return chord_ann.data
 
@@ -96,6 +99,7 @@ def get_annotation_metadata(filename):
 
 def get_cqt(
     filename: str,
+    override_dir: str = None,
     sr: int = SR,
     hop_length: int = HOP_LENGTH,
     n_bins: int = N_BINS,
@@ -119,9 +123,14 @@ def get_cqt(
         cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
     """
     # Default hyperparameters from https://brianmcfee.net/papers/ismir2017_chord.pdf
-    src = librosa.load(
-        os.path.join("./data/processed/audio/", f"{filename}.mp3"), sr=sr
-    )[0]
+    if override_dir is not None:
+        src = librosa.load(
+            os.path.join(f"{override_dir}/audio", f"{filename}.mp3"), sr=sr
+        )[0]
+    else:
+        src = librosa.load(
+            os.path.join("./data/processed/audio/", f"{filename}.mp3"), sr=sr
+        )[0]
 
     cqt = librosa.cqt(
         src,
@@ -526,6 +535,7 @@ def get_chord_annotation(
     filename: str,
     frame_length: float = 0.1,
     return_transitions: bool = False,
+    override_dir: str = None,
 ) -> torch.Tensor:
     """
     Gets the chord annotation of an audio file as a tensor of chord ids.
@@ -538,7 +548,7 @@ def get_chord_annotation(
         chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
     """
 
-    chord_ann = get_raw_chord_annotation(filename)
+    chord_ann = get_raw_chord_annotation(filename, override_dir=override_dir)
     duration = chord_ann[-1].time + chord_ann[-1].duration
 
     # Loop over each frame and assign the chord

@@ -143,6 +143,12 @@ def main():
         help="Alpha smoothing parameter for the weighted loss.",
     )
     parser.add_argument(
+        "--override_cache",
+        action="store_true",
+        help="Whether to override the cached datasets.",
+    )
+    parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
+    parser.add_argument(
         "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
         action="store_true",
         help="Run a single batch of training and validation and small evaluation set.",
@@ -153,7 +159,7 @@ def main():
     if not args.exp_name:
         args.exp_name = generate_experiment_name()
 
-    torch.manual_seed(0)
+    torch.manual_seed(args.seed)
 
     print("=" * 50)
     print(f"Running experiment: {args.exp_name}")
@@ -182,6 +188,7 @@ def main():
         random_pitch_shift=args.random_pitch_shift,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
+        override_cache=args.override_cache,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
@@ -214,12 +221,14 @@ def main():
         "experiment_name": args.exp_name,
         "time": str(datetime.now()),
         "model": model.to_dict(),
+        "seed": args.seed,
         "dataset": {
             "train_size": len(train_dataset),
             "val_size": len(val_dataset),
             "test_size": len(test_dataset),
             "NUM_CHORDS": NUM_CHORDS,
         },
+        "args": vars(args),
     }
     write_json(run_metadata, f"{DIR}/metadata.json")
 

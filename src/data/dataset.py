@@ -73,8 +73,10 @@ class FullChordDataset(Dataset):
 
     def __load_data(self, idx) -> Tuple[Tensor, Tensor]:
         filename = self.filenames[idx]
-        cqt = get_cqt(filename)
-        chord_ids = get_chord_annotation(filename, frame_length=HOP_LENGTH / SR)
+        cqt = get_cqt(filename, override_dir=self.input_dir, hop_length=self.hop_length)
+        chord_ids = get_chord_annotation(
+            filename, frame_length=self.hop_length / SR, override_dir=self.input_dir
+        )
         return cqt, chord_ids
 
     def get_minimum_length_frame(
@@ -157,6 +159,7 @@ class FixedLengthRandomChordDataset(Dataset):
         hop_length=HOP_LENGTH,
         mask_X=False,
         input_dir="./data/processed/",
+        override_cache=False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -173,6 +176,7 @@ class FixedLengthRandomChordDataset(Dataset):
             hop_length=hop_length,
             mask_X=mask_X,
             input_dir=input_dir,
+            override_cache=override_cache,
         )
         self.random_pitch_shift = random_pitch_shift
         self.segment_length = segment_length
@@ -230,6 +234,7 @@ class FixedLengthChordDataset(Dataset):
         hop_length=HOP_LENGTH,
         mask_X=False,
         input_dir="./data/processed/",
+        override_cache=False,
     ):
         """
         Creates an instance of the FixedLengthChordDataset class.
@@ -247,6 +252,7 @@ class FixedLengthChordDataset(Dataset):
             hop_length=hop_length,
             mask_X=mask_X,
             input_dir=input_dir,
+            override_cache=override_cache,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -299,6 +305,7 @@ def generate_datasets(
     hop_length: int,
     random_pitch_shift: bool = True,
     subset_size=None,
+    override_cache: bool = False,
 ):
     """
     Generate the training, validation, and test datasets.
@@ -330,6 +337,7 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
         random_pitch_shift=random_pitch_shift,
+        override_cache=override_cache,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -337,24 +345,28 @@ def generate_datasets(
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        override_cache=override_cache,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        override_cache=override_cache,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        override_cache=override_cache,
     )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        override_cache=override_cache,
     )
     return (
         train_dataset,
