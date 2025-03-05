@@ -80,8 +80,9 @@ With this learning rate and learning rate scheduler fixed, we perform a random s
 - Incorrect region analysis
 - Worst Songs
 \subsection{Long Run SGD}
-- Convergence found to be sometimes better with a long run with SGD [XX]
-- Results:
+
+Using SGD in place of Adam as an optimiser has been shown to improve performance in some cases, especially for long-running convergence. We therefore try training the model for 2000 epochs
+
 \subsection{Hop Length}
 - Results on different hop lengths.
 - Metrics aren't directly comparable due to different number of frames.

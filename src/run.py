@@ -142,11 +142,7 @@ def main():
         default=0.65,
         help="Alpha smoothing parameter for the weighted loss.",
     )
-    parser.add_argument(
-        "--override_cache",
-        action="store_true",
-        help="Whether to override the cached datasets.",
-    )
+
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
         "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
@@ -188,7 +184,6 @@ def main():
         random_pitch_shift=args.random_pitch_shift,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
-        override_cache=args.override_cache,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 

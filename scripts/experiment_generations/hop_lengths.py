@@ -28,8 +28,7 @@ for hop_length in hop_lengths:
     # Note that we don't set a seed for rep - a seed is selected at random
     # and recorded in the output data by the python script
     expt_call = (
-        f"{base_call} "
-        f"--exp_name=hop_length_{hop_length} --hop_length={hop_length} --override_cache"
+        f"{base_call} " f"--exp_name=hop_length_{hop_length} --hop_length={hop_length}"
     )
     print(expt_call, file=output_file)
 
