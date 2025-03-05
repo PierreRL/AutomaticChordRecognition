@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define hop lengths to iterate ovter
-hop_lengths=(8192 16384)
+hop_lengths=(512 1024 2048 8192 16384)
 
 # Path to the script
 script_path="./src/data/create_cached_datasets.py"  # Update this if your script has a different name

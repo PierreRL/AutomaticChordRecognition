@@ -27,7 +27,7 @@ class ISMIR2017ACR(BaseACR):
         num_classes: int = NUM_CHORDS,
         hidden_size: int = 256,
         num_layers: int = 1,
-        cr2: bool = True,
+        cr2: bool = False,
         activation: str = "relu",
     ):
         """

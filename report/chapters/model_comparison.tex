@@ -40,38 +40,66 @@ Initial experiments were conducted on the simpler chord vocabualary with $V=25$.
 
 Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table also shows the performance of the same model trained with the large vocabulary, $V=170$ and its predictions mapped back to the smaller vocabualary. A confusion matrix over chord roots of the model trained on $V=25$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. We see that...
 
+
 \begin{table}[h]
     \centering
     \begin{tabular}{lcccccc}
         \toprule
-        Model & $V$ for training & frame & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
+        Model & $V$ for training & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
         \midrule
-        \emph{CRNN} & 25 & 0.72 & 0.81 & 0.76 & 0.70 & 0.71 \\
-        \emph{CRNN} & 170 & 0.72 & 0.81 & 0.76 & 0.70 & 0.71 \\
+        \emph{CRNN} & 25 & 0.75 & 0.73 & 0.71 & 0.71 \\
+        \emph{CRNN} & 170 & 0.75 & 0.72 & 0.71 & 0.73 \\
         \bottomrule
     \end{tabular}
-    \caption{CRNN model results on the small vocabualary with $V=25$. Other metrics are omitted for lack of relevance to the small vocabualary task.}
+    \caption{CRNN model results on the small vocabualary with $V=25$. Other metrics are omitted as they are identical for classification with $V=25$.}
     \label{tab:crnn_small_vocab}
 \end{table}
 
-While some other works continue to measure performance on the smaller vocabualary~\citep{BTC}, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the inherent ambiguity of whether a chord should be present in the smaller vocabualary will always lead to some chords being misclassified. We therefore only measure performance on the larger vocabualary.
+While some other works continue to measure performance on the smaller vocabualary~\citep{BTC}, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the inherent ambiguity of whether a chord should be present in the smaller vocabualary will always lead to some chords being misclassified. We therefore only measure performance on the larger vocabualary from now on.
 
 \subsection{Hyperparameter Tuning}
-- Learning rates
-- Random search
+
+After progressing to the larger vocabualary, we thought it a good time to conduct some hyperparameter tuning. 
+
+\subsubsection{Learning rates}
+
+The first set of hyperparameters experiments was a gridsearch on learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, ReduceLROnPlateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. We report a subset of metrics in Table~\ref{tab:crnn_lr}. A sample of training histories are shown in Figure~\ref{fig:crnn_lr}. These figures, alongside Figure~\ref{fig:crnn_small_vocab_loss}, show that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved valiation loss, we conclude that early stopping is not necessary. We therefore conduct future experiments without early stopping and with the above learning rate and scheduler.
+
+\subsubsection{Model Hyperparameters}
+
+With this learning rate and learning rate scheduler fixed, we perform a random search on the number of layers in the GRU, the hidden size of the layers in the GRU and the training patch segment length. The search is performed by independently and uniformly randomly sampling 32 points in the sets $\texttt{hidden\_size}\in\{64,65,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$ and $\texttt{segment\_length}\in\{10,11,\ldots,60\}$. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were then ranked according to each metric and their ranks for each metric added up. The models were ordered by this total rank. The best model was found to have a hidden size of $201$, a single layer GRU and a segment length of $28$, although the differences between models were relatively small.
+
 \subsection{Model Analysis}
 - Transition frame analysis
 - Incorrect region analysis
+- Worst Songs
+\subsection{Long Run SGD}
+- Convergence found to be sometimes better with a long run with SGD [XX]
+- Results:
 \subsection{Hop Length}
+
+- Couldn't test on some of the smaller hop lengths due to Nyquist frequency.
+- Instead, tested on 4096, 8192, 16384 and also one smaller on 2896 which is 4096/sqrt(2). 
 
 \section{Weighted Loss}
 
 \section{Pitch Augmentation}
+- Two methods:
+- On CQT [2019] not good
+- Using MUDA on the audio [everyone else], works?
 
 \section{Structured Training}
 
+- Add structured loss and retrain. From literature. Should (?) further improve accuracies on sevenths etc.
+
 \section{Transformer}
+
+- Make own transformer architecture, similar to BTC or HarmonyTransformer, or Curriculum learning. How to train and evaluate?
 
 \section{Using Generative Features}
 
+- As in [MelodyTranscriptionViaGenerativePreTraining], use Jukebox (?) to generate features at frames (? is it possible to do it on the same frames?). Train on these features and evaluate.
+
 \section{Results on Test Set}
+
+- Directly compare CRNN, weighted loss, pitch augmentation, structured, transformer, generative features on the test set.

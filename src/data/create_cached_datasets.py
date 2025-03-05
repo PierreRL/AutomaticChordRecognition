@@ -15,7 +15,7 @@ def main(hop_length, create_cqts):
     filenames = get_filenames()
     for filename in tqdm(filenames):
         if create_cqts:
-            cqt = get_cqt(filename, dataset.hop_length)
+            cqt = get_cqt(filename, hop_length=dataset.hop_length)
             torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
 
         chord_one_hot = get_chord_annotation(

@@ -18,6 +18,7 @@ from src.utils import (
     get_torch_device,
     collate_fn,
     NUM_CHORDS,
+    SMALL_VOCABULARY,
     chord_to_id_map,
 )
 
@@ -88,6 +89,10 @@ class EvalMetric(Enum):
         # Evaluate the chord labels using the evaluation metric
         metrics = self.eval_func()(references, hypotheses)
 
+        # Ensure the output is always an array
+        if np.isscalar(metrics):
+            metrics = np.array([metrics])  # Convert scalar to 1D array
+
         return metrics
 
 
@@ -149,9 +154,12 @@ def evaluate_model(
         predictions = model.predict(batch_features).to(device)
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
-            valid_mask = torch.logical_and(
-                batch_labels[i] != -1, batch_labels[i] != chord_to_id_map["X"]
-            )
+            if SMALL_VOCABULARY:
+                valid_mask = batch_labels[i] != -1
+            else:
+                valid_mask = torch.logical_and(
+                    batch_labels[i] != -1, batch_labels[i] != chord_to_id_map["X"]
+                )
             filtered_references = batch_labels[i][valid_mask].cpu().numpy()
             filtered_hypotheses = predictions[i][valid_mask].cpu().numpy()
 

@@ -49,14 +49,13 @@ def get_filenames(directory: str = "data/processed/audio") -> list:
 
 
 def get_split_filenames() -> Tuple[List, List, List]:
-    """
-    Get the filenames for the train, validation, and test sets.
+    """Get the filenames for the train, validation, and test sets.
 
     Returns:
+
         train_filenames (list): The filenames for the training set.
         val_filenames (list): The filenames for the validation set.
-        test_filenames (list): The filenames for the test set.
-    """
+        test_filenames (list): The filenames for the test set."""
     with open("data/processed/splits.json", "r") as f:
         splits = json.load(f)
 
@@ -143,7 +142,7 @@ def get_cqt(
 
 
 def pitch_shift_cqt(
-    cqt: torch.Tensor, semitones: int, bins_per_octave=36
+    cqt: torch.Tensor, semitones: int, bins_per_octave=BINS_PER_OCTAVE
 ) -> torch.Tensor:
     """
     Apply a pitch shift to a log CQT.
@@ -416,7 +415,7 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
 
 
 @lru_cache(maxsize=None)
-def id_to_chord(chord_id: int, use_small_vocab: bool = False) -> str:
+def id_to_chord(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
     """
     Converts a chord id to a string representation of a chord.
 

@@ -24,6 +24,7 @@ class FullChordDataset(Dataset):
         hop_length: int = HOP_LENGTH,
         mask_X: bool = False,
         input_dir: str = "./data/processed/",
+        small_vocab: bool = SMALL_VOCABULARY,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -47,7 +48,8 @@ class FullChordDataset(Dataset):
         self.mask_X = mask_X
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
-        if SMALL_VOCABULARY:
+        self.small_vocab = small_vocab
+        if self.small_vocab:
             self.chord_cache_dir = (
                 f"{self.input_dir}/cache/{self.hop_length}/chords_small_vocab"
             )
