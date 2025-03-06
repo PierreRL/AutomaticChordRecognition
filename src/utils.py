@@ -18,7 +18,7 @@ import jams
 from harte.harte import Harte
 
 # Constants
-SMALL_VOCABULARY = False
+SMALL_VOCABULARY = True
 SR = 44100
 HOP_LENGTH = 4096
 BINS_PER_OCTAVE = 36

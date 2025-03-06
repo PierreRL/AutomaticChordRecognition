@@ -6,7 +6,7 @@ In this section, we compare various model on the \emph{Pop} dataset. We start by
 
 As a simple baseline, we consider a single layer NN which treats each frame independently. Then the layer takes input of size $216$ and outputs a $V$-dimensional vector, where $V$ is the cardinality of the chord vocabulary. The outputs are then passed through a softmax layer to get the probability of each chord and the cross-entropy loss is calculated. We call this model \emph{Logistic}.This can effectively be seen as a logistic regression model trained using SGD. We could have used a logistic regression model implemented in \texttt{sklearn} for example which may have found better minima but implementing it as a neural network was fast and easy and unlikely to yield significantly different results.
 
-A grid search on learning rates and learning rate schedulers was conducted on the sets \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[Cosine, ReduceLROnPlateau, None]} respectively. The best model was found to be a learning rate of $0.01$ with a \texttt{Cosine} scheduler. This best model was chosen for having the highest score on the most of the metrics in validation set. All models with learning rates of $0.01$ or $0.001$ converged within 150 epochs. Although the best model had learning rate $0.01$, a learning rate of $0.001$ over 150 epochs had a more stable validation accuracy. The model's results can be seen in Table \ref{tab:baseline_results}. Full results are ommitted as they are not relevant to the main discussion. The model serves simply as a baseline to compare the more complex models to. These results give us the first empirical evidence that the task is non-trivial. The model is only able to predict the root of the chord with a mean frame-wise accuracy of $0.64$ and a mirex of $0.65$. The model identifies both the root and the third with an accuracy of $0.56$ but struggles more with the seventh with an accuracy of $0.44$. The lowest scores are on class-wise accuracies able to predict the class of the chord with \texttt{class}\textsubscript{mean}$=0.13$ and \texttt{class}\textsubscript{median}$=0.03$. This gives us the first insight into each of the evaluation metrics and what we can hope from more complex models and other improvements.
+A grid search on learning rates and learning rate schedulers was conducted on the sets \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[Cosine, Plateau, None]} respectively. \texttt{Plateau} halves the learning rate when the validation loss hasn't improved for 10 epochs and \texttt{Cosine} is as described in Section~\ref{sec:training}. The best model was found to be a learning rate of $0.01$ with a \texttt{Cosine} scheduler. This best model was chosen for having the highest score on the most of the metrics in validation set. All models with learning rates of $0.01$ or $0.001$ converged within 150 epochs. Although the best model had learning rate $0.01$, a learning rate of $0.001$ over 150 epochs had a more stable validation accuracy. The model's results can be seen in Table \ref{tab:baseline_results}. Full results are ommitted as they are not relevant to the main discussion. The model serves simply as a baseline to compare the more complex models to. These results give us the first empirical evidence that the task is non-trivial. The model is only able to predict the root of the chord with a mean frame-wise accuracy of $0.64$ and a mirex of $0.65$. The model identifies both the root and the third with an accuracy of $0.56$ but struggles more with the seventh with an accuracy of $0.44$. The lowest scores are on class-wise accuracies able to predict the class of the chord with \texttt{class}\textsubscript{mean}$=0.13$ and \texttt{class}\textsubscript{median}$=0.03$. This gives us the first insight into each of the evaluation metrics and what we can hope from more complex models and other improvements.
 
 \begin{table}[h]
     \centering
@@ -38,8 +38,9 @@ Initial experiments were conducted on the simpler chord vocabualary with $V=25$.
     \caption{CRNN model training history on small vocabualary. We see the training loss and the validation loss and accuracy. The accuracy here is over all chord labels, not ignoring \texttt{X} as in final metric calculations. Training was stopped early at epoch 79. We can see the validation loss flattening out after around epoch 50. However, the model could have continued to be trained as it has not started overfitting yet. This behaviour later contributed to the argument for the removal of early stopping.}\label{fig:crnn_small_vocab_loss}
 \end{figure}
 
-Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table also shows the performance of the same model trained with the large vocabulary, $V=170$ and its predictions mapped back to the smaller vocabualary. A confusion matrix over chord roots of the model trained on $V=25$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. We see that...
+Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table also shows the performance of the same model trained with the large vocabulary, $V=170$ and its predictions mapped back to the smaller vocabualary. A confusion matrix over chord roots of the model trained on $V=26$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. The model performs better than the baseline on the larger vocabualary, which is to be expected given the nested nature of the models, and the harder task on the larger vocabulary. From the confusion matrix, it becomes clear that many of the mistakes the model is making lie in the \texttt{X} symbol, which consitutes just over 7\% of the smaller vocabulary dataset. Chords with qualities like \texttt{sus4} could be confused with \texttt{major} by a reasonable model but are represented with \texttt{X} in the smaller vocabulary. Interestingly, the model trained with $V=170$ performs nearly as well on all metrics as the model trained with $V=25$. This implies that training with $V=170$ allows the model to learn almost all the relevant information about the smaller vocabulary, and gives it the chance to learn something about the larger vocabulary as well. Therefore, we proceed with the larger vocabulary for the rest of the experiments.
 
+While some other works continue to measure performance on the smaller vocabualary~\citep{BTC}, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the \texttt{third} metric capture much of the information we would look for in the evaluating with $V=25$. We therefore only measure performance on the larger vocabualary from now on.
 
 \begin{table}[h]
     \centering
@@ -47,21 +48,18 @@ Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table
         \toprule
         Model & $V$ for training & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
         \midrule
-        \emph{CRNN} & 25 & 0.75 & 0.73 & 0.71 & 0.71 \\
-        \emph{CRNN} & 170 & 0.75 & 0.72 & 0.71 & 0.73 \\
+        \emph{CRNN} & 26 & 0.79 & 0.77 & 0.74 & 0.74 \\
+        \emph{CRNN} & 170 & 0.78 & 0.74 & 0.72 & 0.73 \\
         \bottomrule
     \end{tabular}
-    \caption{CRNN model results on the small vocabualary with $V=25$. The other metrics are omitted as they are identical to \texttt{third} for classification with $V=25$.}
-    \label{tab:crnn_small_vocab}
+    \caption{CRNN model results on the small vocabualary with $V=26$. The other metrics are omitted as they are identical to \texttt{third} for classification with $V=26$.}\label{tab:crnn_small_vocab}
 \end{table}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/small_vocab_root_cm.png}
-    \caption{Confusion matrix over roots of the CRNN model trained on the small vocabualary. The outlier is the model's worse accuarcy with the label \texttt{N}.}\label{fig:crnn_small_vocab_cm}
+    \caption{Confusion matrix over roots of the CRNN model trained on the small vocabualary. The values have been normalised by their counts, such that the values on the diagonals are recall metrics. There is a clear outlier in the model's recall with the label \texttt{X}, at just $0.07$. It also performs poorly on \texttt{N}.}\label{fig:crnn_small_vocab_cm}
 \end{figure}
-
-While some other works continue to measure performance on the smaller vocabualary~\citep{BTC}, we believe more metrics distract from the main goal of increasing performance across a wider range of chords. Additionally, the inherent ambiguity of whether a chord should be present in the smaller vocabualary will always lead to some chords being misclassified. We therefore only measure performance on the larger vocabualary from now on.
 
 \subsection{Hyperparameter Tuning}
 
@@ -69,16 +67,43 @@ After progressing to the larger vocabualary, we thought it a good time to conduc
 
 \subsubsection{Learning rates}
 
-The first set of hyperparameters experiments was a gridsearch on learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, ReduceLROnPlateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. We report a subset of metrics in Table~\ref{tab:crnn_lr}. A sample of training histories are shown in Figure~\ref{fig:crnn_lr}. These figures, alongside Figure~\ref{fig:crnn_small_vocab_loss}, show that the validation loss does not get worse for a long time. We conclude that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved valiation loss, we decided to remove early stopping. We therefore conduct future experiments without early stopping and with \texttt{lr=0.001} and \texttt{Cosine} scheduling.
+We perform gridsearch on the same learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, Plateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. Judging by training graphs seen in~\ref{fig:lr_search_cosine}, the best learning rate is $0.001$. Any lower and we do not converge fast enough; any higher and gradient updates cause the validation accuracy to be noisy. These figures also show that the validation loss does not get worse after convergence. We conclude that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved valiation loss, we decided to remove early stopping. We therefore conduct future experiments without early stopping and with \texttt{lr=0.001} and \texttt{Cosine} scheduling.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/lr_search_cosine.png}
+    \caption{Training graphs for the CRNN model with different learning rates. The learning rate of $0.001$ seems to be the best, as it converges quickly and does not overfit.}\label{fig:lr_search_cosine}
+\end{figure}
+
+We report a subset of metrics in Table~\ref{tab:crnn_lr}. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. However, there were no large differences in performance between the learning rate schedulers. We proceed with these hyperparameters as defaults for the rest of the experiments.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lccccccc}
+        \toprule
+        lr & scheduler & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\
+        \midrule
+        0.01 & Cosine & 0.71 & 0.68 & 0.55 & 0.76 & 0.13 & 0.00 \\
+        0.001 & Cosine & \textbf{0.77} & \textbf{0.73} & \textbf{0.60} & 0.80 & 0.17 & \textbf{0.01} \\
+        0.0001 & Cosine & 0.70 & 0.65 & 0.54 & 0.70 & 0.10 & 0.00 \\
+        \midrule
+        0.001 & Plateau & 0.74 & \textbf{0.73} & \textbf{0.60} & 0.80 & \textbf{0.18} & \textbf{0.01} \\
+        0.001 & None & 0.71 & 0.70 & 0.58 & \textbf{0.82} & 0.17 & 0.00 \\
+        \bottomrule
+    \end{tabular}
+    \caption{CRNN model results on the large vocabualary with different learning rates and schedulers. Overall, a learning rate of 0.001 and a scheduler of \texttt{Cosine} performs the best in many metrics, though a scheduler of \texttt{Plateau} performs just as well or better on many metrics. We prioritise the performance of the model on the root as this is more important than the \texttt{mirex} metric. }\label{tab:crnn_lr}
+\end{table}
 
 \subsubsection{Model Hyperparameters}
 
 With this learning rate and learning rate scheduler fixed, we perform a random search on the number of layers in the GRU, the hidden size of the layers in the GRU and the training patch segment length. The search is performed by independently and uniformly randomly sampling 32 points in the sets $\texttt{hidden\_size}\in\{64,65,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$ and $\texttt{segment\_length}\in\{10,11,\ldots,60\}$. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were then ranked according to each metric and their ranks for each metric added up. The models were ordered by this total rank. The best model was found to have a hidden size of $201$, a single layer GRU and a segment length of $28$, although the differences between models were relatively small.
 
 \subsection{Model Analysis}
-- Transition frame analysis
-- Incorrect region analysis
-- Worst Songs
+\subsubsection{Transition Frames}
+\subsubsection{Smoothing}
+\subsubsection{Performance Across the Context}
+\subsubsection{Qualities and Roots}
+
 \subsection{Long Run SGD}
 
 Using SGD in place of Adam as an optimiser has been shown to improve performance in some cases, especially for long-running convergence. We therefore try training the model for 2000 epochs
