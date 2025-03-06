@@ -96,7 +96,24 @@ We report a subset of metrics in Table~\ref{tab:crnn_lr}. The best performing mo
 
 \subsubsection{Model Hyperparameters}
 
-With this learning rate and learning rate scheduler fixed, we perform a random search on the number of layers in the GRU, the hidden size of the layers in the GRU and the training patch segment length. The search is performed by independently and uniformly randomly sampling 32 points in the sets $\texttt{hidden\_size}\in\{64,65,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$ and $\texttt{segment\_length}\in\{10,11,\ldots,60\}$. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were then ranked according to each metric and their ranks for each metric added up. The models were ordered by this total rank. The best model was found to have a hidden size of $201$, a single layer GRU and a segment length of $28$, although the differences between models were relatively small.
+With this learning rate and learning rate scheduler fixed, we perform a random search on the number of layers in the GRU, the hidden size of the layers in the GRU and the training patch segment length. The search is performed by independently and uniformly randomly sampling 32 points in the sets $\texttt{hidden\_size}\in\{64,65,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$ and $\texttt{segment\_length}\in\{10,11,\ldots,60\}$. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were then ranked according to each metric and their ranks for each metric added up. The models were ordered by this total rank. The best model was found to have a hidden size $h=201$, a single layer GRU and a segment length of $L=28$, although the differences between models were relatively small.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{ccccccccc}
+        \toprule
+        $L$ & layers & $h$ & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\
+        \midrule
+        28 & 1 & 201 & \textbf{0.78} & \textbf{0.75} & \textbf{0.62} & \textbf{0.79} & 0.18 & 0.01 \\
+        23 & 2 & 295 & \textbf{0.78} & \textbf{0.75} & \textbf{0.62} & 0.78 & \textbf{0.19} & \textbf{0.02} \\
+        14 & 2 & 374 & 0.77 & 0.74 & 0.61 & \textbf{0.79} & \textbf{0.19} & \textbf{0.02} \\
+        56 & 1 & 463 & 0.77 & 0.74 & 0.61 & 0.78 & 0.19 & \textbf{0.02} \\
+        42 & 3 & 222 & 0.77 & 0.74 & 0.60 & \textbf{0.79} & 0.16 & 0.00 \\
+        \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots \\
+        \bottomrule
+    \end{tabular}
+    \caption{CRNN model results on the large vocabualary with different hyperparameters. The best model was found to have a hidden size of $201$, a single layer GRU and a segment length of $28$.}\label{tab:crnn_hparams}
+\end{table}
 
 \subsection{Model Analysis}
 \subsubsection{Transition Frames}

@@ -8,8 +8,6 @@ from typing import Tuple, List
 from src.utils import (
     pitch_shift_cqt,
     transpose_chord_id_vector,
-    get_cqt,
-    get_chord_annotation,
     SMALL_VOCABULARY,
     NUM_CHORDS,
     HOP_LENGTH,
@@ -89,7 +87,7 @@ class FullChordDataset(Dataset):
 
         Args:
             epsilon (float): A value to prevent division by zero. The effective number of samples for each class is epsilon + counts.
-            alpha (float): The exponent of the inverse frequency. The higher the value, the more the weights are skewed towards the rare classes.
+            alpha (float): The exponent of the inverse frequency. The higher the value, the more the weights are skewed towards the rare classes. Should be in [0,1].
 
         Returns:
             weights (Tensor): The chord loss weights, normalized.
@@ -99,14 +97,11 @@ class FullChordDataset(Dataset):
         )  # Flatten all chord IDs
         all_chord_ids = all_chord_ids[all_chord_ids != -1]  # Remove -1 (ignored labels)
 
-        num_classes = NUM_CHORDS
+        counts = torch.bincount(all_chord_ids, minlength=NUM_CHORDS).float()
 
-        counts = torch.bincount(
-            all_chord_ids, minlength=num_classes
-        ).float()  # Efficient counting
+        weights = 1.0 / (counts + epsilon) ** alpha  # Inverse frequency weights
 
-        weights = 1.0 / (counts + epsilon) ** alpha  # Inverse frequency
-        # Mask zero-count classes explicitly
+        # Mask zero-count classes
         nonzero_mask = counts > 0  # Only consider seen classes
         weights[~nonzero_mask] = 0  # Set weights of unseen classes to 0
 
@@ -117,7 +112,7 @@ class FullChordDataset(Dataset):
         weights /= scaling_factor  # Normalize
 
         if self.mask_X:
-            weights[1] = 0  # Ensure class '1' has zero weight
+            weights[1] = 0  # Ensure class '1' has zero weight if it is masked
 
         return weights
 
@@ -387,7 +382,7 @@ def main():
     print(torch.sum(dataset[idx][1] == 1))
 
     print("Test Calc Chord Loss Weights")
-    weights = dataset.calc_chord_loss_weights()
+    weights = dataset.get_class_weights()
     print(weights)
     print(sum(weights))
     # Print top 5 and bottom 5 weights
