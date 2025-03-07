@@ -136,7 +136,7 @@ class FixedLengthRandomChordDataset(Dataset):
     def __init__(
         self,
         random_pitch_shift=False,
-        segment_length=10,
+        segment_length=28,
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,
@@ -209,7 +209,7 @@ class FixedLengthChordDataset(Dataset):
 
     def __init__(
         self,
-        segment_length=10,
+        segment_length=28,
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,

@@ -72,7 +72,7 @@ We perform gridsearch on the same learning rates and learning rate schedulers as
 \begin{figure}[h]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/lr_search_cosine.png}
-    \caption{Training graphs for the CRNN model with different learning rates. The learning rate of $0.001$ seems to be the best, as it converges quickly and does not overfit.}\label{fig:lr_search_cosine}
+    \caption{Training graphs for the CRNN model with different learning rates. The learning rate of $0.001$ seems to be the best, as it converges in a reasonable time and the validation accuracy increases in a stable fashion.}\label{fig:lr_search_cosine}
 \end{figure}
 
 We report a subset of metrics in Table~\ref{tab:crnn_lr}. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. However, there were no large differences in performance between the learning rate schedulers. We proceed with these hyperparameters as defaults for the rest of the experiments.
@@ -112,7 +112,7 @@ With this learning rate and learning rate scheduler fixed, we perform a random s
         \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots \\
         \bottomrule
     \end{tabular}
-    \caption{CRNN model results on the large vocabualary with different hyperparameters. The best model was found to have a hidden size of $201$, a single layer GRU and a segment length of $28$.}\label{tab:crnn_hparams}
+    \caption{CRNN model results on the large vocabualary with different hyperparameters. Results across all hyperparameters were very similar. We conclude that the hyperparameters tested did not make much of a difference to the model. We proceed with the best model hidden size of $201$, a single layer GRU and a segment length of $28$, although any configuration would work similarly. This also implies that model is learning something simple because the increased complexity of larger models did not help with performance.}\label{tab:crnn_hparams}
 \end{table}
 
 \subsection{Model Analysis}
