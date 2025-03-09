@@ -24,7 +24,7 @@ This annotation is far too flexible to be used as targets for a machine learning
 
 Chords in Harte notation are mapped to this vocabulary by first converting them to a tuple of integers using the Harte library. These integers represent pitch classes and are in the range 0-11 inclusive. These are transposed such that 0 is the root. These pitch classes are then matched to the pitch classes of a quality in the vocabulary, similar to the work by~\citet{StructuredTraining}. However, for some chords this was not sufficient. For example, a \texttt{C:maj6(9)} chord would not fit perfectly with any of these templates due to the added 9th. Therefore, the chord is also passed through Music21's~\citep{music21} chord quality function which matches chords such as the one above to major. This function would not work alone as its list of qualities is not as rich as the one defined above. If the chord is still not matched, it is mapped to \texttt{X}. This additional step is not done by \citet{StructuredTraining} but gives more meaningful labels to roughly one third of the chords previously mapped to \texttt{X}.
 
-\subsection{Pop}
+\subsection{Pop Dataset}
 
 The \emph{Pop} dataset consists of songs from the \emph{Mcgill Billboard}, \emph{Isophonics}, \emph{RWC-Pop} and \emph{USPop} datasets mentioned in Section~\ref{sec:background-acr}. This collection was originally proposed in work by~\citet{FourTimelyInsights} in order to bring together most of the known datasets for chord recognition. The dataset consists of 1,217 songs, filtered for duplicates and selected for those with annotations available. The dataset was provided with obfuscated filenames and audio as \texttt{.mp3} files and annotations as \texttt{.jams} files~\citep{JAMS}. 
 
