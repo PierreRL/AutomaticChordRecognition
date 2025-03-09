@@ -1,3 +1,28 @@
 {
-    "r.lsp.promptToInstall": false
+    "r.lsp.promptToInstall": false,
+    "cSpell.words": [
+        "arpeggiated",
+        "CRNN",
+        "hdim",
+        "hyperparameters",
+        "Isophonics",
+        "JAAH",
+        "librosa",
+        "majmin",
+        "majorminor",
+        "Melspectrograms",
+        "minmaj",
+        "mirex",
+        "MUDA",
+        "numpy",
+        "overfit",
+        "overfitting",
+        "Poltronieri",
+        "SFTF",
+        "sklearn",
+        "softmax",
+        "Vandellas",
+        "voicings",
+        "Zweieck"
+    ]
 }

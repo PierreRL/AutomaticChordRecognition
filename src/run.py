@@ -149,6 +149,12 @@ def main():
         action="store_true",
         help="Run a single batch of training and validation and small evaluation set.",
     )
+    parser.add_argument(
+        "--job_id",
+        type=str,
+        default=None,
+        help="Job ID for the experiment. Used for tracking in the cluster.",
+    )
 
     args = parser.parse_args()
 
@@ -217,6 +223,7 @@ def main():
         "time": str(datetime.now()),
         "model": model.to_dict(),
         "seed": args.seed,
+        "job_id": args.job_id,
         "dataset": {
             "train_size": len(train_dataset),
             "val_size": len(val_dataset),
