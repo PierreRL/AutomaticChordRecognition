@@ -1,0 +1,59 @@
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Motivation}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Aims}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Outline}{1}{section.1.3}%
+\contentsline {chapter}{\numberline {2}Background \& Related Work}{2}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Background}{2}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Harmony, Chords and Chord Recognition}{2}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Music Features}{4}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Related Work}{5}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Automatic Chord Recognition}{5}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Synthetic Data Generation}{6}{subsection.2.2.2}%
+\contentsline {chapter}{\numberline {3}Experimental Setup}{7}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Data}{7}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Preprocessing}{7}{subsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1.1}Audio to CQT}{7}{subsubsection.3.1.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1.2}Chord Annotations}{8}{subsubsection.3.1.1.2}%
+\contentsline {subsection}{\numberline {3.1.2}Pop Dataset}{9}{subsection.3.1.2}%
+\contentsline {subsubsection}{\numberline {3.1.2.1}Data Integrity}{9}{subsubsection.3.1.2.1}%
+\contentsline {subsubsection}{\numberline {3.1.2.2}Chord Distribution}{11}{subsubsection.3.1.2.2}%
+\contentsline {subsection}{\numberline {3.1.3}JAAH Dataset}{12}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}Evaluation}{12}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Training}{14}{section.3.3}%
+\contentsline {chapter}{\numberline {4}Model Comparison}{15}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Logistic Baseline}{15}{section.4.1}%
+\contentsline {section}{\numberline {4.2}CRNN}{16}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Model Description}{16}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Small to Large Vocabulary}{16}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Hyperparameter Tuning}{18}{subsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.3.1}Learning rates}{18}{subsubsection.4.2.3.1}%
+\contentsline {subsubsection}{\numberline {4.2.3.2}Model Hyperparameters}{20}{subsubsection.4.2.3.2}%
+\contentsline {subsection}{\numberline {4.2.4}Model Analysis}{21}{subsection.4.2.4}%
+\contentsline {subsubsection}{\numberline {4.2.4.1}Qualities and Roots}{21}{subsubsection.4.2.4.1}%
+\contentsline {subsubsection}{\numberline {4.2.4.2}Transition Frames}{23}{subsubsection.4.2.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.4.3}Smoothness}{23}{subsubsection.4.2.4.3}%
+\contentsline {subsubsection}{\numberline {4.2.4.4}Performance Across the Context}{24}{subsubsection.4.2.4.4}%
+\contentsline {subsubsection}{\numberline {4.2.4.5}Generalising Across Songs}{24}{subsubsection.4.2.4.5}%
+\contentsline {subsubsection}{\numberline {4.2.4.6}Four Illustrative Examples}{25}{subsubsection.4.2.4.6}%
+\contentsline {section}{\numberline {4.3}Weighted Loss}{27}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Pitch Augmentation}{28}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Structured Training}{29}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Transformer}{29}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Using Generative Features}{29}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Decoding}{29}{section.4.8}%
+\contentsline {section}{\numberline {4.9}Results on Test Set}{29}{section.4.9}%
+\contentsline {chapter}{\numberline {5}Synthetic Data Generation}{30}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Performance on JAAH}{30}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Generation method}{30}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Experiments}{30}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Results}{30}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Qualitative Analysis}{30}{section.5.5}%
+\contentsline {chapter}{\numberline {6}Conclusions, Limitations and Further Work}{31}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Conclusions}{31}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Limitations}{31}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Further Work}{31}{section.6.3}%
+\contentsline {chapter}{Bibliography}{32}{chapter*.18}%
+\contentsline {chapter}{\numberline {A}Appendix}{36}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Histogram over Incorrect Region Lengths}{36}{section.A.1}%
+\contentsline {section}{\numberline {A.2}Accuracy vs Context Length of Evaluation}{37}{section.A.2}%
+\contentsline {section}{\numberline {A.3}Accuracy vs Hop Length}{37}{section.A.3}%

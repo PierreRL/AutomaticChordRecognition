@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99d (TeX Live 2024)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: thesis.aux
+The style file: plainnat.bst
+Database file #1: references.bib
+Warning--empty booktitle in McgillBillboard
+Warning--empty booktitle in RWC
+Warning--empty booktitle in HarteNotation
+Warning--empty booktitle in JAMS
+Warning--empty booktitle in ACRHMM
+Warning--empty booktitle in NNLSChroma
+Warning--empty booktitle in librosa
+Warning--empty booktitle in ShazamSpectrogram
+You've used 40 entries,
+            2773 wiz_defined-function locations,
+            852 strings with 14554 characters,
+and the built_in function-call counts, 22977 in all, are:
+= -- 1959
+> -- 1663
+< -- 33
++ -- 555
+- -- 515
+* -- 1868
+:= -- 3456
+add.period$ -- 149
+call.type$ -- 40
+change.case$ -- 290
+chr.to.int$ -- 40
+cite$ -- 88
+duplicate$ -- 970
+empty$ -- 1695
+format.name$ -- 583
+if$ -- 4912
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 30
+newline$ -- 234
+num.names$ -- 164
+pop$ -- 666
+preamble$ -- 1
+purify$ -- 250
+quote$ -- 0
+skip$ -- 866
+stack$ -- 0
+substring$ -- 566
+swap$ -- 199
+text.length$ -- 16
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 440
+warning$ -- 8
+while$ -- 163
+width$ -- 0
+write$ -- 556
+(There were 8 warnings)
