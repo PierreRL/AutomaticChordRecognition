@@ -8,3 +8,5 @@ report/tex_build/*
 *.pyc
 __pycache__/
 results/*
+.vscode/*
+.DS_Store
