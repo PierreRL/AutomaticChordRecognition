@@ -17,7 +17,7 @@ class LogisticACR(BaseACR):
     Pytorch implementation of a simple logistic regression model for Automatic Chord Recognition.
     """
 
-    def __init__(self, input_features: int = 216, num_classes: int = NUM_CHORDS):
+    def __init__(self, input_features: int = 216, num_classes: int = NUM_CHORDS, hmm_smoothing: bool = True, hmm_alpha: float = 0.2):
         """
         Initializes the LogisticACR model.
 
@@ -25,7 +25,7 @@ class LogisticACR(BaseACR):
             input_features (int): Number of input frequency bins (e.g., 216 for CQT features).
             num_classes (int): Number of chord classes in the vocabulary.
         """
-        super(LogisticACR, self).__init__()
+        super(LogisticACR, self).__init__(hmm_smoothing, hmm_alpha)
         self.num_classes = num_classes
         self.linear = nn.Linear(input_features, num_classes)
 

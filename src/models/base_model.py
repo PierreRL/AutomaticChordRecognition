@@ -1,4 +1,9 @@
+import autorootcwd
+
 import torch
+
+from src.models.hmm_smoother import HMMSmoother
+from src.utils import NUM_CHORDS
 
 
 class BaseACR(torch.nn.Module):
@@ -6,7 +11,16 @@ class BaseACR(torch.nn.Module):
     Base class for Automatic Chord Recognition models.
     """
 
-    def predict(self, features: torch.Tensor) -> torch.Tensor:
+    def __init__(self, hmm_smoothing: bool = True, hmm_alpha: float = 0.2):
+        """
+        Args:
+            hmm_smoothing (bool): If True, the model will apply HMM smoothing to the chord predictions.
+        """
+        super().__init__()
+        if hmm_smoothing:
+            self.hmm_smoother = HMMSmoother(num_classes=NUM_CHORDS, alpha=hmm_alpha)
+
+    def predict(self, features: torch.Tensor, device = None) -> torch.Tensor:
         """
         Given a tensor of features, predict the chord labels as a one-hot tensor.
 
@@ -15,7 +29,10 @@ class BaseACR(torch.nn.Module):
         Returns:
             chord_labels (torch.Tensor): A tensor of chord ids of shape (B, frames).
         """
-        output = self(features)
+        with torch.no_grad():
+            output = self(features) 
+            if hasattr(self, "hmm_smoother"):
+                output = self.hmm_smoother(output, device)
         return torch.argmax(output, dim=-1)
 
     def __str__(self):

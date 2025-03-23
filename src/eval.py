@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 
 from src.models.ismir2017 import ISMIR2017ACR
 from src.models.base_model import BaseACR
+from src.models.hmm_smoother import HMMSmoother
 from src.data.dataset import FullChordDataset
 from src.utils import (
     id_to_chord_table,
@@ -107,9 +108,7 @@ def evaluate_model(
         EvalMetric.SEVENTH,
         EvalMetric.SONG_WISE_ACC,
     ],
-    frame_wise_acc: bool = True,
-    class_wise_acc: bool = True,
-    batch_size: int = 8,
+    batch_size: int = 64,
     device: torch.device = None,
 ) -> Dict[str, float]:
     """
@@ -195,19 +194,19 @@ def evaluate_model(
     all_hypotheses = np.array(all_hypotheses)
     all_references = np.array(all_references)
 
-    if frame_wise_acc:
-        metrics["frame_wise_acc"] = accuracy_score(all_references, all_hypotheses)
+    # Compute frame-wise accuracy
+    metrics["frame_wise_acc"] = accuracy_score(all_references, all_hypotheses)
 
-    if class_wise_acc:
-        class_accs = np.full(NUM_CHORDS, np.nan)
-        for i in range(NUM_CHORDS):
-            # Find all references of class i
-            mask = all_references == i
-            class_references = all_references[mask]
-            class_hypotheses = all_hypotheses[mask]
+    # Compute class-wise accuracy
+    class_accs = np.full(NUM_CHORDS, np.nan)
+    for i in range(NUM_CHORDS):
+        # Find all references of class i
+        mask = all_references == i
+        class_references = all_references[mask]
+        class_hypotheses = all_hypotheses[mask]
 
-            if class_references.size > 0:
-                class_accs[i] = accuracy_score(class_references, class_hypotheses)
+        if class_references.size > 0:
+            class_accs[i] = accuracy_score(class_references, class_hypotheses)
 
         metrics["class_wise_acc_mean"] = np.nanmean(class_accs)  # Ignore NaNs
         metrics["class_wise_acc_median"] = np.nanmedian(class_accs)
@@ -217,46 +216,46 @@ def evaluate_model(
 
 def main():
     # Testing the seventh chords on C major
-    chord1 = "C:maj7"
-    chord2 = "C:maj"
-    chord3 = "C:min"
-    chord4 = "C:min7"
-    chord5 = "C:7"
-    chord6 = "C:dim"
+    # chord1 = "C:maj7"
+    # chord2 = "C:maj"
+    # chord3 = "C:min"
+    # chord4 = "C:min7"
+    # chord5 = "C:7"
+    # chord6 = "C:dim"
 
-    # print(EvalMetric.ROOT.evaluate([chord1], [chord2]))
-    # print(EvalMetric.ROOT.evaluate([chord1], [chord3]))
-    print(EvalMetric.SEVENTH.evaluate([chord1], [chord1]))
-    print(EvalMetric.SEVENTH.evaluate([chord1], [chord2]))
-    print(EvalMetric.SEVENTH.evaluate([chord2], [chord1]))
+    # # print(EvalMetric.ROOT.evaluate([chord1], [chord2]))
+    # # print(EvalMetric.ROOT.evaluate([chord1], [chord3]))
+    # print(EvalMetric.SEVENTH.evaluate([chord1], [chord1]))
+    # print(EvalMetric.SEVENTH.evaluate([chord1], [chord2]))
+    # print(EvalMetric.SEVENTH.evaluate([chord2], [chord1]))
 
-    # from torch.utils.data import random_split
+    from torch.utils.data import random_split
 
-    # full_length_dataset = FullChordDataset()
+    full_length_dataset = FullChordDataset()
 
-    # # Split the dataset into train and test
-    # train_size = int(0.8 * len(full_length_dataset))
-    # test_size = len(full_length_dataset) - train_size
+    # Split the dataset into train and test
+    train_size = int(0.8 * len(full_length_dataset))
+    test_size = len(full_length_dataset) - train_size
 
-    # torch.manual_seed(42)
-    # train_dataset, test_dataset = random_split(
-    #     full_length_dataset, [train_size, test_size]
-    # )
+    torch.manual_seed(42)
+    train_dataset, test_dataset = random_split(
+        full_length_dataset, [train_size, test_size]
+    )
 
-    # # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
+    # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
 
-    # # Initialize the model architecture
-    # model = ISMIR2017ACR(
-    #     input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
-    # )
+    # Initialize the model architecture
+    model = ISMIR2017ACR(
+        input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
+    )
 
-    # # Load the trained weights
-    # exp_name = "large-vocab-fewer-X"
-    # save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
-    # model.load_state_dict(torch.load(save_path, weights_only=True))
+    # Load the trained weights
+    exp_name = "large-vocab-fewer-X"
+    save_path = os.path.join(f"data/experiments/{exp_name}/best_model.pth")
+    model.load_state_dict(torch.load(save_path, weights_only=True))
 
-    # metrics = evaluate_model(model, test_dataset, batch_size=32)
-    # print(metrics)
+    metrics = evaluate_model(model, test_dataset, batch_size=32)
+    print(metrics)
 
 
 if __name__ == "__main__":

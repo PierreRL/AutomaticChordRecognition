@@ -7,7 +7,8 @@ import torch
 from src.train import train_model, TrainingArgs
 from src.data.dataset import generate_datasets
 from src.models.ismir2017 import ISMIR2017ACR
-from models.logistic_acr import LogisticACR
+from src.models.hmm_smoother import HMMSmoother
+from src.models.logistic_acr import LogisticACR
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
@@ -142,6 +143,18 @@ def main():
         default=0.65,
         help="Alpha smoothing parameter for the weighted loss.",
     )
+    parser.add_argument(
+        "--no_hmm_smoothing",
+        dest="hmm_smoothing",
+        action="store_false",
+        help="Disable HMM smoothing.",
+    )
+    parser.add_argument(
+        "--hmm_alpha",
+        type=float,
+        default=0.2,
+        help="Alpha parameter for the HMM smoothing. The probability of staying in the same chord.",
+    )
 
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
@@ -207,9 +220,11 @@ def main():
             cr2=args.cr2,
             hidden_size=args.hidden_size,
             num_layers=args.num_layers,
+            hmm_smoothing=args.hmm_smoothing,
+            hmm_alpha=args.hmm_alpha,
         )
     elif args.model == "logistic":
-        model = LogisticACR(input_features=N_BINS, num_classes=NUM_CHORDS)
+        model = LogisticACR(input_features=N_BINS, num_classes=NUM_CHORDS, hmm_smoothing=args.hmm_smoothing, hmm_alpha=args.hmm_alpha)
     elif args.model == "transformer":
         raise NotImplementedError("Transformer model not implemented yet.")
     else:
@@ -230,6 +245,8 @@ def main():
             "test_size": len(test_dataset),
             "NUM_CHORDS": NUM_CHORDS,
         },
+        "hmm_smoothing": args.hmm_smoothing,
+        "hmm_alpha": args.hmm_alpha,
         "args": vars(args),
     }
     write_json(run_metadata, f"{DIR}/metadata.json")

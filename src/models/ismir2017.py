@@ -19,6 +19,7 @@ from src.utils import NUM_CHORDS
 class ISMIR2017ACR(BaseACR):
     """
     Pytorch implementation of the ISMIR 2017 model for Automatic Chord Recognition.
+    https://brianmcfee.net/papers/ismir2017_chord.pdf
     """
 
     def __init__(
@@ -28,7 +29,10 @@ class ISMIR2017ACR(BaseACR):
         hidden_size: int = 201,
         num_layers: int = 1,
         cr2: bool = False,
+        crf: bool = False,
         activation: str = "relu",
+        hmm_smoothing: bool = True,
+        hmm_alpha: float = 0.2,
     ):
         """
         Initializes the ISMIR2017ACR model.
@@ -41,8 +45,9 @@ class ISMIR2017ACR(BaseACR):
             num_layers (int): Number of layers in the GRU.
             activation (str): Activation function to use (relu or prelu).
         """
-        super(ISMIR2017ACR, self).__init__()
+        super().__init__(hmm_smoothing=hmm_smoothing, hmm_alpha=hmm_alpha)
         self.cr2 = cr2
+        self.crf = crf
         self.input_features = input_features
         self.hidden_size = hidden_size
         self.num_classes = num_classes
