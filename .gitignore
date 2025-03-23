@@ -1,10 +1,10 @@
 data/*
 experiments/*
 .python-version
-report/tex_build/*
-!report/dissertation.pdf
-!report/dissertation.tex
-!report/references.bib
+thesis/tex_build/*
+!thesis/thesis.pdf
+!thesis/thesis.tex
+!thesis/references.bib
 *.pyc
 __pycache__/
 results/*
