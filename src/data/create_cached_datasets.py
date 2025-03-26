@@ -8,13 +8,17 @@ from src.data.dataset import FullChordDataset
 
 
 def main(
-    hop_length, create_cqts, input_dir="data/processed", output_dir="data/processed"
+    create_cqts=True,
+    hop_length=4096,
+    input_dir="data/processed",
+    output_dir="data/processed",
+    ignore_chords=False,
 ):
     dataset = FullChordDataset(hop_length=hop_length, input_dir=output_dir)
     os.makedirs(dataset.cqt_cache_dir, exist_ok=True)
     os.makedirs(dataset.chord_cache_dir, exist_ok=True)
 
-    filenames = get_filenames()
+    filenames = get_filenames(directory=f"{input_dir}/audio")
     for filename in tqdm(filenames):
         if create_cqts:
             cqt = get_cqt(
@@ -22,6 +26,8 @@ def main(
             )
             torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
 
+        if ignore_chords:
+            continue
         chord_ids = get_chord_annotation(
             filename,
             frame_length=hop_length / SR,
@@ -33,7 +39,11 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Cache dataset for faster loading.")
     parser.add_argument(
-        "--hop_length", type=int, required=True, help="Hop length to use in processing."
+        "--hop_length",
+        type=int,
+        required=False,
+        help="Hop length to use in processing.",
+        default=4096,
     )
     parser.add_argument(
         "--create_cqts", action="store_true", help="Flag to create CQTs (takes ~1hr)"
@@ -50,6 +60,17 @@ if __name__ == "__main__":
         default="data/processed",
         help="Directory to save the cached data.",
     )
+    parser.add_argument(
+        "--ignore_chords",
+        action="store_true",
+        help="Flag to ignore the chord annotations.",
+    )
     args = parser.parse_args()
 
-    main(args.hop_length, args.create_cqts)
+    main(
+        create_cqts=args.create_cqts,
+        hop_length=args.hop_length,
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        ignore_chords=args.ignore_chords,
+    )

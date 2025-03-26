@@ -122,7 +122,7 @@ def get_cqt(
     Returns:
         cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
     """
-    # Default hyperparameters from https://brianmcfee.net/papers/ismir2017_chord.pdf
+    # Default hyperparameters from https://brianmcfee.net/papers/crnn_chord.pdf
     if override_dir is not None:
         src = librosa.load(
             os.path.join(f"{override_dir}/audio", f"{filename}.mp3"), sr=sr
@@ -543,7 +543,7 @@ chord_to_id_map = {v: k for k, v in id_to_chord_map.items()}
 
 def get_chord_annotation(
     filename: str,
-    frame_length: float = 0.1,
+    frame_length: float = HOP_LENGTH / SR,
     return_transitions: bool = False,
     override_dir: str = None,
 ) -> torch.Tensor:

@@ -6,7 +6,7 @@ import torch
 
 from src.train import train_model, TrainingArgs
 from src.data.dataset import generate_datasets
-from src.models.ismir2017 import ISMIR2017ACR
+from models.crnn import CRNN
 from src.models.hmm_smoother import HMMSmoother
 from src.models.logistic_acr import LogisticACR
 from src.utils import (
@@ -41,8 +41,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="ismir2017",
-        help="Model to train. Values: ismir2017, logistic, transformer.",
+        default="crnn",
+        help="Model to train. Values: crnn, logistic, transformer.",
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
@@ -101,7 +101,7 @@ def main():
     parser.add_argument(
         "--cr2",
         action="store_true",
-        help="Whether to use the cr2 version of ISMIR2017, with comparable model size.",
+        help="Whether to use the cr2 version of crnn, with comparable model size.",
     )
     parser.add_argument(
         "--hidden_size",
@@ -213,8 +213,8 @@ def main():
         args.output_dir = "experiments_fdr"
 
     # Initialize the model
-    if args.model == "ismir2017":
-        model = ISMIR2017ACR(
+    if args.model == "crnn":
+        model = CRNN(
             input_features=N_BINS,
             num_classes=NUM_CHORDS,
             cr2=args.cr2,
@@ -224,12 +224,17 @@ def main():
             hmm_alpha=args.hmm_alpha,
         )
     elif args.model == "logistic":
-        model = LogisticACR(input_features=N_BINS, num_classes=NUM_CHORDS, hmm_smoothing=args.hmm_smoothing, hmm_alpha=args.hmm_alpha)
+        model = LogisticACR(
+            input_features=N_BINS,
+            num_classes=NUM_CHORDS,
+            hmm_smoothing=args.hmm_smoothing,
+            hmm_alpha=args.hmm_alpha,
+        )
     elif args.model == "transformer":
         raise NotImplementedError("Transformer model not implemented yet.")
     else:
         raise ValueError(
-            f"Invalid model type {args.model}. Must be one of ismir2017, logistic, transformer."
+            f"Invalid model type {args.model}. Must be one of crnn, logistic, transformer."
         )
 
     # Save the experiment name and time

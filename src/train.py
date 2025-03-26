@@ -11,7 +11,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from src.models.ismir2017 import ISMIR2017ACR
+from src.models.crnn import CRNN
 from src.data.dataset import FixedLengthRandomChordDataset, FixedLengthChordDataset
 from src.utils import get_torch_device, collate_fn, NUM_CHORDS, N_BINS, EarlyStopper
 
@@ -264,7 +264,7 @@ def main():
         dataset, [train_size, val_size]
     )
     # Initialize the model
-    model = ISMIR2017ACR(input_features=N_BINS, num_classes=NUM_CHORDS, cr2=True)
+    model = CRNN(input_features=N_BINS, num_classes=NUM_CHORDS, cr2=True)
 
     training_args = TrainingArgs(
         epochs=100,

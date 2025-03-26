@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 import mir_eval
 from sklearn.metrics import accuracy_score
 
-from src.models.ismir2017 import ISMIR2017ACR
+from src.models.crnn import CRNN
 from src.models.base_model import BaseACR
 from src.models.hmm_smoother import HMMSmoother
 from src.data.dataset import FullChordDataset
@@ -245,7 +245,7 @@ def main():
     # dataset = FixedLengthChordDataset(test_dataset, segment_length=10)
 
     # Initialize the model architecture
-    model = ISMIR2017ACR(
+    model = CRNN(
         input_features=test_dataset.dataset.n_bins, num_classes=NUM_CHORDS, cr2=False
     )
 
