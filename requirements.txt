@@ -1,4 +1,4 @@
-audiocraft==1.4.0a2
+audiocraft @ git+https://github.com/facebookresearch/audiocraft.git@896ec7c47f5e5d1e5aa1e4b260c4405328bf009d
 autorootcwd==1.0.1
 harte_library==0.4.5
 jams==0.3.4
