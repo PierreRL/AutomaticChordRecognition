@@ -22,6 +22,7 @@ class FullChordDataset(Dataset):
         self,
         filenames: List[str] = None,
         hop_length: int = HOP_LENGTH,
+        generative_features: bool = False,
         mask_X: bool = False,
         input_dir: str = "./data/processed/",
         small_vocab: bool = SMALL_VOCABULARY,
@@ -31,7 +32,10 @@ class FullChordDataset(Dataset):
         Args:
             filenames (list) = None: A list of filenames to include in the dataset. If None, all files in the processed audio directory are included.
             hop_length (int): The hop length used to compute the log CQT.
+            generative_features (bool): If True, the dataset loads generative features from MusicGen.
             mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
+            input_dir (str): The directory where the audio files are stored.
+            small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
         """
         if not filenames:
             print("Using all filenames!")
@@ -45,8 +49,11 @@ class FullChordDataset(Dataset):
         self.input_dir = input_dir
         self.filenames = filenames
         self.hop_length = hop_length
+        self.generative_features = generative_features
         self.mask_X = mask_X
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
+        if self.generative_features:
+            self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
         if self.small_vocab:
@@ -58,28 +65,36 @@ class FullChordDataset(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        cqt, chord_ids = self.__get_cached_item(idx)
+        if self.generative_features:
+            cqt, chord_ids, gen = self.__get_cached_item(idx)
+        else:
+            cqt, chord_ids = self.__get_cached_item(idx)
+
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
-        return self.get_minimum_length_frame(cqt, chord_ids)
-
-    def get_minimum_length_frame(
-        self, cqt: Tensor, chord_ids: Tensor
-    ) -> Tuple[Tensor, Tensor]:
+        if self.generative_features:
+            return self.get_minimum_length_frame(cqt, chord_ids, gen)
+        else:
+            return self.get_minimum_length_frame(cqt, chord_ids)
+    
+    def get_minimum_length_frame(self, *tensors: Tensor) -> Tuple[Tensor, ...]:
         """
-        Returns the cqt and chord annotation with the minimum length.
+        Returns each tensor trimmed to the minimum length along the first dimension
+        among all provided tensors.
 
         Args:
-            cqt (Tensor): The log CQT.
-            chord_ids (Tensor): The chord annotation.
+            *tensors (Tensor): An arbitrary number of tensors.
 
         Returns:
-            cqt (Tensor): The log CQT with the minimum length.
-            chord_ids (Tensor): The chord annotation with the minimum length.
+            Tuple[Tensor, ...]: A tuple of tensors, each sliced to the minimum length.
         """
-        minimum_length_frames = min(cqt.shape[0], chord_ids.shape[0])
-        return cqt[:minimum_length_frames], chord_ids[:minimum_length_frames]
+        if not tensors:
+            raise ValueError("At least one tensor must be provided")
+
+        # Compute the minimum length among all tensors along the first dimension.
+        min_length = min(tensor.shape[0] for tensor in tensors)
+        return tuple(tensor[:min_length] for tensor in tensors)
 
     def get_class_weights(self, epsilon=1e1, alpha=0.65) -> torch.Tensor:
         """
@@ -122,7 +137,11 @@ class FullChordDataset(Dataset):
         chord_ids = torch.load(
             f"{self.chord_cache_dir}/{filename}.pt", weights_only=True
         )
-        return cqt, chord_ids
+        if self.generative_features:
+            gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
+            return cqt, chord_ids, gen
+        else:
+            return cqt, chord_ids
 
     def get_filename(self, idx):
         return self.filenames[idx]

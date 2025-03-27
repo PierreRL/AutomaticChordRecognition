@@ -610,7 +610,7 @@ def get_chord_annotation(
     return frames
 
 
-def get_torch_device():
+def get_torch_device(allow_mps=True):
     """
     Get the torch device to use for training.
 
@@ -622,8 +622,9 @@ def get_torch_device():
     if torch.cuda.is_available():
         return torch.device("cuda")
 
+
     # MPS
-    if torch.backends.mps.is_available():
+    if allow_mps and torch.backends.mps.is_available():
         if not torch.backends.mps.is_built():
             print("MPS is available but not built.")
         return torch.device("mps")
