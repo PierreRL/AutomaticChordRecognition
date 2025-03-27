@@ -49,15 +49,10 @@ SCRATCH_DISK=/disk/scratch
 SCRATCH_HOME=${SCRATCH_DISK}/${USER}
 mkdir -p ${SCRATCH_HOME}
 
-
-# Set up the virtual environment
+# Setup environment
 echo "Loading modules"
 
-VENV_DIR=~/ug4_venv
-python3 -m venv $VENV_DIR
-source $VENV_DIR/bin/activate
-pip install --upgrade pip
-pip install -r ~/LeadSheetTranscription/requirements.txt
+source ~/ug4_venv/bin/activate
 
 
 # Move data
