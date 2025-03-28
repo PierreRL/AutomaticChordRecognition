@@ -55,11 +55,16 @@ echo "Loading modules"
 source ~/ug4_venv/bin/activate
 
 
+
 # Move data
 # echo "Moving input data to the compute node's scratch space: $SCRATCH_DISK"
 
 repo_home=/home/${USER}/LeadSheetTranscription
 # src_path=${repo_home}/data/processed
+
+# Set up any environment variables
+export HF_HUB_OFFLINE=1
+export AUDIOCRAFT_CACHE_DIR="${repo_home}/data/model_cache"
 
 # # input data directory path on the scratch disk of the node
 # dest_path=${SCRATCH_HOME}/data/processed
