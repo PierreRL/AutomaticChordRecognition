@@ -16,7 +16,7 @@ from src.data.musicgen import get_musicgen_model, extract_song_hidden_representa
 
 def main(
     hop_length=4096,
-    dir = "data/processed",
+    dir = "./data/processed",
     model_size="large",
     layer_index=None,
     max_chunk_length=5
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dir",
         type=str,
-        default="data/processed",
+        default="./data/processed",
         help="Directory for input and output. Expects audio files in dir/audio and will output to dir/gen.",
     )
     parser.add_argument(

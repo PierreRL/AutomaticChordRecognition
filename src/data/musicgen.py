@@ -31,9 +31,13 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
-    local_path = os.path.expanduser(f"~/musicgen-{model_size}")
-    model = MusicGen.get_pretrained(local_path, device=device)
+    model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
+    # local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    # model = MusicGen.get_pretrained(local_path, device=device)
+    model.lm = model.lm.float()
+    model.compression_model = model.compression_model.float()
+    model.lm.eval()
+    model.compression_model.eval()
     return model
 
 def get_wav(filename: str, dir = "./data/processed/", device = "cuda", target_sr = 32000):
@@ -135,6 +139,9 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_ind
     # Fuse the audio embeddings with the conditioning.
     fused_input, cross_attention_input = model.lm.fuser(input_emb, condition_tensors)
     # fused_input shape: [B, S, embed_dim]
+
+    fused_input = fused_input.float()
+    cross_attention_input = cross_attention_input.float()
     
     # Prepare the transformer input by adding positional embeddings.
     transformer = model.lm.transformer  # This is a 'StreamingTransformer'.
