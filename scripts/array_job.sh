@@ -64,7 +64,6 @@ repo_home=/home/${USER}/LeadSheetTranscription
 
 # Set up any environment variables
 export HF_HUB_OFFLINE=1
-export AUDIOCRAFT_CACHE_DIR="${repo_home}/data/model_cache"
 
 # # input data directory path on the scratch disk of the node
 # dest_path=${SCRATCH_HOME}/data/processed

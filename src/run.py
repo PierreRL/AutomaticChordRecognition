@@ -124,7 +124,7 @@ def main():
     parser.add_argument(
         "--segment_length",
         type=int,
-        default=28,
+        default=10,
         help="Segment length for training dataset in seconds.",
     )
     parser.add_argument(
