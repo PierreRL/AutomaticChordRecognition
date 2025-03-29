@@ -149,6 +149,8 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_ind
     else:
         x = fused_input
 
+    x = x.float()  # Ensure the input is in float32 format.
+
     # Determine which layer to extract.
     num_layers = len(transformer.layers)
     if layer_index is None:
