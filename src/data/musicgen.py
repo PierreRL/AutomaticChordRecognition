@@ -33,9 +33,9 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     model = MusicGen.get_pretrained("facebook/musicgen-" + model_size, device=device)
     return model
 
-def get_wav(filename: str, dir = "./data/processed/"):
+def get_wav(filename: str, dir = "./data/processed/", device = "cuda", target_sr = 32000):
     """
-    Loads a wav file from the given directory. Resamples the audio to 32kHz if the model is not None.
+    Loads a wav file from the given directory. Resamples the audio to 32kHz if the model is not None and converts to mono.
 
     Args:
     - filename (str): The name of the file to load.
@@ -43,12 +43,23 @@ def get_wav(filename: str, dir = "./data/processed/"):
 
     Returns:
     - wav (torch.Tensor): The audio waveform.
+    - sr (int): The sample rate of the audio.
     """
+    # Load the audio file.
     wav, sr = torchaudio.load(f"{dir}/audio/{filename}.mp3")
-    new_sr = 32000
-    resampler = Resample(orig_freq=sr, new_freq=new_sr)
-    wav = resampler(wav)
-    return wav
+
+    if wav.shape[0] > 1:
+        wav = wav.mean(dim=0, keepdim=True)  # convert to mono
+
+    wav = wav.unsqueeze(0).to(device)  # shape becomes [1, channels, samples]
+
+    # Resample to target sample rate if provided.
+    # Note: MusicGen models are trained on 32kHz audio.
+    if target_sr is not None and sr != target_sr:
+        resampler = Resample(orig_freq=sr, new_freq=target_sr).to(device)
+        wav = resampler(wav)
+
+    return wav, sr
 
 def resample_hidden_states(
     hidden_states: torch.Tensor,
@@ -191,15 +202,7 @@ def extract_song_hidden_representation(
     model.compression_model = model.compression_model.to(device)
 
     # Load the audio file.
-    wav, sr = torchaudio.load(f"{dir}/audio/{filename}.mp3").to(device)
-
-    if wav.shape[0] > 1:
-        wav = wav.mean(dim=0, keepdim=True)  # convert to mono
-
-    wav = wav.unsqueeze(0).to(device)  # shape becomes [1, channels, samples]
-    if sr != model.sample_rate:
-        resampler = Resample(orig_freq=sr, new_freq=model.sample_rate).to(device)
-        wav = resampler(wav)
+    wav, sr = get_wav(filename, dir=dir, device=device, target_sr=model.sample_rate)
 
     total_samples = wav.shape[-1]
     total_duration = total_samples / sr  # in seconds
