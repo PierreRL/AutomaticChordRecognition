@@ -165,14 +165,20 @@ def train_model(
     for epoch in tqdm(range(args.epochs)):
         model.train()
         train_loss = 0.0
-        for i, (features, labels) in enumerate(train_loader):
-            features, labels = features.to(device), labels.to(device)
+        for i, (features, gens, labels) in enumerate(train_loader):
+            features, gens, labels = features.to(device), gens.to(device), labels.to(device)
             optimiser.zero_grad()
-            outputs = model(features)
+
+            print(features.shape, gens.shape, labels.shape)
+
+            if hasattr(model, 'use_generative_features') and model.use_generative_features:
+                outputs = model(features, gens)
+            else:
+                outputs = model(features)
 
             # Flatten the outputs and labels
             outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
-            labels = labels.view(-1)  # (B*frames)
+            labels = labels.view(-1)  # (B*frames) 
 
             # Compute the loss and backpropagate
             loss = criterion(outputs, labels)
@@ -195,9 +201,13 @@ def train_model(
         correct = 0
         total = 0
         torch.set_grad_enabled(False)
-        for i, (features, labels) in enumerate(val_loader):
-            features, labels = features.to(device), labels.to(device)
-            outputs = model(features)
+        for i, (features, gens, labels) in enumerate(val_loader):
+            cqts, gens, labels = features.to(device), gens.to(device), labels.to(device)
+
+            if hasattr(model, 'use_generative_features') and model.use_generative_features:
+                outputs = model(cqts, gens)
+            else:
+                outputs = model(cqts)
 
             # Flatten the outputs and labels across the batch and frames
             outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)

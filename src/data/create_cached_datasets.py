@@ -18,7 +18,7 @@ def main(
     os.makedirs(dataset.cqt_cache_dir, exist_ok=True)
     os.makedirs(dataset.chord_cache_dir, exist_ok=True)
 
-    filenames = get_filenames(directory=f"{input_dir}/audio")
+    filenames = get_filenames(dir=f"{input_dir}/audio")
     for filename in tqdm(filenames):
         if create_cqts:
             cqt = get_cqt(

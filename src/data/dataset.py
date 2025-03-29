@@ -22,9 +22,9 @@ class FullChordDataset(Dataset):
         self,
         filenames: List[str] = None,
         hop_length: int = HOP_LENGTH,
-        generative_features: bool = False,
         mask_X: bool = False,
         input_dir: str = "./data/processed/",
+        gen_layer: int = 18,
         small_vocab: bool = SMALL_VOCABULARY,
     ):
         """
@@ -49,11 +49,9 @@ class FullChordDataset(Dataset):
         self.input_dir = input_dir
         self.filenames = filenames
         self.hop_length = hop_length
-        self.generative_features = generative_features
         self.mask_X = mask_X
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
-        if self.generative_features:
-            self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen"
+        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{gen_layer}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
         if self.small_vocab:
@@ -65,18 +63,12 @@ class FullChordDataset(Dataset):
         return len(self.filenames)
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        if self.generative_features:
-            cqt, chord_ids, gen = self.__get_cached_item(idx)
-        else:
-            cqt, chord_ids = self.__get_cached_item(idx)
+        cqt, gen, chord_ids = self.__get_cached_item(idx)
 
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
-        if self.generative_features:
-            return self.get_minimum_length_frame(cqt, chord_ids, gen)
-        else:
-            return self.get_minimum_length_frame(cqt, chord_ids)
+        return self.get_minimum_length_frame(cqt, gen, chord_ids)
     
     def get_minimum_length_frame(self, *tensors: Tensor) -> Tuple[Tensor, ...]:
         """
@@ -137,11 +129,8 @@ class FullChordDataset(Dataset):
         chord_ids = torch.load(
             f"{self.chord_cache_dir}/{filename}.pt", weights_only=True
         )
-        if self.generative_features:
-            gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
-            return cqt, chord_ids, gen
-        else:
-            return cqt, chord_ids
+        gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
+        return cqt, gen, chord_ids
 
     def get_filename(self, idx):
         return self.filenames[idx]
@@ -181,7 +170,7 @@ class FixedLengthRandomChordDataset(Dataset):
         self.segment_length = segment_length
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        full_cqt, full_chord_ids = self.full_dataset[idx]
+        full_cqt, gen_features, full_chord_ids, = self.full_dataset[idx]
 
         # Convert segment length in seconds to segment length in frames
         segment_length_samples = int(
@@ -194,6 +183,9 @@ class FixedLengthRandomChordDataset(Dataset):
                 0, full_cqt.shape[0] - segment_length_samples, (1,)
             ).item()
             cqt_patch = full_cqt[start_idx : start_idx + segment_length_samples]
+            gen_features_patch = gen_features[
+                start_idx : start_idx + segment_length_samples
+            ]
             chord_ids_patch = full_chord_ids[
                 start_idx : start_idx + segment_length_samples
             ]
@@ -202,6 +194,9 @@ class FixedLengthRandomChordDataset(Dataset):
             pad_length = segment_length_samples - full_cqt.shape[0]
             cqt_patch = torch.cat(
                 (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
+            )
+            gen_features_patch = torch.cat(
+                (gen_features, torch.zeros((pad_length, gen_features.shape[1])))
             )
             chord_ids_patch = torch.cat(
                 (
@@ -215,7 +210,7 @@ class FixedLengthRandomChordDataset(Dataset):
             cqt_patch = pitch_shift_cqt(cqt_patch, semitones, BINS_PER_OCTAVE)
             chord_ids_patch = transpose_chord_id_vector(chord_ids_patch, semitones)
 
-        return cqt_patch, chord_ids_patch
+        return cqt_patch, gen_features_patch, chord_ids_patch
 
     def __len__(self):
         return len(self.full_dataset)
@@ -274,12 +269,13 @@ class FixedLengthChordDataset(Dataset):
 
         #  Loop over each song in the dataset
         for i in range(len(self.full_dataset)):
-            cqt, chord_ids = self.full_dataset[i]
+            cqt, gen, chord_ids  = self.full_dataset[i]
             # Loop over each 'segment' in the song
             for j in range(0, cqt.shape[0], self.segment_length_samples):
                 data.append(
                     (
                         cqt[j : j + self.segment_length_samples],
+                        gen[j : j + self.segment_length_samples],
                         chord_ids[j : j + self.segment_length_samples],
                     )
                 )

@@ -31,7 +31,7 @@ else:
 
 
 # Functions
-def get_filenames(directory: str = "data/processed/audio") -> list:
+def get_filenames(dir: str = "data/processed/audio") -> list:
     """
     Get a list of filenames in a directory.
 
@@ -41,14 +41,14 @@ def get_filenames(directory: str = "data/processed/audio") -> list:
     Returns:
         filenames (list): A list of filenames in the directory.
     """
-    filenames = os.listdir(directory)
+    filenames = os.listdir(dir)
     filenames = [
         filename.split(".")[0] for filename in filenames if filename.endswith(".mp3")
     ]
     return filenames
 
 
-def get_split_filenames() -> Tuple[List, List, List]:
+def get_split_filenames(dir: str = 'data/processed/') -> Tuple[List, List, List]:
     """Get the filenames for the train, validation, and test sets.
 
     Returns:
@@ -56,7 +56,7 @@ def get_split_filenames() -> Tuple[List, List, List]:
         train_filenames (list): The filenames for the training set.
         val_filenames (list): The filenames for the validation set.
         test_filenames (list): The filenames for the test set."""
-    with open("data/processed/splits.json", "r") as f:
+    with open(f"{dir}/splits.json", "r") as f:
         splits = json.load(f)
 
     return splits["train"], splits["val"], splits["test"]
@@ -644,13 +644,14 @@ def collate_fn(data: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
         cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
         chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
     """
-    cqt, chord_ids = zip(*data)
+    cqt, gens, chord_ids = zip(*data)
     # Stack the CQTs and chord annotations with padding if necessary
     cqt = torch.nn.utils.rnn.pad_sequence(cqt, batch_first=True, padding_value=0)
+    gens = torch.nn.utils.rnn.pad_sequence(gens, batch_first=True, padding_value=0)
     chord_ids = torch.nn.utils.rnn.pad_sequence(
         chord_ids, batch_first=True, padding_value=-1
     )
-    return cqt, chord_ids
+    return cqt, gens, chord_ids
 
 
 def write_json(dictionary: dict, file: str):

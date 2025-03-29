@@ -20,7 +20,7 @@ class BaseACR(torch.nn.Module):
         if hmm_smoothing:
             self.hmm_smoother = HMMSmoother(num_classes=NUM_CHORDS, alpha=hmm_alpha)
 
-    def predict(self, features: torch.Tensor, device = None) -> torch.Tensor:
+    def predict(self, features: torch.Tensor = None, gens: torch.Tensor = None, device = None) -> torch.Tensor:
         """
         Given a tensor of features, predict the chord labels as a one-hot tensor.
 
@@ -30,7 +30,12 @@ class BaseACR(torch.nn.Module):
             chord_labels (torch.Tensor): A tensor of chord ids of shape (B, frames).
         """
         with torch.no_grad():
-            output = self(features) 
+            if hasattr(self, "use_generative_features") and self.use_generative_features:
+                if gens is None:
+                    raise ValueError("Generative features must be provided.")
+                output = self(features, gens)
+            else:
+                output = self(features) 
             if hasattr(self, "hmm_smoother"):
                 output = self.hmm_smoother(output, device)
         return torch.argmax(output, dim=-1)

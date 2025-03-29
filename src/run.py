@@ -99,6 +99,17 @@ def main():
         help="Whether to apply random pitch shift.",
     )
     parser.add_argument(
+        "--use_generative_features",
+        action="store_true",
+        help="Whether to use generative features.",
+    )
+    parser.add_argument(
+        "--no_cqt",
+        dest="use_cqt",
+        action="store_false",
+        help="Whether to use CQT features.",
+    )
+    parser.add_argument(
         "--cr2",
         action="store_true",
         help="Whether to use the cr2 version of crnn, with comparable model size.",
@@ -163,6 +174,12 @@ def main():
         help="Run a single batch of training and validation and small evaluation set.",
     )
     parser.add_argument(
+        "--generative_features_dim",
+        type=int,
+        default=2048,
+        help="Dimensionality of each generative feature vector per frame.",
+    )
+    parser.add_argument(
         "--job_id",
         type=str,
         default=None,
@@ -185,7 +202,7 @@ def main():
     os.makedirs(DIR, exist_ok=True)
 
     # Load the dataset filenames
-    train_filenames, val_filenames, test_filenames = get_split_filenames()
+    train_filenames, val_filenames, test_filenames = get_split_filenames(dir=args.input_dir)
 
     # Create datasets
     (
@@ -222,6 +239,9 @@ def main():
             num_layers=args.num_layers,
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
+            use_cqt=args.use_cqt,
+            use_generative_features=args.use_generative_features,
+            gen_dimension=args.generative_features_dim,
         )
     elif args.model == "logistic":
         model = LogisticACR(
@@ -283,47 +303,36 @@ def main():
     # Train the model
     print(f"Number of training samples: {len(train_dataset)}")
     print("Training model...")
-    try:
-        training_history = train_model(
-            model,
-            train_dataset,
-            val_dataset,
-            args=training_args,
-        )
-    except Exception as e:
-        print(f"Training Error: {e}")
-        # Save the exception to a file
-        write_text(f"{DIR}/training_error.txt", str(e))
-        return
+    training_history = train_model(
+        model,
+        train_dataset,
+        val_dataset,
+        args=training_args,
+    )
 
     # Save the training history dictionary
     write_json(training_history, f"{DIR}/training_history.json")
 
-    # Evaluate the model on val and test
-    try:
-        # Load the best model
-        model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
 
-        # Validation set
-        print("Evaluation model on validation set...")
-        val_metrics = evaluate_model(model, val_final_test_dataset)
-        write_json(val_metrics, f"{DIR}/val_metrics.json")
+    # Validate and test the model
+    
+    # Load the best model
+    model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
 
-        # Test set
-        print("Evaluating model on test...")
-        test_metrics = evaluate_model(model, test_dataset)
-        write_json(test_metrics, f"{DIR}/test_metrics.json")
+    # Validation set
+    print("Evaluation model on validation set...")
+    val_metrics = evaluate_model(model, val_final_test_dataset)
+    write_json(val_metrics, f"{DIR}/val_metrics.json")
 
-        # Train set
-        print("Evaluating model on train...")
-        train_metrics = evaluate_model(model, train_final_test_dataset)
-        write_json(train_metrics, f"{DIR}/train_metrics.json")
+    # Test set
+    print("Evaluating model on test...")
+    test_metrics = evaluate_model(model, test_dataset)
+    write_json(test_metrics, f"{DIR}/test_metrics.json")
 
-    except Exception as e:
-        print(f"Evaluation Error: {e}")
-        # Save the exception to a file
-        write_text(f"{DIR}/evaluation_error.txt", str(e))
-        return
+    # Train set
+    print("Evaluating model on train...")
+    train_metrics = evaluate_model(model, train_final_test_dataset)
+    write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")

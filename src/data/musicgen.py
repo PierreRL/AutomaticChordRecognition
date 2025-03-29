@@ -6,8 +6,10 @@ Inspired by work in: https://arxiv.org/pdf/2107.05677
 We adapt their method to use with a newer model, MusicGen.
 """
 
+
 import autorootcwd
 import os
+from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -105,7 +107,7 @@ def resample_hidden_states(
     
     return resampled
 
-def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_index=18):
+def get_hidden_states_from_tokens(model, prompt_tokens, text="a song", layer_indices=[18]):
     """
     Given a MusicGen model and a token tensor (shape [B, K, S]),
     returns the LM transformer hidden state at a specified intermediate layer.
@@ -115,8 +117,7 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_ind
         prompt_tokens (torch.Tensor): Token tensor from the compression model of shape [B, K, S],
             where K is the number of codebooks.
         text (str): Text condition to use. For unconditional or generic behavior, e.g. "a song".
-        layer_index (int): Index of the transformer layer to extract the hidden state from.
-            If None, the last layer is used.
+        layer_indices (list): List of layer indices to extract the hidden state from. 1-indexed.
     
     Returns:
         torch.Tensor: The hidden state from the specified transformer layer, shape [B, S, embed_dim].
@@ -160,9 +161,14 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_ind
 
     # Determine which layer to extract.
     num_layers = len(transformer.layers)
-    if layer_index is None:
-        layer_index = num_layers - 1
-    assert 0 <= layer_index < num_layers, f"Layer index {layer_index} out of range [0, {num_layers - 1}]"
+    if layer_indices is None:
+        layer_indices = [num_layers]  # Default to the last layer.
+
+    layer_indices = [idx - 1 for idx in layer_indices]  # Convert to 0-indexed.
+    assert [idx for idx in layer_indices if idx < 0 or idx >= num_layers] == [], \
+        f"Layer indices must be in the range [0, {num_layers - 1}]."
+
+    hidden_states_dict = {}
     
     # 7. Iterate through transformer layers until the specified index.
     for idx, layer in enumerate(transformer.layers):
@@ -174,11 +180,11 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_ind
             cross_attention_src=cross_attention_input,
             src_mask=None
         )
-        if idx == layer_index:
-            # Return the hidden state at the specified layer.
-            return x
+        if idx in layer_indices:
+            # Add the 1 to the index to match the original 1-indexed layer indices.
+            hidden_states_dict[idx+1] = x.clone()  # Store the hidden state for this layer.
     # If layer_index is greater than available layers, return the final hidden state.
-    return x
+    return hidden_states_dict
 
 def extract_song_hidden_representation(
     filename: str,
@@ -187,7 +193,7 @@ def extract_song_hidden_representation(
     max_chunk_length: float,
     frame_length: float,
     overlap_ratio: float = 0.5,
-    layer_index: int = None,
+    layer_indices: List[int] = [18]
 ) -> torch.Tensor:
     """
     Process an entire song in overlapping chunks and returns a hidden state representation
@@ -204,7 +210,7 @@ def extract_song_hidden_representation(
         desired_frame_length (float): Desired time interval (in seconds) between hidden state vectors in the final output.
                                       For example, 4096/44100 (~0.093 s) would yield ~10–11 frames per second.
         overlap_ratio (float, optional): Fraction of overlap between consecutive chunks (default 0.5 for 50% overlap).
-        layer_index (int, optional): Index of the transformer layer to extract the hidden state from.
+        layer_indices (list, optional): List of layer indices to extract the hidden state from. 1-indexed.
         
     Returns:
         torch.Tensor: A hidden state tensor for the entire song, of shape [new_T, D],
@@ -229,7 +235,8 @@ def extract_song_hidden_representation(
     D = model.lm.emb[0].embedding_dim
 
     # Preallocate accumulators for the global hidden state and a weight mask.
-    global_hidden = torch.zeros(1, global_frames, D, device=device)
+    global_hidden_dict = {idx: torch.zeros(1, global_frames, D, device=device)
+                          for idx in layer_indices}
     global_weights = torch.zeros(1, global_frames, 1, device=device)
     
     # Determine chunking parameters.
@@ -247,10 +254,17 @@ def extract_song_hidden_representation(
             # prompt_tokens shape: [1, K, S] (K: number of codebooks, S: number of tokens for this chunk)
             
             # Get the intermediate hidden state representation using the helper function.
-            hidden_chunk = get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_index=layer_index)
+            hidden_states_dict = get_hidden_states_from_tokens(
+                model,
+                prompt_tokens,
+                text='a song',
+                layer_indices=layer_indices
+            )
             # hidden_chunk shape: [1, S, D]
         
-        S = hidden_chunk.shape[1]  # number of time steps (frames) for this chunk.
+        example_layer = layer_indices[0]  # pick the first
+        hidden_chunk = hidden_states_dict[example_layer]
+        S = hidden_chunk.shape[1]
         
         # Determine the start time (in seconds) of the chunk and map it to a frame index.
         chunk_start_time = start_sample / sr
@@ -259,24 +273,27 @@ def extract_song_hidden_representation(
         # Clip the chunk if it exceeds the global duration.
         if chunk_start_frame + S > global_frames:
             S = global_frames - chunk_start_frame
-            hidden_chunk = hidden_chunk[:, :S, :]
+            for idx in layer_indices:
+                hidden_states_dict[idx] = hidden_states_dict[idx][:, :S, :]
         
-        # Accumulate the chunk's hidden states and record weights for averaging.
-        global_hidden[:, chunk_start_frame:chunk_start_frame + S, :] += hidden_chunk
+        #  Accumulate each layer's hidden states
+        for idx in layer_indices:
+            global_hidden_dict[idx][:, chunk_start_frame:chunk_start_frame + S, :] += hidden_states_dict[idx]
         global_weights[:, chunk_start_frame:chunk_start_frame + S, :] += 1.0
         
         # Move the window.
         start_sample += hop_samples
     
-    # Average overlapping regions.
-    # Change device
-    global_weights = global_weights.to(global_hidden.device)
-    global_hidden = global_hidden / global_weights
+    # Average overlapping frames
+    for idx in layer_indices:
+        global_hidden_dict[idx] /= global_weights
 
-    # Resample the global hidden states to have one vector every desired_frame_length seconds.
-    resampled_hidden = resample_hidden_states(global_hidden, model, frame_length)
+    # Now resample each layer's hidden state
+    final_dict = {}
+    for idx in layer_indices:
+        # [1, T, D]
+        hs = global_hidden_dict[idx]
+        hs_resampled = resample_hidden_states(hs, model, frame_length)
+        final_dict[idx] = hs_resampled.squeeze(0)  # remove batch dim: [T', D]
 
-    # Remove batch dimension.
-    resampled_hidden = resampled_hidden.squeeze(0)  # shape: [new_T, D]
-    
-    return resampled_hidden
+    return final_dict
