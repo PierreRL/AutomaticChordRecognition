@@ -31,6 +31,9 @@ def main(
     model = get_musicgen_model(model_size=model_size, device=device)
     frame_length = hop_length / SR
 
+    for layer_idx in layer_indices:
+        os.makedirs(f"{dir}/cache/gen/{layer_idx}", exist_ok=True)
+
     print('Extracting features...')
     for filename in tqdm(filenames):
         song_repr_dict = extract_song_hidden_representation(
