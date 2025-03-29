@@ -19,7 +19,7 @@ from audiocraft.modules.transformer import create_sin_embedding
 
 from src.utils import get_torch_device
 
-def get_musicgen_model(model_size: str):
+def get_musicgen_model(model_size: str, device: str = "cuda"):
     """
     Returns a pretrained MusicGen model.
 
@@ -30,7 +30,7 @@ def get_musicgen_model(model_size: str):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    model = MusicGen.get_pretrained("facebook/musicgen-" + model_size)
+    model = MusicGen.get_pretrained("facebook/musicgen-" + model_size, device=device)
     return model
 
 def get_wav(filename: str, dir = "./data/processed/"):
@@ -191,14 +191,14 @@ def extract_song_hidden_representation(
     model.compression_model = model.compression_model.to(device)
 
     # Load the audio file.
-    wav, sr = torchaudio.load(f"{dir}/audio/{filename}.mp3")
+    wav, sr = torchaudio.load(f"{dir}/audio/{filename}.mp3").to(device)
 
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)  # convert to mono
 
     wav = wav.unsqueeze(0).to(device)  # shape becomes [1, channels, samples]
     if sr != model.sample_rate:
-        resampler = Resample(orig_freq=sr, new_freq=model.sample_rate)
+        resampler = Resample(orig_freq=sr, new_freq=model.sample_rate).to(device)
         wav = resampler(wav)
 
     total_samples = wav.shape[-1]

@@ -10,7 +10,7 @@ import argparse
 from tqdm import tqdm
 
 from src.data.dataset import FullChordDataset
-from src.utils import get_filenames, SR
+from src.utils import get_filenames, get_torch_device, SR
 from src.data.musicgen import get_musicgen_model, extract_song_hidden_representation, get_wav
 
 
@@ -20,12 +20,14 @@ def main(
     model_size="large",
     max_chunk_length=5
 ):
+    device = get_torch_device(allow_mps=False)
+    print(f"Using device: {device}")
     dataset = FullChordDataset(hop_length=hop_length, input_dir=dir, generative_features=True)
     os.makedirs(dataset.gen_cache_dir, exist_ok=True)
 
     filenames = get_filenames(directory=f"{dir}/audio")
     print('Loading model...')
-    model = get_musicgen_model(model_size=model_size)
+    model = get_musicgen_model(model_size=model_size, device=device)
     frame_length = hop_length / SR
 
     print('Extracting features...')
