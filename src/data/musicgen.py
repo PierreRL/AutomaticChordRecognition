@@ -7,6 +7,7 @@ We adapt their method to use with a newer model, MusicGen.
 """
 
 import autorootcwd
+import os
 
 import torch
 import torch.nn.functional as F
@@ -30,7 +31,9 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    model = MusicGen.get_pretrained("facebook/musicgen-" + model_size, device=device)
+    # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
+    local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    model = MusicGen.get_pretrained(local_path, device=device)
     return model
 
 def get_wav(filename: str, dir = "./data/processed/", device = "cuda", target_sr = 32000):
