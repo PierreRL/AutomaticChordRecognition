@@ -23,7 +23,7 @@ def main(
 ):
     device = get_torch_device(allow_mps=False)
     print(f"Using device: {device}")
-    dataset = FullChordDataset(hop_length=hop_length, input_dir=dir, generative_features=True)
+    dataset = FullChordDataset(hop_length=hop_length, input_dir=dir)
     os.makedirs(dataset.gen_cache_dir, exist_ok=True)
 
     filenames = get_filenames(directory=f"{dir}/audio")

@@ -90,7 +90,6 @@ def resample_hidden_states(
 
     current_frame_rate = model.compression_model.frame_rate
     input_duration = T / current_frame_rate  # in seconds
-    print(f"Input duration: {input_duration:.2f} seconds")
 
     # Compute the new number of time steps so that each represents the desired frame length.
     new_T = int(round(input_duration / desired_frame_length))
