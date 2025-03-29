@@ -86,7 +86,7 @@ if __name__ == "__main__":
     if args.layer_indices is not None:
         layer_indices = [int(x.strip()) for x in args.layer_indices.split(',')]
     else:
-        layer_indices = None
+        layer_indices = [24,36,48]
 
 
     main(
