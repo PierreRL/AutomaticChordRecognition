@@ -18,6 +18,7 @@ def main(
     hop_length=4096,
     dir = "data/processed",
     model_size="large",
+    layer_index=None,
     max_chunk_length=5
 ):
     device = get_torch_device(allow_mps=False)
@@ -37,7 +38,8 @@ def main(
             filename=filename,
             max_chunk_length=max_chunk_length,
             model=model,
-            frame_length=frame_length
+            frame_length=frame_length,
+            layer_index=layer_index,
         )
         torch.save(song_repr, f"{dataset.gen_cache_dir}/{filename}.pt")
 
@@ -69,11 +71,19 @@ if __name__ == "__main__":
         default=10,
         help="The length of context in seconds to pass through the model at once. Absolute maximum 30s."
     )
+    parser.add_argument(
+        "--layer_index",
+        type=int,
+        required=False,
+        help="Layer index to extract features from.",
+        default=None,
+    )
     args = parser.parse_args()
 
     main(
         hop_length=args.hop_length,
         dir=args.dir,
         model_size=args.model_size,
-        max_chunk_length=args.max_chunk_length
+        max_chunk_length=args.max_chunk_length,
+        layer_index=args.layer_index,
     )

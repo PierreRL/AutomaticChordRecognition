@@ -101,7 +101,7 @@ def resample_hidden_states(
     
     return resampled
 
-def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_frac=0.75):
+def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_index=18):
     """
     Given a MusicGen model and a token tensor (shape [B, K, S]),
     returns the LM transformer hidden state at a specified intermediate layer.
@@ -111,7 +111,8 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_fra
         prompt_tokens (torch.Tensor): Token tensor from the compression model of shape [B, K, S],
             where K is the number of codebooks.
         text (str): Text condition to use. For unconditional or generic behavior, e.g. "a song".
-        layer_frac (int, optional): The fraction of the total number of layers from which to extract the hidden state. In range [0, 1]. If None, the last layer is used. Default is None.
+        layer_index (int): Index of the transformer layer to extract the hidden state from.
+            If None, the last layer is used.
     
     Returns:
         torch.Tensor: The hidden state from the specified transformer layer, shape [B, S, embed_dim].
@@ -152,14 +153,9 @@ def get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_fra
 
     # Determine which layer to extract.
     num_layers = len(transformer.layers)
-    if layer_frac is not None:
-        # Calculate the layer index based on the fraction.
-        layer_index = int(num_layers * layer_frac)
-        assert 0 <= layer_index < num_layers, "layer_frac must be in the range [0, 1]."
+    if layer_index is None:
         layer_index = num_layers - 1
-    else:
-        # Default to the last layer.
-        layer_index = num_layers - 1
+    assert 0 <= layer_index < num_layers, f"Layer index {layer_index} out of range [0, {num_layers - 1}]"
     
     # 7. Iterate through transformer layers until the specified index.
     for idx, layer in enumerate(transformer.layers):
@@ -184,7 +180,7 @@ def extract_song_hidden_representation(
     max_chunk_length: float,
     frame_length: float,
     overlap_ratio: float = 0.5,
-    layer_frac: int = 0.75
+    layer_index: int = None,
 ) -> torch.Tensor:
     """
     Process an entire song (wav file) in overlapping chunks and returns a hidden state representation
@@ -201,6 +197,7 @@ def extract_song_hidden_representation(
         desired_frame_length (float): Desired time interval (in seconds) between hidden state vectors in the final output.
                                       For example, 4096/44100 (~0.093 s) would yield ~10–11 frames per second.
         overlap_ratio (float, optional): Fraction of overlap between consecutive chunks (default 0.5 for 50% overlap).
+        layer_index (int, optional): Index of the transformer layer to extract the hidden state from.
         
     Returns:
         torch.Tensor: A hidden state tensor for the entire song, of shape [1, T_final, D],
@@ -243,7 +240,7 @@ def extract_song_hidden_representation(
             # prompt_tokens shape: [1, K, S] (K: number of codebooks, S: number of tokens for this chunk)
             
             # Get the intermediate hidden state representation using the helper function.
-            hidden_chunk = get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_frac=layer_frac)
+            hidden_chunk = get_intermediate_hidden_state(model, prompt_tokens, text="a song", layer_index=layer_index)
             # hidden_chunk shape: [1, S, D]
         
         S = hidden_chunk.shape[1]  # number of time steps (frames) for this chunk.
