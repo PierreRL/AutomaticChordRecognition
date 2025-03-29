@@ -191,7 +191,7 @@ def extract_song_hidden_representation(
     layer_index: int = None,
 ) -> torch.Tensor:
     """
-    Process an entire song (wav file) in overlapping chunks and returns a hidden state representation
+    Process an entire song in overlapping chunks and returns a hidden state representation
     for the entire song resampled to have one vector every desired_frame_length seconds.
     
     This function uses the previously defined helper functions:
@@ -208,7 +208,7 @@ def extract_song_hidden_representation(
         layer_index (int, optional): Index of the transformer layer to extract the hidden state from.
         
     Returns:
-        torch.Tensor: A hidden state tensor for the entire song, of shape [1, T_final, D],
+        torch.Tensor: A hidden state tensor for the entire song, of shape [new_T, D],
                       where T_final ≈ (total_duration / desired_frame_length) and D is the hidden dimension.
     """
     device = get_torch_device(allow_mps=False)
@@ -274,11 +274,10 @@ def extract_song_hidden_representation(
     global_weights = global_weights.to(global_hidden.device)
     global_hidden = global_hidden / global_weights
 
-    print(f"Global hidden shape: {global_hidden.shape}")
-
     # Resample the global hidden states to have one vector every desired_frame_length seconds.
     resampled_hidden = resample_hidden_states(global_hidden, model, frame_length)
 
-    print(f"Resampled hidden shape: {resampled_hidden.shape}")
+    # Remove batch dimension.
+    resampled_hidden = resampled_hidden.squeeze(0)  # shape: [new_T, D]
     
     return resampled_hidden
