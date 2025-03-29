@@ -66,7 +66,7 @@ def get_wav(filename: str, dir = "./data/processed/", device = "cuda", target_sr
         resampler = Resample(orig_freq=sr, new_freq=target_sr).to(device)
         wav = resampler(wav)
 
-    return wav, sr
+    return wav, target_sr
 
 def resample_hidden_states(
     hidden_states: torch.Tensor,
@@ -90,6 +90,7 @@ def resample_hidden_states(
 
     current_frame_rate = model.compression_model.frame_rate
     input_duration = T / current_frame_rate  # in seconds
+    print(f"Input duration: {input_duration:.2f} seconds")
 
     # Compute the new number of time steps so that each represents the desired frame length.
     new_T = int(round(input_duration / desired_frame_length))
@@ -273,7 +274,11 @@ def extract_song_hidden_representation(
     global_weights = global_weights.to(global_hidden.device)
     global_hidden = global_hidden / global_weights
 
+    print(f"Global hidden shape: {global_hidden.shape}")
+
     # Resample the global hidden states to have one vector every desired_frame_length seconds.
     resampled_hidden = resample_hidden_states(global_hidden, model, frame_length)
+
+    print(f"Resampled hidden shape: {resampled_hidden.shape}")
     
     return resampled_hidden
