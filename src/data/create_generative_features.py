@@ -46,7 +46,7 @@ def main(
         )
         for layer_idx, song_repr in song_repr_dict.items():
             # Save each layer's representation separately
-            torch.save(song_repr, f"{dir}/cache/gen/{layer_idx}/{filename}.pt")
+            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen/{layer_idx}/{filename}.pt")
 
 
 if __name__ == "__main__":
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     if args.layer_indices is not None:
         layer_indices = [int(x.strip()) for x in args.layer_indices.split(',')]
     else:
-        layer_indices = [24,36,48]
+        layer_indices = list(range(1,49))  # Default to all layers
 
 
     main(
