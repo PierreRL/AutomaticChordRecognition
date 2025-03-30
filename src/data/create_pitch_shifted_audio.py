@@ -34,12 +34,18 @@ def pitch_shift_file(input_dir: str, file_name: str, output_dir: str, keep_stere
     for semitone in range(-5, 7):
         if semitone == 0:
             continue
+        # If file already exists, skip
+        output_file_name = f"{os.path.splitext(file_name)[0]}_shifted_{semitone}.mp3"
+        output_file_path = os.path.join(output_dir, output_file_name)
+        if os.path.isfile(output_file_path):
+            print(f"File {output_file_path} already exists. Skipping.")
+            continue
+
+        # Perform pitch shift using pyrubberband
         shifted = pyrubberband.pitch_shift(waveform_np, sample_rate, semitone)
         # Convert back to (channels, samples) for torchaudio.save
         shifted_tensor = torch.tensor(shifted.T)
         
-        output_file_name = f"{os.path.splitext(file_name)[0]}_shifted_{semitone}.mp3"
-        output_file_path = os.path.join(output_dir, output_file_name)
         torchaudio.save(output_file_path, shifted_tensor, sample_rate)
 
 def create_pitch_shifted_audios(
