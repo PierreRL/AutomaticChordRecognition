@@ -17,7 +17,6 @@
 
 # Megabytes of RAM required. Check `cluster-status` for node configurations
 #SBATCH --mem=24G
-
 # Number of CPUs to use. Check `cluster-status` for node configurations
 #SBATCH --cpus-per-task=1
 
@@ -54,6 +53,10 @@ echo "Loading modules"
 
 source ~/ug4_venv/bin/activate
 
+# Load any modules you need
+echo "Loading bash source"
+export PATH="$HOME/.local/bin:$PATH"
+source ~/.bashrc
 
 
 # Move data
