@@ -1,12 +1,122 @@
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=1e-05 --lr_scheduler=cosine --exp_name=lr-search_cosine_1e-05
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=1e-05 --lr_scheduler=plateau --exp_name=lr-search_plateau_1e-05
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=1e-05 --lr_scheduler=none --exp_name=lr-search_none_1e-05
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.0001 --lr_scheduler=cosine --exp_name=lr-search_cosine_0.0001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.0001 --lr_scheduler=plateau --exp_name=lr-search_plateau_0.0001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.0001 --lr_scheduler=none --exp_name=lr-search_none_0.0001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.001 --lr_scheduler=cosine --exp_name=lr-search_cosine_0.001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.001 --lr_scheduler=plateau --exp_name=lr-search_plateau_0.001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.001 --lr_scheduler=none --exp_name=lr-search_none_0.001
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.01 --lr_scheduler=cosine --exp_name=lr-search_cosine_0.01
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.01 --lr_scheduler=plateau --exp_name=lr-search_plateau_0.01
-python /home/$pierrelardet/LeadSheetTranscription/src/run.py --input_dir=/home/$pierrelardet/LeadSheetTranscription/data/processed/input --output_dir=/disk/scratch/pierrelardet/experiments  --lr=0.01 --lr_scheduler=none --exp_name=lr-search_none_0.01
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=0 --end_idx=10
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=10 --end_idx=20
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=20 --end_idx=30
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=30 --end_idx=40
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=40 --end_idx=50
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=50 --end_idx=60
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=60 --end_idx=70
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=70 --end_idx=80
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=80 --end_idx=90
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=90 --end_idx=100
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=100 --end_idx=110
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=110 --end_idx=120
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=120 --end_idx=130
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=130 --end_idx=140
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=140 --end_idx=150
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=150 --end_idx=160
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=160 --end_idx=170
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=170 --end_idx=180
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=180 --end_idx=190
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=190 --end_idx=200
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=200 --end_idx=210
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=210 --end_idx=220
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=220 --end_idx=230
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=230 --end_idx=240
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=240 --end_idx=250
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=250 --end_idx=260
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=260 --end_idx=270
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=270 --end_idx=280
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=280 --end_idx=290
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=290 --end_idx=300
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=300 --end_idx=310
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=310 --end_idx=320
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=320 --end_idx=330
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=330 --end_idx=340
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=340 --end_idx=350
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=350 --end_idx=360
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=360 --end_idx=370
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=370 --end_idx=380
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=380 --end_idx=390
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=390 --end_idx=400
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=400 --end_idx=410
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=410 --end_idx=420
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=420 --end_idx=430
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=430 --end_idx=440
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=440 --end_idx=450
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=450 --end_idx=460
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=460 --end_idx=470
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=470 --end_idx=480
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=480 --end_idx=490
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=490 --end_idx=500
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=500 --end_idx=510
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=510 --end_idx=520
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=520 --end_idx=530
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=530 --end_idx=540
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=540 --end_idx=550
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=550 --end_idx=560
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=560 --end_idx=570
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=570 --end_idx=580
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=580 --end_idx=590
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=590 --end_idx=600
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=600 --end_idx=610
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=610 --end_idx=620
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=620 --end_idx=630
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=630 --end_idx=640
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=640 --end_idx=650
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=650 --end_idx=660
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=660 --end_idx=670
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=670 --end_idx=680
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=680 --end_idx=690
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=690 --end_idx=700
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=700 --end_idx=710
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=710 --end_idx=720
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=720 --end_idx=730
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=730 --end_idx=740
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=740 --end_idx=750
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=750 --end_idx=760
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=760 --end_idx=770
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=770 --end_idx=780
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=780 --end_idx=790
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=790 --end_idx=800
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=800 --end_idx=810
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=810 --end_idx=820
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=820 --end_idx=830
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=830 --end_idx=840
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=840 --end_idx=850
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=850 --end_idx=860
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=860 --end_idx=870
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=870 --end_idx=880
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=880 --end_idx=890
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=890 --end_idx=900
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=900 --end_idx=910
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=910 --end_idx=920
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=920 --end_idx=930
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=930 --end_idx=940
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=940 --end_idx=950
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=950 --end_idx=960
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=960 --end_idx=970
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=970 --end_idx=980
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=980 --end_idx=990
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=990 --end_idx=1000
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1000 --end_idx=1010
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1010 --end_idx=1020
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1020 --end_idx=1030
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1030 --end_idx=1040
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1040 --end_idx=1050
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1050 --end_idx=1060
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1060 --end_idx=1070
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1070 --end_idx=1080
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1080 --end_idx=1090
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1090 --end_idx=1100
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1100 --end_idx=1110
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1110 --end_idx=1120
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1120 --end_idx=1130
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1130 --end_idx=1140
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1140 --end_idx=1150
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1150 --end_idx=1160
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1160 --end_idx=1170
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1170 --end_idx=1180
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1180 --end_idx=1190
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1190 --end_idx=1200
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1200 --end_idx=1210
+python src/data/create_pitch_shifted_audio.py --input_dir=./data/processed/audio --output_dir=./data/processed/audio/augs --start_idx=1210 --end_idx=1213

@@ -42,26 +42,27 @@ def pitch_shift_file(input_dir: str, file_name: str, output_dir: str, keep_stere
         output_file_path = os.path.join(output_dir, output_file_name)
         torchaudio.save(output_file_path, shifted_tensor, sample_rate)
 
-# def create_pitch_shifted_audios(input_dir: str, output_dir: str, keep_stereo: bool, single_file: str = None):
-#     """
-#     Process either a single file or all MP3 files in a directory.
-#     """
-#     if not os.path.exists(output_dir):
-#         os.makedirs(output_dir)
+def create_pitch_shifted_audios(
+        input_dir: str, 
+        output_dir: str, 
+        keep_stereo: bool, 
+        start_idx: int = None, 
+        end_idx: int = None
+    ):
+    """
+    Process either a single file or all MP3 files in a directory.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    # Process all MP3 files in the input directory
+    files = [f for f in os.listdir(input_dir) if f.endswith(".mp3")]
+    if start_idx is None:
+        start_idx = 0
+    if end_idx is None:
+        end_idx = len(files)
     
-#     if single_file:
-#         file_path = os.path.join(input_dir, single_file)
-#         if not os.path.isfile(file_path):
-#             print(f"Error: {file_path} does not exist.")
-#             return
-#         print(f"Processing single file: {file_path}")
-#         pitch_shift_file(file_path, output_dir, keep_stereo)
-#     else:
-#         # Process all MP3 files in the input directory
-#         files = [f for f in os.listdir(input_dir) if f.endswith(".mp3")]
-#         for file_name in tqdm(files, desc="Processing files"):
-#             file_path = os.path.join(input_dir, file_name)
-#             pitch_shift_file(file_path, output_dir, keep_stereo)
+    files = files[start_idx:end_idx]
+    for file_name in tqdm(files, desc="Processing files"):
+        pitch_shift_file(input_dir, file_name, output_dir, keep_stereo)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -90,10 +91,35 @@ def main():
         default=None,
         help="Process only this file (filename relative to input_dir) instead of all files."
     )
+    parser.add_argument(
+        "--start_idx",
+        type=int,
+        default=None,
+        help="Start index for processing files."
+    )
+    parser.add_argument(
+        "--end_idx",
+        type=int,
+        default=None,
+        help="End index for processing files."
+    )
     args = parser.parse_args()
 
-    # create_pitch_shifted_audios(args.input_dir, args.output_dir, keep_stereo=not args.mono, single_file=args.file)
-    pitch_shift_file(args.input_dir, args.file, args.output_dir, keep_stereo=not args.mono)
+    if args.file:
+        # If a specific file is provided, process only that file
+        input_file = os.path.join(args.input_dir, args.file)
+        if not os.path.isfile(input_file):
+            raise FileNotFoundError(f"File {input_file} does not exist.")
+        pitch_shift_file(args.input_dir, args.file, args.output_dir, not args.mono)
+    else:
+        # Process all MP3 files in the input directory
+        create_pitch_shifted_audios(
+            args.input_dir,
+            args.output_dir,
+            not args.mono,
+            args.start_idx,
+            args.end_idx
+        )
 
 if __name__ == "__main__":
     main()
