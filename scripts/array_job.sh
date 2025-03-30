@@ -13,16 +13,16 @@
 # #SBATCH --nodes=1
 
 # Generic resources to use - typically you'll want gpu:n to get n gpus
-#SBATCH --gres=gpu:1
+##SBATCH --gres=gpu:a6000:1
 
 # Megabytes of RAM required. Check `cluster-status` for node configurations
-#SBATCH --mem=8000
+#SBATCH --mem=24G
 
 # Number of CPUs to use. Check `cluster-status` for node configurations
 #SBATCH --cpus-per-task=1
 
 # Maximum time for the job to run, format: days-hours:minutes:seconds
-#SBATCH --time=02:00:00
+#SBATCH --time=01:00:00
 
 echo "Starting job $SLURM_JOB_ID"
 echo "Running on $SLURM_JOB_NODELIST"

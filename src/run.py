@@ -180,6 +180,12 @@ def main():
         help="Dimensionality of each generative feature vector per frame.",
     )
     parser.add_argument(
+        "--gen_layer",
+        type=int,
+        default=24,
+        help="Number of layers in the generative model.",
+    )
+    parser.add_argument(
         "--job_id",
         type=str,
         default=None,
@@ -220,6 +226,7 @@ def main():
         random_pitch_shift=args.random_pitch_shift,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
+        gen_layer=args.gen_layer,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
@@ -272,6 +279,9 @@ def main():
         },
         "hmm_smoothing": args.hmm_smoothing,
         "hmm_alpha": args.hmm_alpha,
+        "use_cqt": args.use_cqt,
+        "use_generative_features": args.use_generative_features,
+        "gen_layer": args.gen_layer,
         "args": vars(args),
     }
     write_json(run_metadata, f"{DIR}/metadata.json")

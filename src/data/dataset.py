@@ -3,7 +3,7 @@ import os
 from torch.utils.data import Dataset, random_split
 import torch
 from torch import Tensor
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from src.utils import (
     pitch_shift_cqt,
@@ -23,9 +23,10 @@ class FullChordDataset(Dataset):
         filenames: List[str] = None,
         hop_length: int = HOP_LENGTH,
         mask_X: bool = False,
-        input_dir: str = "./data/processed/",
+        input_dir: str = "./data/processed",
         gen_layer: int = 18,
         small_vocab: bool = SMALL_VOCABULARY,
+        dev_mode=False
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -36,6 +37,8 @@ class FullChordDataset(Dataset):
             mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
             input_dir (str): The directory where the audio files are stored.
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
+            gen_layer (int): The layer of the generative features to use.
+            dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
         """
         if not filenames:
             print("Using all filenames!")
@@ -50,6 +53,7 @@ class FullChordDataset(Dataset):
         self.filenames = filenames
         self.hop_length = hop_length
         self.mask_X = mask_X
+        self.dev_mode = dev_mode
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
         self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{gen_layer}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
@@ -70,23 +74,27 @@ class FullChordDataset(Dataset):
 
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
     
-    def get_minimum_length_frame(self, *tensors: Tensor) -> Tuple[Tensor, ...]:
+    def get_minimum_length_frame(self, *tensors: Optional["Tensor"]) -> Tuple[Optional["Tensor"], ...]:
         """
-        Returns each tensor trimmed to the minimum length along the first dimension
-        among all provided tensors.
+        Returns each non-None tensor trimmed to the minimum length along the first dimension
+        among all provided non-None tensors, and returns None in slots corresponding to None inputs.
 
         Args:
-            *tensors (Tensor): An arbitrary number of tensors.
+            *tensors (Optional[Tensor]): An arbitrary number of tensors (or None).
 
         Returns:
-            Tuple[Tensor, ...]: A tuple of tensors, each sliced to the minimum length.
+            Tuple[Optional[Tensor], ...]: A tuple of tensors, each sliced to the minimum length
+            (if the original input is a tensor), or None (if the original input was None).
         """
-        if not tensors:
-            raise ValueError("At least one tensor must be provided")
 
-        # Compute the minimum length among all tensors along the first dimension.
-        min_length = min(tensor.shape[0] for tensor in tensors)
-        return tuple(tensor[:min_length] for tensor in tensors)
+        # Example: Instead of returning None, return an empty float tensor of shape (0, D)
+        EMPTY_TENSOR = torch.empty(0)
+        valid_tensors = [t for t in tensors if t is not None]
+        if not valid_tensors:
+            return (EMPTY_TENSOR, EMPTY_TENSOR, EMPTY_TENSOR)
+        
+        min_length = min(t.shape[0] for t in valid_tensors)
+        return tuple(t[:min_length] if t is not None else EMPTY_TENSOR for t in tensors)
 
     def get_class_weights(self, epsilon=1e1, alpha=0.65) -> torch.Tensor:
         """
@@ -129,7 +137,16 @@ class FullChordDataset(Dataset):
         chord_ids = torch.load(
             f"{self.chord_cache_dir}/{filename}.pt", weights_only=True
         )
-        gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
+        try:
+            gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
+        except FileNotFoundError:
+            # If the generative features are not found, use a zero tensor
+            if self.dev_mode:
+                gen = None
+            else:
+                raise FileNotFoundError(
+                    f"Generative features not found for {filename}. Please run the generative feature extraction script."
+                )
         return cqt, gen, chord_ids
 
     def get_filename(self, idx):
@@ -148,6 +165,7 @@ class FixedLengthRandomChordDataset(Dataset):
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,
+        gen_layer=24,
         input_dir="./data/processed/",
     ):
         """
@@ -164,6 +182,7 @@ class FixedLengthRandomChordDataset(Dataset):
             filenames=filenames,
             hop_length=hop_length,
             mask_X=mask_X,
+            gen_layer=gen_layer,
             input_dir=input_dir,
         )
         self.random_pitch_shift = random_pitch_shift
@@ -223,10 +242,11 @@ class FixedLengthChordDataset(Dataset):
 
     def __init__(
         self,
-        segment_length=28,
+        segment_length=10,
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,
+        gen_layer=24,
         input_dir="./data/processed/",
     ):
         """
@@ -245,6 +265,7 @@ class FixedLengthChordDataset(Dataset):
             hop_length=hop_length,
             mask_X=mask_X,
             input_dir=input_dir,
+            gen_layer=gen_layer,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -297,6 +318,7 @@ def generate_datasets(
     mask_X: bool,
     hop_length: int,
     random_pitch_shift: bool = True,
+    gen_layer: int = 24,
     subset_size=None,
 ):
     """
@@ -342,18 +364,21 @@ def generate_datasets(
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        gen_layer=gen_layer,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        gen_layer=gen_layer,
     )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        gen_layer=gen_layer,
     )
     return (
         train_dataset,

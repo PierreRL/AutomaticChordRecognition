@@ -146,16 +146,17 @@ def evaluate_model(
     all_hypotheses = []
     all_references = []
 
-    for batch_features, batch_labels in tqdm(data_loader):
-        batch_cqts, batch_gens, batch_labels = batch_features.to(device), batch_gens.to(device), batch_labels.to(
+    for batch_cqts, batch_gens, batch_labels in tqdm(data_loader):
+        batch_cqts, batch_gens, batch_labels = batch_cqts.to(device), batch_gens.to(device), batch_labels.to(
             device
         )
+
         if hasattr(model, "use_generative_features") and model.use_generative_features:
             predictions = model.predict(
                 batch_cqts, batch_gens, device=device
             ).to(device)
         else:
-            predictions = model.predict(batch_features).to(device)
+            predictions = model.predict(batch_cqts).to(device)
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
             if SMALL_VOCABULARY:

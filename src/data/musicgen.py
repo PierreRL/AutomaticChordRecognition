@@ -60,7 +60,7 @@ def get_wav(filename: str, dir = "./data/processed/", device = "cuda", target_sr
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)  # convert to mono
 
-    wav = wav.unsqueeze(0).to(device)  # shape becomes [1, channels, samples]
+    wav = wav.unsqueeze(0).to(device)  # shape becomes [1, channels=1, samples]
 
     # Resample to target sample rate if provided.
     # Note: MusicGen models are trained on 32kHz audio.
