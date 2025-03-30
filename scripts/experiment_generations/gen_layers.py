@@ -18,7 +18,7 @@ for layer in gen_layers:
     # Note that we don't set a seed for rep - a seed is selected at random
     # and recorded in the output data by the python script
     expt_call = (
-        f"{base_call} " f"--exp_name=layer_{layer} --gen_layer={layer} --no_cqt --use_generative_features --segment_length=10"
+        f"{base_call} --exp_name=layer_{layer} --gen_layer={layer} --no_cqt --use_generative_features --segment_length=10"
     )
     print(expt_call, file=output_file)
 
