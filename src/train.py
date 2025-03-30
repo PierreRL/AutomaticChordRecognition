@@ -169,8 +169,6 @@ def train_model(
             features, gens, labels = features.to(device), gens.to(device), labels.to(device)
             optimiser.zero_grad()
 
-            print(features.shape, gens.shape, labels.shape)
-
             if hasattr(model, 'use_generative_features') and model.use_generative_features:
                 outputs = model(features, gens)
             else:
