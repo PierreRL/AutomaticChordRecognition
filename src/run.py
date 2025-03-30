@@ -101,6 +101,11 @@ def main():
         help="Whether to apply random pitch shift directly to CQT features.",
     )
     parser.add_argument(
+        "--audio_pitch_shift",
+        action="store_true",
+        help="Whether to apply random pitch shift directly to audio.",
+    )
+    parser.add_argument(
         "--use_generative_features",
         action="store_true",
         help="Whether to use generative features.",
