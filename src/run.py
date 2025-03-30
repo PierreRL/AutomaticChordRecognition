@@ -21,6 +21,8 @@ from src.eval import evaluate_model
 
 
 def main():
+    start_time = datetime.now()
+
     # Set up CLI arguments
     parser = argparse.ArgumentParser(
         description="Train and evaluate a chord recognition model."
@@ -267,7 +269,7 @@ def main():
     # Save the experiment name and time
     run_metadata = {
         "experiment_name": args.exp_name,
-        "time": str(datetime.now()),
+        "start_time": str(start_time),
         "model": model.to_dict(),
         "seed": args.seed,
         "job_id": args.job_id,
@@ -347,6 +349,16 @@ def main():
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")
     print("=" * 50)
+
+    end_time = datetime.now()
+    # Calculate elapsed time in hh:mm:ss
+    elapsed_time = (end_time - start_time)
+    elapsed_time = str(elapsed_time).split(",")[0]  # Get only the first part (hh:mm:ss)
+    print(f"Elapsed time: {elapsed_time}")
+    print("=" * 50)
+    # Save the elapsed time
+    run_metadata["elapsed_time"] = str(elapsed_time)
+    write_json(run_metadata, f"{DIR}/metadata.json")
 
 
 if __name__ == "__main__":
