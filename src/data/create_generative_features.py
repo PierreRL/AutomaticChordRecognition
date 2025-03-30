@@ -32,7 +32,7 @@ def main(
     frame_length = hop_length / SR
 
     for layer_idx in layer_indices:
-        os.makedirs(f"{dir}/cache/gen/{layer_idx}", exist_ok=True)
+        os.makedirs(f"{dir}/cache/{hop_length}/gen/{layer_idx}", exist_ok=True)
 
     print('Extracting features...')
     for filename in tqdm(filenames):
