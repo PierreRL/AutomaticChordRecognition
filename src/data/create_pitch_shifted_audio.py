@@ -14,13 +14,14 @@ import torchaudio
 import torch
 import numpy as np
 
-def pitch_shift_file(file_path: str, output_dir: str, keep_stereo: bool):
+def pitch_shift_file(input_dir: str, file_name: str, output_dir: str, keep_stereo: bool):
     """
     Create pitch-shifted audios by -5 to +6 semitones for a single audio file.
     """
     os.makedirs(output_dir, exist_ok=True)
-    file_name = os.path.basename(file_path)
-    waveform, sample_rate = torchaudio.load(file_path)  # shape: (channels, samples)
+    file_name = os.path.basename(file_name)
+    file_path = os.path.join(input_dir, file_name)
+    waveform, sample_rate = torchaudio.load(file_path)
 
     # If not keeping stereo, convert to mono (averaging channels)
     if not keep_stereo:
@@ -66,12 +67,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Create pitch-shifted audios for MP3 files."
     )
-    # parser.add_argument(
-    #     "--input_dir",
-    #     type=str,
-    #     required=True,
-    #     help="Directory containing input audio files (MP3)."
-    # )
+    parser.add_argument(
+        "--input_dir",
+        type=str,
+        required=True,
+        help="Directory containing input audio files (MP3)."
+    )
     parser.add_argument(
         "--output_dir",
         type=str,
@@ -92,7 +93,7 @@ def main():
     args = parser.parse_args()
 
     # create_pitch_shifted_audios(args.input_dir, args.output_dir, keep_stereo=not args.mono, single_file=args.file)
-    pitch_shift_file(args.file, args.output_dir, keep_stereo=not args.mono)
+    pitch_shift_file(args.input_dir, args.file, args.output_dir, keep_stereo=not args.mono)
 
 if __name__ == "__main__":
     main()

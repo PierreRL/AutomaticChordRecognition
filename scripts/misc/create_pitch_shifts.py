@@ -6,10 +6,20 @@ USER = os.getenv("USER")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 
-base_call = f"python {REPO_HOME}/src/data/create_pitch_shifted_audio.py --input_dir={REPO_HOME}/data/processed/audio --output_dir={REPO_HOME}/data/processed/audio"
+input_dir = f"{REPO_HOME}/data/processed/audio"
+
+base_call = f"python {REPO_HOME}/src/data/create_pitch_shifted_audio.py --output_dir={REPO_HOME}/data/processed/audio/augs"
 
 output_file = open("./scripts/experiments.txt", "w")
 
-print(base_call, file=output_file)
+for f in os.listdir(input_dir):
+    if not f.endswith(".mp3"):
+        continue
+    
+    expt_call = (
+        f"{base_call} --file={f}"
+    )
+
+    print(expt_call, file=output_file)
 
 output_file.close()
