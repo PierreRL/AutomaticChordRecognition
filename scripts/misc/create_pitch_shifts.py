@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Script for generating experiments.txt"""
 import os
-import autorootcwd
+# import autorootcwd
 USER = os.getenv("USER")
 
-# REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
+REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 
-input_dir = f"./data/processed/audio"
-output_dir = f"./data/processed/audio/augs"
+input_dir = f"{REPO_HOME}/data/processed/audio"
+output_dir = f"{REPO_HOME}/data/processed/audio/augs"
+
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
 files = [f for f in files if f.endswith(".mp3")]

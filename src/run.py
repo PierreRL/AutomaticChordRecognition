@@ -96,9 +96,9 @@ def main():
         "--momentum", type=float, default=0.9, help="Momentum for SGD optimizer."
     )
     parser.add_argument(
-        "--random_pitch_shift",
+        "--cqt_pitch_shift",
         action="store_true",
-        help="Whether to apply random pitch shift.",
+        help="Whether to apply random pitch shift directly to CQT features.",
     )
     parser.add_argument(
         "--use_generative_features",
@@ -225,7 +225,8 @@ def main():
         test_filenames,
         input_dir=args.input_dir,
         segment_length=args.segment_length,
-        random_pitch_shift=args.random_pitch_shift,
+        cqt_pitch_shift=args.cqt_pitch_shift,
+        audio_pitch_shift=args.audio_pitch_shift,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
         gen_layer=args.gen_layer,

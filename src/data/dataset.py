@@ -2,6 +2,7 @@ import autorootcwd
 import os
 from torch.utils.data import Dataset, random_split
 import torch
+import random
 from torch import Tensor
 from typing import Tuple, List, Optional
 
@@ -26,6 +27,7 @@ class FullChordDataset(Dataset):
         input_dir: str = "./data/processed",
         gen_layer: int = 18,
         small_vocab: bool = SMALL_VOCABULARY,
+        use_augs=False,
         dev_mode=False
     ):
         """
@@ -37,6 +39,7 @@ class FullChordDataset(Dataset):
             mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
             input_dir (str): The directory where the audio files are stored.
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
+            use_augs (bool): If True, the dataset uses the augmented audio files.
             gen_layer (int): The layer of the generative features to use.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
         """
@@ -54,6 +57,7 @@ class FullChordDataset(Dataset):
         self.hop_length = hop_length
         self.mask_X = mask_X
         self.dev_mode = dev_mode
+        self.use_augs = use_augs
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
         self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{gen_layer}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
@@ -62,6 +66,11 @@ class FullChordDataset(Dataset):
             self.chord_cache_dir = (
                 f"{self.input_dir}/cache/{self.hop_length}/chords_small_vocab"
             )
+        if self.use_augs:
+            self.aug_cqt_cache_dir = f"{self.cqt_cache_dir}/augs"
+            self.aug_chord_cache_dir = f"{self.chord_cache_dir}/augs"
+            self.aug_gen_cache_dir = f"{self.gen_cache_dir}/augs"
+
 
     def __len__(self):
         return len(self.filenames)
@@ -72,6 +81,12 @@ class FullChordDataset(Dataset):
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
+        return self.get_minimum_length_frame(cqt, gen, chord_ids)
+    
+    def get_aug_item(self, idx, pitch_aug: int) -> Tuple[Tensor, Tensor]:
+        cqt, gen, chord_ids = self.__get_cached_item(idx, pitch_aug)
+        if self.mask_X:
+            chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
     
     def get_minimum_length_frame(self, *tensors: Optional["Tensor"]) -> Tuple[Optional["Tensor"], ...]:
@@ -131,14 +146,25 @@ class FullChordDataset(Dataset):
 
         return weights
 
-    def __get_cached_item(self, idx):
+    def __get_cached_item(self, idx, pitch_aug=None) -> Tuple[Tensor, Tensor]:
+        """
+        Get a cached item from the dataset.
+        Args:
+            idx (int): The index of the item to get.
+            aug (str): The pitch augmentation to retrieve from.
+        Returns:
+            A tuple of the CQT, generative features, and chord IDs.
+        """
         filename = self.filenames[idx]
-        cqt = torch.load(f"{self.cqt_cache_dir}/{filename}.pt", weights_only=True)
-        chord_ids = torch.load(
-            f"{self.chord_cache_dir}/{filename}.pt", weights_only=True
+        cqt_dir = self.cqt_cache_dir if not self.use_augs else self.aug_cqt_cache_dir
+        chord_dir = (
+            self.chord_cache_dir if not self.use_augs else self.aug_chord_cache_dir
         )
+        gen_dir = self.gen_cache_dir if not self.use_augs else self.aug_gen_cache_dir
+        cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True)
+        chord_ids = torch.load(f"{chord_dir}/{filename}.pt", weights_only=True)
         try:
-            gen = torch.load(f"{self.gen_cache_dir}/{filename}.pt", weights_only=True)
+            gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True)
         except FileNotFoundError:
             # If the generative features are not found, use a zero tensor
             if self.dev_mode:
@@ -160,7 +186,8 @@ class FixedLengthRandomChordDataset(Dataset):
 
     def __init__(
         self,
-        random_pitch_shift=False,
+        cqt_pitch_shift=False,
+        audio_pitch_shift=False,
         segment_length=10,
         filenames=None,
         hop_length=HOP_LENGTH,
@@ -184,12 +211,28 @@ class FixedLengthRandomChordDataset(Dataset):
             mask_X=mask_X,
             gen_layer=gen_layer,
             input_dir=input_dir,
+            use_augs=audio_pitch_shift
         )
-        self.random_pitch_shift = random_pitch_shift
+        self.audio_pitch_shift = audio_pitch_shift
+        self.random_pitch_shift = cqt_pitch_shift
         self.segment_length = segment_length
 
+    def get_random_shift(lower: int = -5, upper: int = 6) -> int:
+        """
+        Returns a random pitch shift value between lower and upper bounds inclusive.
+        """
+        return random.randint(lower, upper)
+
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        full_cqt, gen_features, full_chord_ids, = self.full_dataset[idx]
+
+        shift = 0
+        if self.audio_pitch_shift:
+            shift = self.get_random_shift()
+        
+        if shift == 0:
+            full_cqt, gen_features, full_chord_ids, = self.full_dataset[idx]
+        else:
+            full_cqt, gen_features, full_chord_ids = self.full_dataset.get_aug_item(idx, shift)
 
         # Convert segment length in seconds to segment length in frames
         segment_length_samples = int(
@@ -317,7 +360,8 @@ def generate_datasets(
     segment_length: int,
     mask_X: bool,
     hop_length: int,
-    random_pitch_shift: bool = True,
+    cqt_pitch_shift: bool = False,
+    audio_pitch_shift: bool = False,
     gen_layer: int = 24,
     subset_size=None,
 ):
@@ -350,7 +394,9 @@ def generate_datasets(
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
-        random_pitch_shift=random_pitch_shift,
+        cqt_pitch_shift=cqt_pitch_shift,
+        audio_pitch_shift=audio_pitch_shift,
+        gen_layer=gen_layer,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -358,6 +404,7 @@ def generate_datasets(
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
+        gen_layer=gen_layer,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,

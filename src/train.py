@@ -265,7 +265,7 @@ def main():
     torch.manual_seed(0)
 
     # Load the dataset
-    dataset = FixedLengthRandomChordDataset(segment_length=10, random_pitch_shift=True)
+    dataset = FixedLengthRandomChordDataset(segment_length=10, cqt_pitch_shift=True)
 
     # Split the dataset into train, validation
     train_size = int(0.9 * len(dataset))
