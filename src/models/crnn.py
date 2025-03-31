@@ -29,13 +29,13 @@ class CRNN(BaseACR):
         hidden_size: int = 201,
         num_layers: int = 1,
         cr2: bool = False,
-        crf: bool = False,
         activation: str = "relu",
         hmm_smoothing: bool = True,
         hmm_alpha: float = 0.2,
         # New arguments:
         use_cqt: bool = True,
         use_generative_features: bool = False,
+        gen_down_dimension: int = 128,
         gen_dimension: int = 2048,
     ):
         """
@@ -53,6 +53,7 @@ class CRNN(BaseACR):
             use_cqt (bool): If True, use the standard CRNN convolutional pipeline on the CQT.
             use_generative_features (bool): If True, accept external generative features that
                 skip the convolution layers and go straight into the RNN.
+            gen_down_dimension (int): Dimensionality of the generative feature vector after projection.
             gen_dimension (int): Dimensionality of each generative feature vector per frame.
         """
         super().__init__(hmm_smoothing=hmm_smoothing, hmm_alpha=hmm_alpha)
@@ -62,7 +63,6 @@ class CRNN(BaseACR):
             raise ValueError("Must use at least one of cqt or generative features.")
     
         self.cr2 = cr2
-        self.crf = crf
         self.input_features = input_features
         self.hidden_size = hidden_size
         self.num_classes = num_classes
@@ -71,6 +71,7 @@ class CRNN(BaseACR):
         self.use_cqt = use_cqt
         self.use_generative_features = use_generative_features
         self.gen_dimension = gen_dimension
+        self.gen_down_dimension = gen_down_dimension
 
         if self.activation not in ["relu", "prelu"]:
             raise ValueError(f"Invalid activation function: {self.activation}")
@@ -99,18 +100,15 @@ class CRNN(BaseACR):
             )
             self.activation2 = nn.ReLU() if activation == "relu" else nn.PReLU()
 
-        #
+        if self.use_generative_features:
+            self.gen_projector = nn.Linear(self.gen_dimension, self.gen_down_dimension)
+
         # ----- RNN input dimension -----
-        #
-        # If we use CQT, the convolution pipeline outputs 36 channels.
-        # If we also use the generative features, we will cat them -> 36 + gen_dimension.
-        # If only generative features, we'll feed gen_dimension directly.
-        #
         rnn_input_dim = 0
         if self.use_cqt:
             rnn_input_dim += 36
         if self.use_generative_features:
-            rnn_input_dim += self.gen_dimension
+            rnn_input_dim += self.gen_down_dimension
 
         encoder_hidden_size = self.hidden_size // 2 if self.cr2 else self.hidden_size
 
@@ -133,8 +131,6 @@ class CRNN(BaseACR):
             )
 
         # Final dense layer
-        # - CR1 outputs 2E from the encoder
-        # - CR2 outputs 2E from the decoder
         out_dim = encoder_hidden_size if cr2 else 2 * encoder_hidden_size
         self.dense = nn.Linear(out_dim, num_classes)
 
@@ -182,11 +178,12 @@ class CRNN(BaseACR):
                 )
             # Suppose gen_features is shape (B, frames, gen_dimension)
             # We skip convolution entirely. Just add it.
+            gen_features = self.gen_projector(gen_features)  # (B, frames, gen_down_dimension)
             feature_list.append(gen_features)
 
         # Combine features if we have both
         if len(feature_list) == 2:
-            x = torch.cat(feature_list, dim=2)  # (B, frames, 36 + gen_dimension)
+            x = torch.cat(feature_list, dim=2)  # (B, frames, 36 + gen_down_dimension)
         else:
             x = feature_list[0]  # Either cqt alone or generative alone
 
