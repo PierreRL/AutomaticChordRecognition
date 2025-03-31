@@ -106,6 +106,12 @@ def main():
         help="Whether to apply random pitch shift directly to audio.",
     )
     parser.add_argument(
+        "--aug_shift_prob",
+        type=float,
+        default=0.5,
+        help="Probability of applying pitch shift augmentation.",
+    )
+    parser.add_argument(
         "--use_generative_features",
         action="store_true",
         help="Whether to use generative features.",
@@ -232,9 +238,10 @@ def main():
         segment_length=args.segment_length,
         cqt_pitch_shift=args.cqt_pitch_shift,
         audio_pitch_shift=args.audio_pitch_shift,
+        aug_shift_prob=args.aug_shift_prob,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
-        gen_layer=args.gen_layer,
+        gen_layer=args.gen_layer if args.use_generative_features else None,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 

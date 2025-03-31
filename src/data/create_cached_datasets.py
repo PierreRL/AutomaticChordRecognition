@@ -12,28 +12,25 @@ def main(
     hop_length=4096,
     input_dir="data/processed",
     output_dir="data/processed",
-    ignore_chords=False,
+    create_chords=True,
 ):
-    dataset = FullChordDataset(hop_length=hop_length, input_dir=output_dir)
-    os.makedirs(dataset.cqt_cache_dir, exist_ok=True)
-    os.makedirs(dataset.chord_cache_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
-    filenames = get_filenames(dir=f"{input_dir}/audio")
+    filenames = get_filenames(dir=input_dir)
     for filename in tqdm(filenames):
         if create_cqts:
             cqt = get_cqt(
-                filename, hop_length=dataset.hop_length, override_dir=input_dir
+                filename, hop_length=hop_length, override_dir=input_dir
             )
-            torch.save(cqt, f"{dataset.cqt_cache_dir}/{filename}.pt")
+            torch.save(cqt, f"{output_dir}/{filename}.pt")
 
-        if ignore_chords:
-            continue
-        chord_ids = get_chord_annotation(
-            filename,
-            frame_length=hop_length / SR,
-            override_dir=input_dir,
-        )
-        torch.save(chord_ids, f"{dataset.chord_cache_dir}/{filename}.pt")
+        if create_chords:
+            chord_ids = get_chord_annotation(
+                filename,
+                frame_length=hop_length / SR,
+                override_dir=input_dir,
+            )
+            torch.save(chord_ids, f"{output_dir}/{filename}.pt")
 
 
 if __name__ == "__main__":
@@ -61,9 +58,9 @@ if __name__ == "__main__":
         help="Directory to save the cached data.",
     )
     parser.add_argument(
-        "--ignore_chords",
+        "--create_chords",
         action="store_true",
-        help="Flag to ignore the chord annotations.",
+        help="Flag to create the cached chord annotations.",
     )
     args = parser.parse_args()
 
@@ -72,5 +69,5 @@ if __name__ == "__main__":
         hop_length=args.hop_length,
         input_dir=args.input_dir,
         output_dir=args.output_dir,
-        ignore_chords=args.ignore_chords,
+        create_chords=args.create_chords,
     )

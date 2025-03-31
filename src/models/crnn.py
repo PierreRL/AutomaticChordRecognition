@@ -60,7 +60,7 @@ class CRNN(BaseACR):
         # Must use at least one of the two feature types
         if not (use_cqt or use_generative_features):
             raise ValueError("Must use at least one of cqt or generative features.")
-
+    
         self.cr2 = cr2
         self.crf = crf
         self.input_features = input_features
@@ -153,6 +153,7 @@ class CRNN(BaseACR):
         Returns:
             torch.Tensor: Output of shape (B, frames, num_classes).
         """
+
         # Collect the features to feed into the RNN
         feature_list = []
 

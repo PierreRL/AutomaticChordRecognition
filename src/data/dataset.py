@@ -39,8 +39,8 @@ class FullChordDataset(Dataset):
             mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
             input_dir (str): The directory where the audio files are stored.
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
-            use_augs (bool): If True, the dataset uses the augmented audio files.
             gen_layer (int): The layer of the generative features to use.
+            use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
         """
         if not filenames:
@@ -57,9 +57,10 @@ class FullChordDataset(Dataset):
         self.hop_length = hop_length
         self.mask_X = mask_X
         self.dev_mode = dev_mode
+        self.gen_layer = gen_layer
         self.use_augs = use_augs
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
-        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{gen_layer}"
+        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{self.gen_layer}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
         if self.small_vocab:
@@ -87,6 +88,8 @@ class FullChordDataset(Dataset):
         cqt, gen, chord_ids = self.__get_cached_item(idx, pitch_aug)
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
+
+        chord_ids = torch.tensor(transpose_chord_id_vector(chord_ids, pitch_aug), dtype=torch.long)
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
     
     def get_minimum_length_frame(self, *tensors: Optional["Tensor"]) -> Tuple[Optional["Tensor"], ...]:
@@ -102,7 +105,6 @@ class FullChordDataset(Dataset):
             (if the original input is a tensor), or None (if the original input was None).
         """
 
-        # Example: Instead of returning None, return an empty float tensor of shape (0, D)
         EMPTY_TENSOR = torch.empty(0)
         valid_tensors = [t for t in tensors if t is not None]
         if not valid_tensors:
@@ -156,23 +158,29 @@ class FullChordDataset(Dataset):
             A tuple of the CQT, generative features, and chord IDs.
         """
         filename = self.filenames[idx]
-        cqt_dir = self.cqt_cache_dir if not self.use_augs else self.aug_cqt_cache_dir
-        chord_dir = (
-            self.chord_cache_dir if not self.use_augs else self.aug_chord_cache_dir
-        )
-        gen_dir = self.gen_cache_dir if not self.use_augs else self.aug_gen_cache_dir
+
+        aug = pitch_aug is not None and pitch_aug != 0 and self.use_augs
+
+        cqt_dir = self.cqt_cache_dir if not aug else self.aug_cqt_cache_dir
+        chord_dir = self.chord_cache_dir if not aug else self.aug_chord_cache_dir
+        gen_dir = self.gen_cache_dir if not aug else self.aug_gen_cache_dir        
+
+        if aug:
+            filename = f"{filename}_shifted_{pitch_aug}"
+
         cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True)
-        chord_ids = torch.load(f"{chord_dir}/{filename}.pt", weights_only=True)
+        chord_ids = torch.load(f"{chord_dir}/{filename}.pt")
         try:
             gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True)
         except FileNotFoundError:
-            # If the generative features are not found, use a zero tensor
-            if self.dev_mode:
+            # If the generative features are not found, use None. It is later converted to an empty tensor.
+            if self.dev_mode or self.gen_layer is None:
                 gen = None
             else:
                 raise FileNotFoundError(
                     f"Generative features not found for {filename}. Please run the generative feature extraction script."
                 )
+            
         return cqt, gen, chord_ids
 
     def get_filename(self, idx):
@@ -188,6 +196,7 @@ class FixedLengthRandomChordDataset(Dataset):
         self,
         cqt_pitch_shift=False,
         audio_pitch_shift=False,
+        aug_shift_prob=0.5,
         segment_length=10,
         filenames=None,
         hop_length=HOP_LENGTH,
@@ -214,14 +223,22 @@ class FixedLengthRandomChordDataset(Dataset):
             use_augs=audio_pitch_shift
         )
         self.audio_pitch_shift = audio_pitch_shift
-        self.random_pitch_shift = cqt_pitch_shift
+        self.aug_shift_prob = aug_shift_prob
+        self.cqt_pitch_shift = cqt_pitch_shift
         self.segment_length = segment_length
 
-    def get_random_shift(lower: int = -5, upper: int = 6) -> int:
+    def get_random_shift(self, lower: int = -5, upper: int = 6) -> int:
         """
-        Returns a random pitch shift value between lower and upper bounds inclusive.
+        Returns 0 with probability 1 - aug_shift_prob.
+        Returns a random value between lower and upper bounds inclusive \ {0} with probability aug_shift_prob.
         """
-        return random.randint(lower, upper)
+        if random.random() < self.aug_shift_prob:
+            shift = random.randint(lower, upper)
+            while shift == 0:
+                shift = random.randint(lower, upper)
+            return shift
+        else:
+            return 0
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
 
@@ -257,9 +274,12 @@ class FixedLengthRandomChordDataset(Dataset):
             cqt_patch = torch.cat(
                 (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
             )
-            gen_features_patch = torch.cat(
-                (gen_features, torch.zeros((pad_length, gen_features.shape[1])))
-            )
+            if self.full_dataset.gen_layer is not None:
+                gen_features_patch = torch.cat(
+                    (gen_features, torch.zeros((pad_length, gen_features.shape[1])))
+                )
+            else:
+                gen_features_patch = torch.empty(0)
             chord_ids_patch = torch.cat(
                 (
                     full_chord_ids,
@@ -267,10 +287,10 @@ class FixedLengthRandomChordDataset(Dataset):
                 )  # Use -1 as a padding label
             )
 
-        if self.random_pitch_shift:
+        if self.cqt_pitch_shift:
             semitones = torch.randint(-5, 6, (1,)).item()
             cqt_patch = pitch_shift_cqt(cqt_patch, semitones, BINS_PER_OCTAVE)
-            chord_ids_patch = transpose_chord_id_vector(chord_ids_patch, semitones)
+            chord_ids_patch = torch.tensor(transpose_chord_id_vector(chord_ids_patch, semitones), dtype=torch.long)
 
         return cqt_patch, gen_features_patch, chord_ids_patch
 
@@ -362,6 +382,7 @@ def generate_datasets(
     hop_length: int,
     cqt_pitch_shift: bool = False,
     audio_pitch_shift: bool = False,
+    aug_shift_prob: float = 0.5,
     gen_layer: int = 24,
     subset_size=None,
 ):
@@ -396,6 +417,7 @@ def generate_datasets(
         input_dir=input_dir,
         cqt_pitch_shift=cqt_pitch_shift,
         audio_pitch_shift=audio_pitch_shift,
+        aug_shift_prob=aug_shift_prob,
         gen_layer=gen_layer,
     )
     val_dataset = FixedLengthChordDataset(

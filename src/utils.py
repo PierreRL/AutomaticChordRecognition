@@ -125,7 +125,7 @@ def get_cqt(
     # Default hyperparameters from https://brianmcfee.net/papers/crnn_chord.pdf
     if override_dir is not None:
         src = librosa.load(
-            os.path.join(f"{override_dir}/audio", f"{filename}.mp3"), sr=sr
+            os.path.join(f"{override_dir}", f"{filename}.mp3"), sr=sr
         )[0]
     else:
         src = librosa.load(
@@ -519,6 +519,10 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
     # If the chord is N, return N
     if chord_id == 0:
         return 0
+    
+    # If the chord is X, return X
+    if chord_id == 1:
+        return 1
 
     if semitones == 0:
         return chord_id
