@@ -10,5 +10,6 @@ __pycache__/
 results/*
 .vscode/*
 .DS_Store
-chord-seq-ai/** */
-MusiConGen/** */
+chord-seq-ai/**
+MusiConGen/**
+BTC-ISMIR19/**

@@ -32,10 +32,9 @@ class CRNN(BaseACR):
         activation: str = "relu",
         hmm_smoothing: bool = True,
         hmm_alpha: float = 0.2,
-        # New arguments:
         use_cqt: bool = True,
         use_generative_features: bool = False,
-        gen_down_dimension: int = 128,
+        gen_down_dimension: int = 256,
         gen_dimension: int = 2048,
     ):
         """
