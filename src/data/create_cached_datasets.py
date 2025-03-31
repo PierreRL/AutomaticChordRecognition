@@ -28,6 +28,8 @@ def main(
 
     for filename in tqdm(filenames):
         if create_cqts:
+            if os.path.exists(f"{output_dir}/{filename}.pt"):
+                continue
             cqt = get_cqt(
                 filename, hop_length=hop_length, override_dir=input_dir
             )
