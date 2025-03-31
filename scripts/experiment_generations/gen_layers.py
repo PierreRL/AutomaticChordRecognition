@@ -10,7 +10,7 @@ DATA_HOME = f"{REPO_HOME}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/gen_layers "
 
-gen_layers = list(range(48,0,-1))
+gen_layers = list(range(48,0,-8))
 
 output_file = open("./scripts/experiments.txt", "w")
 
