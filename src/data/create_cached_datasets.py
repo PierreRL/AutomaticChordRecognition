@@ -13,10 +13,19 @@ def main(
     input_dir="data/processed",
     output_dir="data/processed",
     create_chords=True,
+    start_idx=None,
+    end_idx=None,
 ):
     os.makedirs(output_dir, exist_ok=True)
 
     filenames = get_filenames(dir=input_dir)
+    if start_idx is not None and end_idx is not None:
+        filenames = filenames[start_idx:end_idx]
+    elif start_idx is not None:
+        filenames = filenames[start_idx:]
+    elif end_idx is not None:
+        filenames = filenames[:end_idx]
+
     for filename in tqdm(filenames):
         if create_cqts:
             cqt = get_cqt(
@@ -62,6 +71,18 @@ if __name__ == "__main__":
         action="store_true",
         help="Flag to create the cached chord annotations.",
     )
+    parser.add_argument(
+        "--start_idx",
+        type=int,
+        default=None,
+        help="Start index for processing files.",
+    )
+    parser.add_argument(
+        "--end_idx",
+        type=int,
+        default=None,
+        help="End index for processing files.",
+    )
     args = parser.parse_args()
 
     main(
@@ -70,4 +91,6 @@ if __name__ == "__main__":
         input_dir=args.input_dir,
         output_dir=args.output_dir,
         create_chords=args.create_chords,
+        start_idx=args.start_idx,
+        end_idx=args.end_idx,
     )
