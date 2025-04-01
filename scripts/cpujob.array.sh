@@ -37,7 +37,7 @@ echo "Running experiment script"
 cd ${REPO_HOME}
 
 # Read the experiment command from the experiments file
-experiment_text_file="${REPO_HOME}/scripts/experiments.txt"
+experiment_text_file="${1:-${REPO_HOME}/scripts/experiments.txt}"
 if [ ! -f "${experiment_text_file}" ]; then
     echo "Error: Experiment text file not found at ${experiment_text_file}"
     exit 1
