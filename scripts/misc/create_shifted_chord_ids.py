@@ -20,7 +20,7 @@ if len(files) % max_group_size != 0:
     )
 
 
-base_call = f"python src/data/transpose_chord_ids --input_dir={input_dir} --output_dir={output_dir}"
+base_call = f"python src/data/transpose_chord_ids.py --input_dir={input_dir} --output_dir={output_dir}"
 
 output_file = open("./scripts/experiments.txt", "w")
 
