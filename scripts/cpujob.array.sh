@@ -2,19 +2,11 @@
 # ====================
 # Options for Grid Engine
 # ====================
-
-# Specify the working directory for the job to run from
 #$ -cwd
+#$ -o /home/$USER/logs/job-$JOB_ID-$TASK_ID.out
+#$ -e /home/$USER/logs/job-$JOB_ID-$TASK_ID.err
 
-# Log location for standard output and error (similar to SLURM output and error)
-#$ -o /home/$USER/logs/job-$JOB_ID.out
-#$ -e /home/$USER/logs/job-$JOB_ID.err
-
-# Request memory (in MB, equivalent to `--mem` in SLURM)
 #$ -l h_vmem=16G
-
-
-# Set the maximum runtime for the job (similar to SLURM's `--time`)
 #$ -l h_rt=02:00:00
 
 # ===================
