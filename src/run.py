@@ -13,8 +13,6 @@ from src.utils import (
     NUM_CHORDS,
     N_BINS,
     write_json,
-    write_text,
-    get_split_filenames,
     generate_experiment_name,
 )
 from src.eval import evaluate_model
@@ -179,6 +177,12 @@ def main():
         default=0.2,
         help="Alpha parameter for the HMM smoothing. The probability of staying in the same chord.",
     )
+    parser.add_argument(
+        "--train_split",
+        type=str,
+        default="60",
+        help="Train split percentage. Must be 60, 80, or 100.",
+    )
 
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
@@ -221,7 +225,7 @@ def main():
     os.makedirs(DIR, exist_ok=True)
 
     # Load the dataset filenames
-    train_filenames, val_filenames, test_filenames = get_split_filenames(dir=args.input_dir)
+    
 
     # Create datasets
     (
@@ -231,9 +235,7 @@ def main():
         train_final_test_dataset,
         val_final_test_dataset,
     ) = generate_datasets(
-        train_filenames,
-        val_filenames,
-        test_filenames,
+        train_split=args.train_split,
         input_dir=args.input_dir,
         segment_length=args.segment_length,
         cqt_pitch_shift=args.cqt_pitch_shift,
@@ -318,6 +320,7 @@ def main():
         optimiser=args.optimiser,
         momentum=args.momentum,
         early_stopping=args.early_stopping if args.enable_early_stopping else None,
+        do_validation=args.training_split == '60',
         save_dir=f"{DIR}",
         save_filename="best_model.pth",
     )
@@ -344,15 +347,17 @@ def main():
     # Load the best model
     model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
 
-    # Validation set
-    print("Evaluation model on validation set...")
-    val_metrics = evaluate_model(model, val_final_test_dataset)
-    write_json(val_metrics, f"{DIR}/val_metrics.json")
+    if args.train_split  == '60':
+        # Validation set
+        print("Evaluation model on validation set...")
+        val_metrics = evaluate_model(model, val_final_test_dataset)
+        write_json(val_metrics, f"{DIR}/val_metrics.json")
 
-    # Test set
-    print("Evaluating model on test...")
-    test_metrics = evaluate_model(model, test_dataset)
-    write_json(test_metrics, f"{DIR}/test_metrics.json")
+    if args.train_split != '100':
+        # Test set
+        print("Evaluating model on test...")
+        test_metrics = evaluate_model(model, test_dataset)
+        write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
     print("Evaluating model on train...")

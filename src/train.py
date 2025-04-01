@@ -21,6 +21,7 @@ class TrainingArgs:
         self,
         epochs: int,
         lr: float,
+        do_validation: bool = True,
         batch_size: int = 64,
         segment_length: int = 10,
         early_stopping: int = 50,
@@ -48,6 +49,7 @@ class TrainingArgs:
         self.decrease_lr_factor = decrease_lr_factor
         self.decrease_lr_epochs = decrease_lr_epochs
         self.mask_X = mask_X
+        self.do_validation = do_validation
         self.use_weighted_loss = use_weighted_loss
         self.weight_alpha = weight_alpha
         self.weight_decay = weight_decay
@@ -66,6 +68,9 @@ class TrainingArgs:
             "batch_size": self.batch_size,
             "segment_length": self.segment_length,
             "hop_length": self.hop_length,
+            "save_dir": self.save_dir,
+            "save_filename": self.save_filename,
+            "do_validation": self.do_validation,
             "early_stopping": self.early_stopping,
             "validate_every": self.validate_every,
             "mask_X": self.mask_X,
@@ -192,6 +197,13 @@ def train_model(
 
         if lr_scheduler is not None and args.lr_scheduler != "plateau":
             lr_scheduler.step()
+
+        if not args.do_validation:
+            # Save the model and skip validation
+            os.makedirs(args.save_dir, exist_ok=True)
+            save_file = os.path.join(args.save_dir, args.save_filename)
+            torch.save(model.state_dict(), save_file)
+            continue
 
         # Validation every 5 epochs
         if (epoch + 1) % args.validate_every != 0:

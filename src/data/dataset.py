@@ -8,12 +8,13 @@ from typing import Tuple, List, Optional
 
 from src.utils import (
     pitch_shift_cqt,
+    get_split_filenames,
     transpose_chord_id_vector,
     SMALL_VOCABULARY,
     NUM_CHORDS,
     HOP_LENGTH,
     SR,
-    BINS_PER_OCTAVE,
+    BINS_PER_OCTAVE
 )
 
 
@@ -373,9 +374,7 @@ class FixedLengthChordDataset(Dataset):
 
 
 def generate_datasets(
-    train_filenames: List[str],
-    val_filenames: List[str],
-    test_filenames: List[str],
+    train_split:str,
     input_dir: str,
     segment_length: int,
     mask_X: bool,
@@ -405,10 +404,20 @@ def generate_datasets(
         test_dataset (FullChordDataset): The test dataset.
         val_final_test_dataset (FullChordDataset): The validation dataset for the final test.
     """
+    train_filenames, val_filenames, test_filenames = get_split_filenames(input_dir)
     if subset_size:
         train_filenames = train_filenames[:subset_size]
         val_filenames = val_filenames[:subset_size]
         test_filenames = test_filenames[:subset_size]
+
+    if train_split == "80":
+        train_filenames = train_filenames + val_filenames
+        val_filenames = []
+    elif train_split == "100":
+        train_filenames = train_filenames + val_filenames + test_filenames
+        val_filenames = []
+        test_filenames = []
+    
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         segment_length=segment_length,
