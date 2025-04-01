@@ -74,7 +74,7 @@ def get_raw_chord_annotation(filename, override_dir=None):
         chord_annotation (SortedKeyDict): An ordered dict of chord annotations.
     """
     if override_dir is not None:
-        jam = jams.load(os.path.join(f"{override_dir}/chords/", f"{filename}.jams"))
+        jam = jams.load(os.path.join(f"{override_dir}/", f"{filename}.jams"))
     else:
         jam = jams.load(os.path.join("./data/processed/chords/", f"{filename}.jams"))
     chord_ann = jam.annotations.search(namespace="chord")[0]
