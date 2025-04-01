@@ -4,15 +4,19 @@ import os
 # import autorootcwd
 USER = os.getenv("USER")
 
-REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
+USER = os.getenv("USER")
+EDDIE = os.getenv("EDDIE")
 
-input_dir = f"{REPO_HOME}/data/processed/audio"
-output_dir = f"{REPO_HOME}/data/processed/audio/augs"
+REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
+DATA_HOME = f"{EDDIE}/data/processed"
+
+input_dir = f"{REPO_HOME}/audio"
+output_dir = f"{REPO_HOME}/audio/augs"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
 files = [f for f in files if f.endswith(".mp3")]
-max_group_size = 10
+max_group_size = 15
 if len(files) % max_group_size != 0:
     print(
         f"Warning: {len(files)} files in {input_dir} not divisible by {max_group_size}. "

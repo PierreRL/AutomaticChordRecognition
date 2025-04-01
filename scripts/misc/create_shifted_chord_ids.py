@@ -3,11 +3,13 @@
 import os
 # import autorootcwd
 USER = os.getenv("USER")
+EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
+DATA_HOME = f"{EDDIE}/data/processed"
 
-input_dir = f"{REPO_HOME}/data/processed/cache/4096/chords"
-output_dir = f"{REPO_HOME}/data/processed/cache/4096/chords/augs"
+input_dir = f"{DATA_HOME}cache/4096/chords"
+output_dir = f"{DATA_HOME}/cache/4096/chords/augs"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
