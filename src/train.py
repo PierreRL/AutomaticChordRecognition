@@ -165,6 +165,7 @@ def train_model(
     learning_rates = [optimiser.param_groups[0]["lr"]]
 
     for epoch in tqdm(range(args.epochs)):
+        torch.set_grad_enabled(True)
         model.train()
         train_loss = 0.0
         for i, (features, gens, labels) in enumerate(train_loader):
