@@ -130,6 +130,8 @@ class FullChordDataset(Dataset):
         )  # Flatten all chord IDs
         all_chord_ids = all_chord_ids[all_chord_ids != -1]  # Remove -1 (ignored labels)
 
+        all_chord_ids = all_chord_ids.long()
+
         counts = torch.bincount(all_chord_ids, minlength=NUM_CHORDS).float()
 
         weights = 1.0 / (counts + epsilon) ** alpha  # Inverse frequency weights
