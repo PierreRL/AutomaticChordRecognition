@@ -57,7 +57,15 @@ echo "Running experiment script"
 cd ${REPO_HOME}
 
 # Read the experiment command from the experiments file
-experiment_text_file=$1
+experiment_text_file="${REPO_HOME}/scripts/experiments.txt"
+if [ ! -f "${experiment_text_file}" ]; then
+    echo "Error: Experiment text file not found at ${experiment_text_file}"
+    exit 1
+fi
+if [ -z "${SGE_TASK_ID}" ]; then
+    echo "Error: SGE_TASK_ID is not set. Please submit the job as an array job."
+    exit 1
+fi
 COMMAND=$(sed -n "${SGE_TASK_ID}p" ${experiment_text_file})
 
 # Print the command to be run
