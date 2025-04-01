@@ -19,9 +19,6 @@
 # Set the maximum runtime for the job (similar to SLURM's `--time`)
 #$ -l h_rt=02:00:00
 
-# Specify which queue to use, for example:
-#$ -q all.q
-
 # ===================
 # Environment Setup
 # ===================
