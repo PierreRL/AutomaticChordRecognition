@@ -124,6 +124,7 @@ def evaluate_model(
     Returns:
         metrics (dict[str, float]): A dictionary of evaluation metrics and their values.
     """
+    torch.set_grad_enabled(False)  # Disable gradient calculation for evaluation
     if not device:
         device = get_torch_device()
 

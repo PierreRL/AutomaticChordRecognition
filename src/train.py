@@ -99,6 +99,8 @@ def train_model(
         dict: A dictionary containing the training history.
     """
 
+    torch.set_grad_enabled(True)
+
     if args.device is None:
         # Use GPU if available, check for cuda and mps
         device = get_torch_device()
