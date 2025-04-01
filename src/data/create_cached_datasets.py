@@ -18,7 +18,8 @@ def main(
 ):
     os.makedirs(output_dir, exist_ok=True)
 
-    filenames = get_filenames(dir=input_dir)
+    filenames = os.listdir(input_dir)
+    filenames = [os.path.splitext(f)[0] for f in filenames]
     if start_idx is not None and end_idx is not None:
         filenames = filenames[start_idx:end_idx]
     elif start_idx is not None:
