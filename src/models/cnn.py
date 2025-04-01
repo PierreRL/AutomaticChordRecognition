@@ -16,9 +16,9 @@ class CNN(BaseACR):
         self,
         input_features: int = 216,
         num_classes: int = NUM_CHORDS,
-        num_layers: int = 3,
-        kernel_size: int = 3,
-        channels: int = 16,
+        num_layers: int = 1,
+        kernel_size: int = 5,
+        channels: int = 5,
         activation: str = "relu",
         hmm_smoothing: bool = True,
         hmm_alpha: float = 0.2,
@@ -59,9 +59,18 @@ class CNN(BaseACR):
                 )
                 layers.append(act_layer())
                 in_channels = channels
-            self.cnn = nn.Sequential(*layers)
-            self.final_conv = nn.Conv2d(channels, channels, kernel_size=(1, self.input_features))
-            self.activation_final = act_layer()
+            self.temporal_cnn = nn.Sequential(*layers)
+
+            # Collapse frequency dimension with 1xF convolution
+            self.freq_collapse = nn.Conv2d(
+                in_channels=channels,
+                out_channels=36,
+                kernel_size=(1, input_features),
+                padding=(0, 0)
+            )
+
+            # Final dense layer per frame
+            self.classifier = nn.Linear(36, num_classes)
 
         if self.use_generative_features:
             self.gen_projector = nn.Linear(self.gen_dimension, self.gen_down_dimension)
@@ -69,7 +78,7 @@ class CNN(BaseACR):
         # Final classifier
         total_features = 0
         if self.use_cqt:
-            total_features += self.channels
+            total_features += 36
         if self.use_generative_features:
             total_features += self.gen_down_dimension
 
@@ -87,9 +96,9 @@ class CNN(BaseACR):
                 raise ValueError("CQT is enabled but no cqt_features were provided.")
 
             x = cqt_features.unsqueeze(1)  # (B, 1, T, F)
-            x = self.cnn(x)
-            x = self.activation_final(self.final_conv(x))  # (B, C, T, 1)
-            x = x.squeeze(-1).permute(0, 2, 1)  # (B, T, C)
+            x = self.temporal_cnn(x)       # (B, C, T, F)
+            x = self.freq_collapse(x)      # (B, 36, T, 1)
+            x = x.squeeze(-1).permute(0, 2, 1)  # (B, T, 36)
             feature_list.append(x)
 
         if self.use_generative_features:
@@ -102,7 +111,8 @@ class CNN(BaseACR):
         if len(feature_list) == 2:
             x = torch.cat(feature_list, dim=2)
         else:
-            x = feature_list[0]
+            x = feature_list[0] 
+        
 
         x = self.classifier(x)  # (B, T, num_classes)
         return x

@@ -330,7 +330,7 @@ def main():
         optimiser=args.optimiser,
         momentum=args.momentum,
         early_stopping=args.early_stopping if args.enable_early_stopping else None,
-        do_validation=args.training_split == '60',
+        do_validation=args.train_split == '60',
         save_dir=f"{DIR}",
         save_filename="best_model.pth",
     )
