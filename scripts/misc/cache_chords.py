@@ -3,9 +3,10 @@
 import os
 # import autorootcwd
 USER = os.getenv("USER")
+EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"~/eddie/data/processed"
+DATA_HOME = f"{EDDIE}/data/processed"
 
 input_dir = os.path.expanduser(f"{DATA_HOME}/audio")
 output_dir = f"{DATA_HOME}/cached/4096/cqts/"
