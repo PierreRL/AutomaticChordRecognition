@@ -7,7 +7,7 @@ USER = os.getenv("USER")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"~/eddie/data/processed"
 
-input_dir = f"{DATA_HOME}/audio"
+input_dir = os.path.expanduser(f"{DATA_HOME}/audio")
 output_dir = f"{DATA_HOME}/cached/4096/cqts/"
 
 os.makedirs(output_dir, exist_ok=True)
