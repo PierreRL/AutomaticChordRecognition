@@ -318,7 +318,7 @@ def main():
         optimiser=args.optimiser,
         momentum=args.momentum,
         early_stopping=args.early_stopping if args.enable_early_stopping else None,
-        save_dir=f"{DIR}/",
+        save_dir=f"{DIR}",
         save_filename="best_model.pth",
     )
 

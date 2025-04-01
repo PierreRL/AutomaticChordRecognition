@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from src.models.crnn import CRNN
 from src.data.dataset import FixedLengthRandomChordDataset, FixedLengthChordDataset
-from src.utils import get_torch_device, collate_fn, NUM_CHORDS, N_BINS, EarlyStopper
+from src.utils import get_torch_device, collate_fn, write_json, NUM_CHORDS, N_BINS, EarlyStopper
 
 
 class TrainingArgs:
@@ -240,7 +240,13 @@ def train_model(
 
         learning_rates.append(optimiser.param_groups[0]["lr"])
 
-        torch.set_grad_enabled(True)
+        get_and_save_history(
+            train_losses,
+            val_losses,
+            val_accuracies,
+            learning_rates,
+            args.save_dir,
+        )
 
         # Early stopping if not improved in the last # epochs
         if args.early_stopping is None:
@@ -250,13 +256,40 @@ def train_model(
             print("Early stopping triggered at epoch ", epoch)
             break
 
-    history = {
+    history = get_and_save_history(
+        train_losses,
+        val_losses,
+        val_accuracies,
+        learning_rates,
+        args.save_dir,
+    )
+
+    return history
+
+def get_and_save_history(
+    train_losses: list,
+    val_losses: list,
+    val_accuracies: list,
+    learning_rates: list,
+    save_dir: str,
+    save_filename: str = 'training_history.json'
+):
+    """
+    Save the training history to a file.
+
+    Args:
+        history (dict): The training history.
+        save_dir (str): The directory to save the history.
+        save_filename (str): The filename to save the history.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    training_history = {
         "train_losses": train_losses,
         "val_losses": val_losses,
         "val_accuracies": val_accuracies,
         "learning_rates": learning_rates,
     }
-    return history
+    write_json(training_history, f"{save_dir}/training_history.json")
 
 
 def main():
