@@ -4,7 +4,7 @@
 # ====================
 #$ -cwd
 #$ -o /home/$USER/logs/job-$JOB_ID-$TASK_ID.out
-#$ -e /home/$USER/logs/job-$JOB_ID-$TASK_ID.err
+#$ -e /home/$USER/logs/job-$JOB_ID-$TASK_ID.out
 
 #$ -l h_vmem=16G
 #$ -l h_rt=02:00:00
