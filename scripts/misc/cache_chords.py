@@ -13,7 +13,7 @@ output_dir = f"{DATA_HOME}/cached/4096/chords/"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
-files = [f for f in files if f.endswith(".mp3")]
+files = [f for f in files if f.endswith(".jams")]
 max_group_size = 1213
 
 base_call = f"python {REPO_HOME}/src/data/create_cached_datasets.py --input_dir={input_dir} --output_dir={output_dir} --create_chords"
