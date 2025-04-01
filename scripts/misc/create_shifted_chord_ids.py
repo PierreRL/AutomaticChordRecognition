@@ -11,7 +11,7 @@ output_dir = f"{REPO_HOME}/data/processed/cache/4096/chords/augs"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
-files = [f for f in files if f.endswith(".mp3")]
+files = [f for f in files if f.endswith(".pt")]
 max_group_size = 122
 if len(files) % max_group_size != 0:
     print(
