@@ -6,8 +6,8 @@ import torch
 
 from src.train import train_model, TrainingArgs
 from src.data.dataset import generate_datasets
-from models.crnn import CRNN
-from src.models.hmm_smoother import HMMSmoother
+from src.models.crnn import CRNN
+from src.models.cnn import CNN
 from src.models.logistic_acr import LogisticACR
 from src.utils import (
     NUM_CHORDS,
@@ -273,6 +273,16 @@ def main():
             num_classes=NUM_CHORDS,
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
+        )
+    elif args.model == "cnn":
+        model = CNN(
+            input_features=N_BINS,
+            num_classes=NUM_CHORDS,
+            hmm_smoothing=args.hmm_smoothing,
+            hmm_alpha=args.hmm_alpha,
+            use_cqt=args.use_cqt,
+            use_generative_features=args.use_generative_features,
+            gen_dimension=args.generative_features_dim,
         )
     elif args.model == "transformer":
         raise NotImplementedError("Transformer model not implemented yet.")

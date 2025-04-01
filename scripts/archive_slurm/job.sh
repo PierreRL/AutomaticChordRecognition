@@ -54,7 +54,7 @@ mkdir -p ${SCRATCH_HOME}
 echo "Loading modules"
 
 VENV_DIR=~/ug4_venv
-python3 -m venv $VENV_DIR
+python3 -m venv ~/ug4_venv
 source $VENV_DIR/bin/activate
 pip install --upgrade pip
 pip install -r ~/LeadSheetTranscription/requirements.txt
