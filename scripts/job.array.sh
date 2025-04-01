@@ -11,10 +11,7 @@
 #$ -e /home/$USER/gridengine_logs/job-$JOB_ID.err
 
 # Request memory (in MB, equivalent to `--mem` in SLURM)
-#$ -l h_vmem=24G
-
-# Request the number of CPUs per task (equivalent to `--cpus-per-task` in SLURM)
-#$ -pe smp 1
+#$ -l h_vmem=16G
 
 # Request GPU 
 #$ -l gpu=1  # Request one GPU
