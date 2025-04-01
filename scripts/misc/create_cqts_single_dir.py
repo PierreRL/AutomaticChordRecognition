@@ -30,4 +30,9 @@ for i in range(0, len(files), max_group_size):
 
     print(expt_call, file=output_file)
 
+# Print number of experiments
+print(
+    f"Generated {len(files) // max_group_size} experiments with max group size of {max_group_size}."
+)
+
 output_file.close()
