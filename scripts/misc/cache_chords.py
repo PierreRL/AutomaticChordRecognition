@@ -8,8 +8,8 @@ EDDIE = os.getenv("EDDIE")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
-input_dir = os.path.expanduser(f"{DATA_HOME}/audio")
-output_dir = f"{DATA_HOME}/cached/4096/cqts/"
+input_dir = os.path.expanduser(f"{DATA_HOME}/chords")
+output_dir = f"{DATA_HOME}/cached/4096/chords/"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
