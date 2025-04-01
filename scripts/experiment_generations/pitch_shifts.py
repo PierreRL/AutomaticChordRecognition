@@ -25,7 +25,7 @@ output_file = open("./scripts/experiments.txt", "w")
 aug_probs = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 for prob in aug_probs:
     expt_call = (
-        f"{base_call} --exp_name=audio_shift_{prob} --audio_pitch_shift --pitch_shift_prob={prob}"
+        f"{base_call} --exp_name=audio_shift_{prob} --audio_pitch_shift --aug_shift_prob={prob}"
     )
     print(expt_call, file=output_file)
 
