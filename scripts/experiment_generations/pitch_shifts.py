@@ -4,11 +4,12 @@ import os
 
 # The home dir on the node's scratch disk
 USER = os.getenv("USER")
+EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"{REPO_HOME}/data/processed"
+DATA_HOME = f"{EDDIE}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/pitch_shifts --segment_length=10"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/pitch_shifts --segment_length=10"
 
 output_file = open("./scripts/experiments.txt", "w")
 
