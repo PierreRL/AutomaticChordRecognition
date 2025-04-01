@@ -3,8 +3,6 @@
 import os
 # import autorootcwd
 USER = os.getenv("USER")
-
-USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"

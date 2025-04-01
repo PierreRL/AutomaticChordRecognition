@@ -34,7 +34,7 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
     # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
-    local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    local_path = os.path.expanduser(f"/exports/eddie/scratch/s2147950/.cache/huggingface/musicgen-{model_size}")
     model = MusicGen.get_pretrained(local_path, device=device)
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()
