@@ -19,6 +19,8 @@ def main(
     dir = "./data/processed",
     model_size="large",
     layer_indices=None,
+    start_idx=0,
+    end_idx=None,
     max_chunk_length=5
 ):
     device = get_torch_device(allow_mps=False)
@@ -33,6 +35,15 @@ def main(
 
     for layer_idx in layer_indices:
         os.makedirs(f"{dir}/cache/{hop_length}/gen/{layer_idx}", exist_ok=True)
+
+    if end_idx is None:
+        end_idx = len(filenames)
+    if start_idx > end_idx:
+        raise ValueError("start_idx must be less than or equal to end_idx")
+    if start_idx is None:
+        start_idx = 0
+    
+    filenames = filenames[start_idx:end_idx]
 
     print('Extracting features...')
     for filename in tqdm(filenames):
@@ -83,6 +94,20 @@ if __name__ == "__main__":
         default=None,
         help="Comma-separated list of layer indices to extract. If None, uses the final layer only."
     )
+    parser.add_argument(
+        "--start_idx",
+        type=int,
+        required=False,
+        default=0,
+        help="Start index for the filenames. Useful for parallel processing."
+    )
+    parser.add_argument(
+        "--end_idx",
+        type=int,
+        required=False,
+        default=None,
+        help="End index for the filenames. Useful for parallel processing."
+    )
     args = parser.parse_args()
 
     # Parse layer indices, e.g. "10,18" => [10, 18]
@@ -97,5 +122,7 @@ if __name__ == "__main__":
         dir=args.dir,
         model_size=args.model_size,
         max_chunk_length=args.max_chunk_length,
+        start_idx=args.start_idx,
+        end_idx=args.end_idx,
         layer_indices=layer_indices,
     )
