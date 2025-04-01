@@ -7,8 +7,8 @@
 #$ -cwd
 
 # Log location for standard output and error (similar to SLURM output and error)
-#$ -o /home/$USER/gridengine_logs/job-$JOB_ID.out
-#$ -e /home/$USER/gridengine_logs/job-$JOB_ID.err
+#$ -o /home/$USER/logs/job-$JOB_ID.out
+#$ -e /home/$USER/logs/job-$JOB_ID.err
 
 # Request memory (in MB, equivalent to `--mem` in SLURM)
 #$ -l h_vmem=16G
@@ -28,16 +28,12 @@ echo "Running on $HOSTNAME"
 echo "Job submitted at $(date)"
 echo "-----------------------------------"
 
-# Load your environment (if needed, adjust based on your setup)
 echo "Setting up bash environment"
 source ~/.bashrc
-
-# Make the script exit after the first error (equivalent to `set -e` in bash)
 set -e
 
-# Setup scratch space (if needed for large data)
-$REPO_HOME="/home/${USER}/LeadSheetTranscription"
-$DATA_HOME="/exports/eddie/scratch/s2147950/"
+REPO_HOME="/home/${USER}/LeadSheetTranscription"
+DATA_HOME="/exports/eddie/scratch/s2147950/"
 
 # Activate virtual environment
 echo "Loading virtual environment"
@@ -69,15 +65,9 @@ echo "Running provided command: ${COMMAND}"
 eval "${COMMAND}"
 
 echo "Command ran successfully!"
-
-# ======================
-# Post-Experiment Logging
-# ======================
 echo ""
 echo "============"
 echo "Job finished successfully"
 dt=$(date '+%d/%m/%Y %H:%M:%S')
 echo "Job finished: $dt"
-
-# Deactivate virtual environment (optional)
 deactivate
