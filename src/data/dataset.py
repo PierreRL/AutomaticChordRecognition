@@ -127,7 +127,7 @@ class FullChordDataset(Dataset):
             weights (Tensor): The chord loss weights, normalized.
         """
         all_chord_ids = torch.cat(
-            [self[i][1].flatten() for i in range(len(self))]
+            [self[i][2].flatten() for i in range(len(self))]
         )  # Flatten all chord IDs
         all_chord_ids = all_chord_ids[all_chord_ids != -1]  # Remove -1 (ignored labels)
 
@@ -137,6 +137,11 @@ class FullChordDataset(Dataset):
 
         weights = 1.0 / (counts + epsilon) ** alpha  # Inverse frequency weights
 
+        print('Weights before normalization:')
+        print(weights)
+        print('Counts:')
+        print(counts)
+
         # Mask zero-count classes
         nonzero_mask = counts > 0  # Only consider seen classes
         weights[~nonzero_mask] = 0  # Set weights of unseen classes to 0
@@ -145,8 +150,12 @@ class FullChordDataset(Dataset):
         scaling_factor = (counts[nonzero_mask] * weights[nonzero_mask]).sum() / counts[
             nonzero_mask
         ].sum()
+        print('Scaling factor:')
+        print(scaling_factor)
         weights /= scaling_factor  # Normalize
 
+        print('Weights after normalization:')
+        print(weights)
         if self.mask_X:
             weights[1] = 0  # Ensure class '1' has zero weight if it is masked
 

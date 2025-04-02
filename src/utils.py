@@ -614,7 +614,7 @@ def get_chord_annotation(
     return frames
 
 
-def get_torch_device(allow_mps=True):
+def get_torch_device(allow_mps=False):
     """
     Get the torch device to use for training.
 
