@@ -531,10 +531,10 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
         raise ValueError("Semitones must be in the range -5 to 6.")
 
     chord_id -= 2  # Offset by 2 for N and X
-    chord_quality = chord_id // 12
-    chord_root = chord_id % 12
+    chord_quality = chord_id % 14
+    chord_root = chord_id // 12
     chord_root_shifted = (chord_root + semitones) % 12
-    chord_id_shifted = chord_root_shifted + chord_quality * 12 + 2
+    chord_id_shifted = (chord_root_shifted * 14 ) + chord_quality + 2
 
     return chord_id_shifted
 
