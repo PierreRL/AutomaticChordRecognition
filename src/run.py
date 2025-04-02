@@ -174,7 +174,7 @@ def main():
     parser.add_argument(
         "--weight_alpha",
         type=float,
-        default=0.65,
+        default=0.55,
         help="Alpha smoothing parameter for the weighted loss.",
     )
     parser.add_argument(
