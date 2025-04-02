@@ -291,7 +291,7 @@ class FixedLengthRandomChordDataset(Dataset):
             )
 
         if self.cqt_pitch_shift:
-            semitones = torch.randint(-5, 6, (1,)).item()
+            semitones = self.get_random_shift()
             cqt_patch = pitch_shift_cqt(cqt_patch, semitones, BINS_PER_OCTAVE)
             chord_ids_patch = torch.tensor(transpose_chord_id_vector(chord_ids_patch, semitones), dtype=torch.long)
 
