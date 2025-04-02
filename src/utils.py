@@ -455,7 +455,7 @@ def id_to_chord(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             return "X"
 
         root = (chord_id - 2) % 12
-        quality = "maj" if (chord_id - 1) // 12 == 0 else "min"
+        quality = "maj" if (chord_id - 2) // 12 == 0 else "min"
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[root]
@@ -473,10 +473,8 @@ def id_to_chord(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             return "X"
 
         # Subtract 2 to account for N and X
-        chord_id -= 2
-
-        root = chord_id // 14
-        quality_index = chord_id % 14
+        root = (chord_id-2) // 14
+        quality_index = (chord_id-2) % 14
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[root]
@@ -530,9 +528,9 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
     if semitones < -5 or semitones > 6:
         raise ValueError("Semitones must be in the range -5 to 6.")
 
-    chord_id -= 2  # Offset by 2 for N and X
-    chord_quality = chord_id % 14
-    chord_root = chord_id // 12
+    # chord_id -= 2  # Offset by 2 for N and X
+    chord_quality = (chord_id-2) % 14
+    chord_root = (chord_id-2) // 14
     chord_root_shifted = (chord_root + semitones) % 12
     chord_id_shifted = (chord_root_shifted * 14 ) + chord_quality + 2
 
