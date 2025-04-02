@@ -30,6 +30,7 @@ for kernel_size, layer, channel in params:
     # and recorded in the output data by the python script
     expt_call = (
         f"{base_call} "
+        f"--exp_name=cnn_k{kernel_size}_l{layer}_c{channel} "
         f"--cnn_kernel_size={kernel_size} "
         f"--num_layers={layer} "
         f"--cnn_channels={channel} "
