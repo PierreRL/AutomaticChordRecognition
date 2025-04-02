@@ -150,6 +150,18 @@ def main():
         help="Segment length for training dataset in seconds.",
     )
     parser.add_argument(
+        "--cnn_channels",
+        type=int,
+        default=10,
+        help="Number of channels in the CNN model.",
+    )
+    parser.add_argument(
+        "--cnn_kernel_size",
+        type=int,
+        default=15,
+        help="Kernel size for the CNN model.",
+    )
+    parser.add_argument(
         "--mask_X",
         action="store_true",
         help="Whether to ignore class label X for training.",
@@ -283,6 +295,12 @@ def main():
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
             gen_dimension=args.generative_features_dim,
+            gen_down_dimension=args.generative_features_dim,
+            gen_layer=args.gen_layer,
+            num_layers=args.num_layers,
+            kernel_size=args.cnn_kernel_size,
+            channels=args.cnn_channels,
+            activation="relu"
         )
     elif args.model == "transformer":
         raise NotImplementedError("Transformer model not implemented yet.")
