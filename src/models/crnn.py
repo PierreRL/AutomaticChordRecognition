@@ -101,6 +101,7 @@ class CRNN(BaseACR):
 
         if self.use_generative_features:
             self.gen_projector = nn.Linear(self.gen_dimension, self.gen_down_dimension)
+            self.gen_norm = nn.LayerNorm(self.gen_down_dimension)
 
         # ----- RNN input dimension -----
         rnn_input_dim = 0
@@ -178,6 +179,7 @@ class CRNN(BaseACR):
             # Suppose gen_features is shape (B, frames, gen_dimension)
             # We skip convolution entirely. Just add it.
             gen_features = self.gen_projector(gen_features)  # (B, frames, gen_down_dimension)
+            gen_features = self.gen_norm(gen_features)       # (B, frames, gen_down_dimension)
             feature_list.append(gen_features)
 
         # Combine features if we have both
