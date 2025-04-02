@@ -296,7 +296,6 @@ def main():
             use_generative_features=args.use_generative_features,
             gen_dimension=args.generative_features_dim,
             gen_down_dimension=args.generative_features_dim,
-            gen_layer=args.gen_layer,
             num_layers=args.num_layers,
             kernel_size=args.cnn_kernel_size,
             channels=args.cnn_channels,
