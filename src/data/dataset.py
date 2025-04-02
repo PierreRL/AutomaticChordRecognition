@@ -8,6 +8,7 @@ from typing import Tuple, List, Optional
 
 from src.utils import (
     pitch_shift_cqt,
+    get_torch_device,
     get_split_filenames,
     transpose_chord_id_vector,
     SMALL_VOCABULARY,
@@ -174,7 +175,7 @@ class FullChordDataset(Dataset):
         cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True)
         chord_ids = torch.load(f"{chord_dir}/{filename}.pt")
         try:
-            gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True)
+            gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True, map_location=get_torch_device())
         except FileNotFoundError:
             # If the generative features are not found, use None. It is later converted to an empty tensor.
             if self.dev_mode or self.gen_layer is None:

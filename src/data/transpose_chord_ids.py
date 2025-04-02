@@ -65,13 +65,13 @@ def pitch_shift_chords(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create pitch-shifted audios for MP3 files."
+        description="Chord ID pitch shifting script."
     )
     parser.add_argument(
         "--input_dir",
         type=str,
         required=True,
-        help="Directory containing input audio files (MP3)."
+        help="Directory containing the tensor files to be pitch-shifted."
     )
     parser.add_argument(
         "--output_dir",
