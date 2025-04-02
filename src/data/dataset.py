@@ -91,7 +91,6 @@ class FullChordDataset(Dataset):
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
-        chord_ids = torch.tensor(transpose_chord_id_vector(chord_ids, pitch_aug), dtype=torch.long)
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
     
     def get_minimum_length_frame(self, *tensors: Optional["Tensor"]) -> Tuple[Optional["Tensor"], ...]:
