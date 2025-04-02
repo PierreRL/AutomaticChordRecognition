@@ -30,8 +30,9 @@ This will output the model, training history and evaluation metrics to a folder 
 
     - `utils.py`: contains many useful functions.
 - `/data` should contain the data relevant to this project. The data can be made available at request by emailing *first[dot]last[at]gmail.com*.
+- `/notebooks`: python notebooks for analysing the data and results.
 - `/scripts`: relevant files for running experiments on a cluster environment
-- `/thesis`: Latex to build the dissertation
+- `/thesis`: latex to build the dissertation
 
 ## Citation
 

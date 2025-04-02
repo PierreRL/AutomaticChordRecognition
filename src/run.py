@@ -388,9 +388,9 @@ def main():
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
-    print("Evaluating model on train...")
-    train_metrics = evaluate_model(model, train_final_test_dataset)
-    write_json(train_metrics, f"{DIR}/train_metrics.json")
+    # print("Evaluating model on train...")
+    # train_metrics = evaluate_model(model, train_final_test_dataset)
+    # write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")
