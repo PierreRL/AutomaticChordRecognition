@@ -373,6 +373,9 @@ def main():
     
     # Load the best model
     model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
+    model.eval()
+
+    torch.set_grad_enabled(False)
 
     if args.train_split  == '60':
         # Validation set

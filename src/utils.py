@@ -140,7 +140,7 @@ def get_cqt(
         bins_per_octave=bins_per_octave,
         fmin=fmin,
     )
-    if absolute:
+    if absolute: # Discard phase information
         cqt = np.abs(cqt)
 
     cqt = librosa.amplitude_to_db(cqt)
@@ -612,7 +612,7 @@ def get_chord_annotation(
     return frames
 
 
-def get_torch_device(allow_mps=False):
+def get_torch_device(allow_mps=True):
     """
     Get the torch device to use for training.
 
