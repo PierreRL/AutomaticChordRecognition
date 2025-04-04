@@ -235,7 +235,6 @@ class FixedLengthRandomChordDataset(Dataset):
         Returns 0 with probability 1 - aug_shift_prob.
         Returns a random value between lower and upper bounds inclusive \ {0} with probability aug_shift_prob.
         """
-        print(f"Random shift: {lower} to {upper}")
         if random.random() < self.aug_shift_prob:
             shift = random.randint(lower, upper)
             while shift == 0:
