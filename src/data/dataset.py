@@ -235,6 +235,7 @@ class FixedLengthRandomChordDataset(Dataset):
         Returns 0 with probability 1 - aug_shift_prob.
         Returns a random value between lower and upper bounds inclusive \ {0} with probability aug_shift_prob.
         """
+        print(f"Random shift: {lower} to {upper}")
         if random.random() < self.aug_shift_prob:
             shift = random.randint(lower, upper)
             while shift == 0:
@@ -291,10 +292,10 @@ class FixedLengthRandomChordDataset(Dataset):
             )
 
         if self.cqt_pitch_shift:
-            semitones = self.get_random_shift()
+            shift = self.get_random_shift()
             if shift != 0:
-                cqt_patch = pitch_shift_cqt(cqt_patch, semitones, BINS_PER_OCTAVE)
-                chord_ids_patch = torch.tensor(transpose_chord_id_vector(chord_ids_patch, semitones), dtype=torch.long)
+                cqt_patch = pitch_shift_cqt(cqt_patch, shift, BINS_PER_OCTAVE)
+                chord_ids_patch = torch.tensor(transpose_chord_id_vector(chord_ids_patch, shift), dtype=torch.long)
 
         return cqt_patch, gen_features_patch, chord_ids_patch
 
