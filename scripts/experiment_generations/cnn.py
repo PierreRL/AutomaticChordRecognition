@@ -13,11 +13,11 @@ DATA_HOME = f"{REPO_HOME}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/cnn --model=cnn"
 
-kernel_sizes = [5, 5, 9, 15]
+kernel_sizes = [5, 5, 9]
 
-layers = [1, 3, 5, 7]
+layers = [1, 3, 5]
 
-channels = [1, 5, 10, 20]
+channels = [1, 5, 10]
 
 params = [(k, l, c) for k, l, c in zip(kernel_sizes, layers, channels)]
 nr_expts = len(params)
