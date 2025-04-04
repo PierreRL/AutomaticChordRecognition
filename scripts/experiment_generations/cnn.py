@@ -5,13 +5,12 @@ import os
 # The home dir on the node's scratch disk
 USER = os.getenv("USER")
 # This may need changing to e.g. /disk/scratch_fast depending on the cluster
-SCRATCH_DISK = "/disk/scratch"
-SCRATCH_HOME = f"{SCRATCH_DISK}/{USER}"
+EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"{REPO_HOME}/data/processed"
+DATA_HOME = f"{EDDIE}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/cnn --model=cnn"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/cnn --model=cnn"
 
 kernel_sizes = [5, 5, 9]
 
