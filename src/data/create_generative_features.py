@@ -18,7 +18,6 @@ def main(
     hop_length=4096,
     dir = "./data/processed",
     model_size="large",
-    layer_indices=None,
     start_idx=0,
     end_idx=None,
     max_chunk_length=5
@@ -33,8 +32,8 @@ def main(
     model = get_musicgen_model(model_size=model_size, device=device)
     frame_length = hop_length / SR
 
-    for layer_idx in layer_indices:
-        os.makedirs(f"{dir}/cache/{hop_length}/gen/{layer_idx}", exist_ok=True)
+    # for layer_idx in layer_indices:
+    #     os.makedirs(f"{dir}/cache/{hop_length}/gen/{layer_idx}", exist_ok=True)
 
     if end_idx is None:
         end_idx = len(filenames)
@@ -52,12 +51,11 @@ def main(
             filename=filename,
             max_chunk_length=max_chunk_length,
             model=model,
-            frame_length=frame_length,
-            layer_indices=layer_indices
+            frame_length=frame_length
         )
-        for layer_idx, song_repr in song_repr_dict.items():
-            # Save each layer's representation separately
-            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen/{layer_idx}/{filename}.pt")
+        for reduction, song_repr in song_repr_dict.items():
+            os.makedirs(f"{dir}/cache/{hop_length}/gen/{reduction}", exist_ok=True)
+            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen/{reduction}/{filename}.pt")
 
 
 if __name__ == "__main__":
@@ -88,13 +86,6 @@ if __name__ == "__main__":
         help="The length of context in seconds to pass through the model at once. Absolute maximum 30s."
     )
     parser.add_argument(
-        "--layer_indices",
-        type=str,
-        required=False,
-        default=None,
-        help="Comma-separated list of layer indices to extract. If None, uses the final layer only."
-    )
-    parser.add_argument(
         "--start_idx",
         type=int,
         required=False,
@@ -110,14 +101,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Parse layer indices, e.g. "10,18" => [10, 18]
-    if args.layer_indices is not None:
-        layer_indices = [int(x.strip()) for x in args.layer_indices.split(',')]
-    else:
-        layer_indices = list(range(1,49))  # Default to all layers: large
-        # layer_indices = list(range(1,25))  # Default to all layers: small
-
-
     main(
         hop_length=args.hop_length,
         dir=args.dir,
@@ -125,5 +108,4 @@ if __name__ == "__main__":
         max_chunk_length=args.max_chunk_length,
         start_idx=args.start_idx,
         end_idx=args.end_idx,
-        layer_indices=layer_indices,
     )
