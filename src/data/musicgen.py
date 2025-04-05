@@ -6,7 +6,6 @@ Inspired by work in: https://arxiv.org/pdf/2107.05677
 We adapt their method to use with a newer model, MusicGen.
 """
 
-
 import autorootcwd
 import os
 from typing import Dict, List
@@ -18,9 +17,8 @@ from torchaudio.transforms import Resample
 
 from audiocraft.models import MusicGen
 from audiocraft.modules.conditioners import ConditioningAttributes
-from audiocraft.modules.transformer import create_sin_embedding
 
-from src.utils import get_torch_device
+from src.utils import get_torch_device, get_filenames
 
 def get_musicgen_model(model_size: str, device: str = "cuda"):
     """
@@ -114,7 +112,8 @@ def extract_song_hidden_representation(
     model,
     max_chunk_length: float,
     frame_length: float = None,
-    overlap_ratio: float = 0.5
+    overlap_ratio: float = 0.5,
+    max_batch_size: int = 16
 ) -> Dict[str, Dict[str, torch.Tensor]]:
     """
     Process an entire song in overlapping chunks and returns a hidden state representation
@@ -164,51 +163,94 @@ def extract_song_hidden_representation(
     # Determine chunking parameters.
     chunk_samples = int(max_chunk_length * sr)  # chunk length in samples.
     hop_samples = int(chunk_samples * (1 - overlap_ratio))  # hop size between chunks.
+
+    # Conditioning attributes for the LM.
+    neutral_condition = ConditioningAttributes(text={'description': ''})
+    tokenized = model.lm.condition_provider.tokenize([neutral_condition])
+    condition_tensors = model.lm.condition_provider(tokenized)
+
+    # Get list of start indices for chunks.
+    start_indices = []
+    idx = 0
+    while idx < total_samples:
+        start_indices.append(idx)
+        idx += hop_samples
     
-    start_sample = 0
-    while start_sample < total_samples:
-        end_sample = min(start_sample + chunk_samples, total_samples)
-        chunk_wav = wav[:, :, start_sample:end_sample]  # shape: [1, channels, chunk_samples]
-        
+        # Create list of chunks; pad last chunk if needed.
+    chunk_list = []
+    for start in start_indices:
+        end = min(start + chunk_samples, total_samples)
+        chunk = wav[:, :, start:end]  # [1, channels, L]
+        if chunk.shape[-1] < chunk_samples:
+            pad_amount = chunk_samples - chunk.shape[-1]
+            chunk = torch.nn.functional.pad(chunk, (0, pad_amount))
+        chunk_list.append(chunk)  # each chunk is [1, channels, chunk_samples]
+    
+    num_chunks = len(chunk_list)
+
+    # Process chunks in batches to limit memory usage.
+    for i in range(0, num_chunks, max_batch_size):
+        batch_chunks = torch.cat(chunk_list[i : i + max_batch_size], dim=0)  # [B, channels, chunk_samples] where B <= max_batch_size
+        # Pass through compression model.
         with torch.no_grad():
-            # Encode the chunk to get discrete tokens.
-            codes, _ = model.compression_model.encode(chunk_wav)
-            # prompt_tokens shape: [1, K, S] (K: number of codebooks, S: number of tokens for this chunk)
-            
-            lm_output = model.lm.compute_predictions(codes, conditions=[], stage=-1, keep_only_valid_steps=True) # Shape [B, K, T, card] 
-            chunk_logits = lm_output.logits  # [1, K, T_chunk, card]
-    
-        # Determine where in the global timeline these chunk logits should be placed.
-        chunk_start_time = start_sample / sr  # in seconds
-        chunk_start_frame = int(round(chunk_start_time * fps))
-        S_chunk = chunk_logits.shape[2]  # number of time steps for this chunk
+            # codes shape: [B, K, S_chunk]
+            codes, _ = model.compression_model.encode(batch_chunks)
+        # Prepare conditions for each chunk in batch.
+        B = codes.shape[0]
+        conditions = [ConditioningAttributes(text={'description': 'a song'}) for _ in range(B)]
+        # conditions = []
+        with torch.no_grad():
+            # LM compute_predictions: logits shape: [B, K, T_chunk, card]
+            lm_output = model.lm.compute_predictions(codes, conditions=conditions, stage=-1, keep_only_valid_steps=True, 
+            # condition_tensors=condition_tensors
+            )
+            batch_logits = lm_output.logits  # [B, K, T_chunk, card]
 
-        # Clip if the chunk goes beyond the global duration.
-        if chunk_start_frame + S_chunk > global_frames:
-            S_chunk = global_frames - chunk_start_frame
-            chunk_logits = chunk_logits[:, :, :S_chunk, :]
+        # For each chunk in the batch, accumulate logits.
+        T_chunk = batch_logits.shape[2]
+        for j in range(B):
+            chunk_global_start = int(round((start_indices[i + j] / sr) * fps))
+            if chunk_global_start + T_chunk > global_frames:
+                valid_T = global_frames - chunk_global_start
+                chunk_logits = batch_logits[j, :, :valid_T, :]
+            else:
+                valid_T = T_chunk
+                chunk_logits = batch_logits[j, :, :valid_T, :]
+            for k in range(K):
+                global_logits[k, chunk_global_start:chunk_global_start + valid_T, :] += chunk_logits[k, :valid_T, :]
+            global_weights[0, chunk_global_start:chunk_global_start + valid_T, 0] += 1.0
 
-        # Accumulate logits for each codebook.
-        for k in range(K):
-            global_logits_dict[k][:, chunk_start_frame:chunk_start_frame + S_chunk, :] += chunk_logits[0, k, :S_chunk, :]
-        global_weights[:, chunk_start_frame:chunk_start_frame + S_chunk, :] += 1.0
-
-        start_sample += hop_samples
-    
-    # Average overlapping frames
     # Average overlapping regions.
+    global_logits = global_logits / global_weights  # shape: [K, global_frames, card]
+
+    resampled_per_codebook = []
     for k in range(K):
-        global_logits_dict[k] /= global_weights
+        logits_k = global_logits[k].unsqueeze(0)  # [1, global_frames, card]
+        resampled = resample_hidden_states(logits_k, model, frame_length)  # [1, new_T, card]
+        resampled_per_codebook.append(resampled.squeeze(0))  # [new_T, card]
 
-    # Now resample each layer's hidden state
-    final_dict = {}
-    for idx in layer_indices:
-        # [1, T, D]
-        hs = global_hidden_dict[idx]
-        hs_resampled = resample_hidden_states(hs, model, frame_length)
-        final_dict[idx] = hs_resampled.squeeze(0)  # remove batch dim: [T', D]
-
-    return final_dict
+   # Compute all reductions.
+    # Stack across codebooks → [new_T, K, card]
+    stacked = torch.stack(resampled_per_codebook, dim=1)
+    
+    # "avg": average across codebooks -> [new_T, card]
+    avg_rep = stacked.mean(dim=1)  # [new_T, card]
+    
+    # "concat": concatenate along the feature dimension.
+    concat_rep = torch.cat([stacked[:, k, :] for k in range(K)], dim=-1)  # [new_T, K * card]
+    
+    # "first": provide each codebook separately.
+    single_dict = {}
+    for k in range(K):
+        single_dict[f"codebook_{k}"] = resampled_per_codebook[k]  # each is [new_T, card]
+    
+    # Return a dict containing all reduction methods.
+    result = {
+        "avg": avg_rep,
+        "concat": concat_rep,
+        "single": {k: single_dict[k].cpu().detach().numpy() for k in single_dict}
+    }
+    return result
 
 
 
@@ -407,3 +449,24 @@ Legacy behaviour in extracting hidden states from layers within the model. Warni
 #         final_dict[idx] = hs_resampled.squeeze(0)  # remove batch dim: [T', D]
 
 #     return final_dict
+
+def main():
+    # Example usage
+    model = get_musicgen_model("small", device='cpu')
+    filename =  get_filenames()[0]
+    dir = "./data/processed/"
+    max_chunk_length = 5.0 # seconds
+    frame_length = 4096 / 44100  # ~0.093 seconds
+
+    result = extract_song_hidden_representation(
+        filename,
+        dir,
+        model,
+        max_chunk_length,
+        frame_length
+    )
+    
+    print(result)
+
+if __name__ == "__main__":
+    main()
