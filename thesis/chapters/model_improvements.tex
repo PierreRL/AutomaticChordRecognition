@@ -10,7 +10,7 @@ A standard method of weighting is to multiply the loss function by the inverse o
     w_c = \frac{1}{(\text{count}(c) + 1)^\alpha}
 \end{equation}
 
-Where $w_c$ is the weight for chord $c$, $\text{count}(i)$ is the number of frames with chord $c$ in the dataset and $\alpha$ is a hyperparameter controlling the strength of weighting. $\alpha=0$ results in no weighting and increasing $alpha$ increases the severity of weighting. We add one in the denominator to avoid dividing by $0$. We then define normalised weights $w_c^*$ below.
+Where $w_c$ is the weight for chord $c$, $\text{count}(i)$ is the number of frames with chord $c$ in the dataset and $\alpha$ is a hyperparameter controlling the strength of weighting. $\alpha=0$ results in no weighting and increasing $alpha$ increases the severity of weighting. We add $1$ in the denominator to avoid dividing by $0$ and to diminish the effect of chords with very few occurrences. We then define normalised weights $w_c^*$ below.
 
 \begin{equation}\label{eq:weighted_loss}
     w_c^* = \frac{w_c}{s} \text{ where } s = \frac{\sum_{c\in \mathcal{C}} \text{count}(c)\cdot w_c}{\sum_{c\in \mathcal{C}} \text{count}(c)}
@@ -49,14 +49,17 @@ The effect of the HMM on the incorrect regions previously discussed in Section~\
 
 We did not implement a CRF. All related works to use a CRF use a linear chain CRF with either hand-crafted transition penalties or learned transition penalties. We believe that such simple CRF's are unlikely to outperform the HMM given the effective smoothing of the HMM and do not explore further. We also do not wish to bias the model towards the transitions contained in the dataset. Given the long-tailed distribution, a learned transition matrix will further encourage the model to predict more common transitions. Thus, we believe that the HMM with a simple transition matrix which effectively smooths the predictions is a satisfactory solution.
 
+\section{Pitch Augmentation}
+- Two methods:
+- On CQT \citet{ACRLargeVocab1}, not good.
+- Using \texttt{pyrubberband}\footnote{\url{https://github.com/bmcfee/pyrubberband}} on the audio [everyone else], works?
+
+Pitch augmentation has been done in other works on chord recognition. This has been done on the CQT~\citep{ACRLargeVocab1} by shifting the CQT bins and directly on the audio~\citep{BTC,StructuredTraining}. These are not the same process. Shifting the CQT is a simple matrix operation, whereas pitch shifting introduces other artefacts due to 
+
 \section{Using Generative Features}
 
 - As in [MelodyTranscriptionViaGenerativePreTraining], use Jukebox (?) to generate features at frames (? is it possible to do it on the same frames?). Train on these features and evaluate.
 
-\section{Pitch Augmentation}
-- Two methods:
-- On CQT \citet{ACRLargeVocab1}, not good.
-- Using MUDA on the audio [everyone else], works?
 
 \section{Structured Training}
 

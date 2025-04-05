@@ -188,6 +188,8 @@ class CRNN(BaseACR):
         else:
             x = feature_list[0]  # Either cqt alone or generative alone
 
+        print(x[0][0])
+
         x, _ = self.bi_gru_encoder(x)  # (B, frames, 2E)
 
         if self.cr2:

@@ -304,7 +304,7 @@ def get_and_save_history(
         "val_accuracies": val_accuracies,
         "learning_rates": learning_rates,
     }
-    write_json(training_history, f"{save_dir}/training_history.json")
+    write_json(training_history, f"{save_dir}/{save_filename}")
 
 
 def main():
