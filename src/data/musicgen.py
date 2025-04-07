@@ -290,27 +290,27 @@ def extract_song_hidden_representation(
     print("Resampled per codebook NaN:", [x.isnan().any() for x in resampled_per_codebook])
     print("Count NaN in resampled per codebook:", [torch.isnan(x).sum().item() for x in resampled_per_codebook])
 
-   # Compute all reductions.
+    # Compute all reductions.
     # Stack across codebooks → [new_T, K, card]
     stacked = torch.stack(resampled_per_codebook, dim=1)
-    
-    # "avg": average across codebooks -> [new_T, card]
-    avg_rep = stacked.mean(dim=1)  # [new_T, card]
-    
-    # "concat": concatenate along the feature dimension.
-    concat_rep = torch.cat([stacked[:, k, :] for k in range(K)], dim=-1)  # [new_T, K * card]
-    
-    # "first": provide each codebook separately.
-    single_dict = {}
-    for k in range(K):
-        single_dict[f"codebook_{k}"] = resampled_per_codebook[k]  # each is [new_T, card]
-    
-    # Return a dict containing all reduction methods.
+
+    # "avg": average across codebooks → [new_T, card]
+    avg_rep = stacked.mean(dim=1)  
+
+    # "concat": concatenate along the feature dimension → [new_T, K * card]
+    concat_rep = torch.cat([stacked[:, k, :] for k in range(K)], dim=-1)
+
+    # Build results dict
     result = {
-        "avg": avg_rep,
-        "concat": concat_rep,
-        "single": {k: single_dict[k].cpu().detach().numpy() for k in single_dict}
+        "avg": avg_rep,        # (torch.Tensor)
+        "concat": concat_rep,  # (torch.Tensor)
     }
+
+    # Insert each codebook at top-level ("codebook_0", etc.)
+    for k in range(K):
+        # Convert each codebook’s final tensor to numpy if desired
+        result[f"codebook_{k}"] = resampled_per_codebook[k].cpu().detach().numpy()
+
     return result
 
 
