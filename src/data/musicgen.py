@@ -215,45 +215,67 @@ def extract_song_hidden_representation(
         print("Computing predictions...")
         conditions = []
         with torch.no_grad():
-            # LM compute_predictions: logits shape: [B, K, T_chunk, card]
-            lm_output = model.lm.compute_predictions(codes, conditions=conditions, stage=-1, keep_only_valid_steps=True, 
-            condition_tensors=condition_tensors
+            # logits: [B, K, T_chunk, card]
+            lm_output = model.lm.compute_predictions(
+                codes, 
+                conditions=conditions, 
+                stage=-1, 
+                keep_only_valid_steps=True, 
+                condition_tensors=condition_tensors
             )
-            batch_logits = lm_output.logits  # [B, K, T_chunk, card]
-        
+            batch_logits = lm_output.logits
+            mask = lm_output.mask  # [B, K, T_chunk], 1=valid, 0=invalid
+
         print(f"Batch logits shape: {batch_logits.shape}")
-        print(batch_logits.isnan().any())
-        print("Count NaN in batch logits:", torch.isnan(batch_logits).sum().item())
-
-        # Counts of nans per codebook
-        for k in range(K):
-            print(f"Count NaN in batch logits codebook {k}:", torch.isnan(batch_logits[:, k]).sum().item())
+        print("Batch logits has NaN:", batch_logits.isnan().any())
         
-        # Count of invalid steps (0 means invalid)
-        mask = lm_output.mask
-        valid_steps = torch.sum(mask, dim=2)
-        print("Count of valid steps:", valid_steps)
-        invalid_steps = torch.sum(mask == 0, dim=2)
-        print("Count of invalid steps:", invalid_steps)
-        print("Count of NaN in mask:", torch.isnan(mask).sum().item())
+        #### ADDED: multiply by mask so invalid steps become 0 instead of NaN
+        batch_logits = batch_logits * mask.unsqueeze(-1)  # shape broadcast: [B, K, T_chunk, card]
 
+        #### ADDED: remove any leftover NaNs
+        batch_logits = torch.nan_to_num(batch_logits, nan=0.0)
+
+        B, _, T_chunk, _ = batch_logits.shape
 
         # For each chunk in the batch, accumulate logits.
-        T_chunk = batch_logits.shape[2]
         for j in range(B):
             chunk_global_start = int(round((start_indices[i + j] / sr) * fps))
-            if chunk_global_start + T_chunk > global_frames:
-                valid_T = global_frames - chunk_global_start
-                chunk_logits = batch_logits[j, :, :valid_T, :]
-            else:
-                valid_T = T_chunk
-                chunk_logits = batch_logits[j, :, :valid_T, :]
+            # If chunk extends past the final frame, clamp
+            valid_T = min(T_chunk, global_frames - chunk_global_start)
+            if valid_T <= 0:
+                continue
+
+            # [K, valid_T, card]
+            chunk_logits = batch_logits[j, :, :valid_T, :]
+            # [K, valid_T] ~ 1=valid, 0=invalid
+            chunk_mask = mask[j, :, :valid_T]
+
+            # Accumulate logits only for valid frames
+            global_logits[:, chunk_global_start : chunk_global_start + valid_T, :] += chunk_logits
+
+            #### ADDED: Instead of +1.0, add the valid frame counts from chunk_mask
+            # Summation across codebook dimension is typically separate or 
+            # done per codebook. Usually you'd match the shapes carefully.
+            # One simple approach: just treat each codebook's valid frames individually:
+            #   shape: [K, valid_T] -> we want [valid_T, 1] for each codebook
+            # so let's sum across K => but that merges codebooks. 
+            # If you want each codebook to be weighted individually, do it per codebook. 
+            # For a single global weight, you might sum over K. 
+            # Example here: we do them codebook by codebook:
             for k in range(K):
-                global_logits[k, chunk_global_start:chunk_global_start + valid_T, :] += chunk_logits[k, :valid_T, :]
-            global_weights[0, chunk_global_start:chunk_global_start + valid_T, 0] += 1.0
+                # shape: [valid_T]
+                codebook_mask_k = chunk_mask[k]
+                global_weights[0, 
+                               chunk_global_start : chunk_global_start + valid_T, 
+                               0] += codebook_mask_k
 
     # Average overlapping regions.
-    global_logits = global_logits / global_weights  # shape: [K, global_frames, card]
+    global_logits = torch.divide(
+        global_logits,      # shape: [K, global_frames, card]
+        global_weights,     # shape: [1, global_frames, 1]
+        out=torch.zeros_like(global_logits),  
+        where=(global_weights != 0)
+    )
 
     print("Global logits shape:", global_logits.shape)
     print(global_logits.isnan().any())
