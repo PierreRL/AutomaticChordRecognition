@@ -140,15 +140,8 @@ def extract_song_hidden_representation(
 
     model.compression_model = model.compression_model.to(device)
 
-    print(f"Using device: {device}")
-    print("Model:")
-    print(model)
-
     # Load the audio file.
     wav, sr = get_wav(filename, dir=dir, device=device, target_sr=model.sample_rate)
-
-    print(f"Loaded {filename} with shape {wav.shape} and sample rate {sr}")
-    print(wav.isnan().any())
 
     total_samples = wav.shape[-1]
     total_duration = total_samples / sr  # in seconds
@@ -177,7 +170,7 @@ def extract_song_hidden_representation(
         start_indices.append(idx)
         idx += hop_samples
     
-        # Create list of chunks; pad last chunk if needed.
+    # Create list of chunks; pad last chunk if needed.
     chunk_list = []
     for start in start_indices:
         end = min(start + chunk_samples, total_samples)
@@ -189,30 +182,24 @@ def extract_song_hidden_representation(
     
     num_chunks = len(chunk_list)
 
-        # Global accumulators for each codebook.
+    # Global accumulators for each codebook.
     K = model.lm.num_codebooks  # number of codebooks (e.g., 4)
     # Use LM linear layer output features as "card"
     card = model.lm.linears[0].out_features
     global_logits = torch.zeros(K, global_frames, card, device=device)
     global_weights = torch.zeros(1, global_frames, 1, device=device)
 
-    print("Init done, starting chunks:")
     # Process chunks in batches to limit memory usage.
     for i in range(0, num_chunks, max_batch_size):
         batch_chunks = torch.cat(chunk_list[i : i + max_batch_size], dim=0)  # [B, channels, chunk_samples] where B <= max_batch_size
         # Pass through compression model.
-        print(f"Processing chunks {i} to {i + max_batch_size} of {num_chunks}...")
         with torch.no_grad():
             # codes shape: [B, K, S_chunk]
             codes, _ = model.compression_model.encode(batch_chunks)
         
-        print(f"Codes shape: {codes.shape}")
-        print(codes.isnan().any())
         # Prepare conditions for each chunk in batch.
         B = codes.shape[0]
         # conditions = [ConditioningAttributes(text={'description': 'a song'}) for _ in range(B)]
-
-        print("Computing predictions...")
         conditions = []
         with torch.no_grad():
             # logits: [B, K, T_chunk, card]
@@ -225,14 +212,8 @@ def extract_song_hidden_representation(
             )
             batch_logits = lm_output.logits
             mask = lm_output.mask  # [B, K, T_chunk], 1=valid, 0=invalid
-
-        print(f"Batch logits shape: {batch_logits.shape}")
-        print("Batch logits has NaN:", batch_logits.isnan().any())
         
-        #### ADDED: multiply by mask so invalid steps become 0 instead of NaN
         batch_logits = batch_logits * mask.unsqueeze(-1)  # shape broadcast: [B, K, T_chunk, card]
-
-        #### ADDED: remove any leftover NaNs
         batch_logits = torch.nan_to_num(batch_logits, nan=0.0)
 
         B, _, T_chunk, _ = batch_logits.shape
@@ -276,19 +257,11 @@ def extract_song_hidden_representation(
     w_mask = (global_weights_expanded != 0)
     global_logits[w_mask] = global_logits[w_mask] / global_weights_expanded[w_mask]
 
-
-    print("Global logits shape:", global_logits.shape)
-    print(global_logits.isnan().any())
-
     resampled_per_codebook = []
     for k in range(K):
         logits_k = global_logits[k].unsqueeze(0)  # [1, global_frames, card]
         resampled = resample_hidden_states(logits_k, model, frame_length)  # [1, new_T, card]
         resampled_per_codebook.append(resampled.squeeze(0))  # [new_T, card]
-
-    print("Resampled per codebook shape:", [x.shape for x in resampled_per_codebook])
-    print("Resampled per codebook NaN:", [x.isnan().any() for x in resampled_per_codebook])
-    print("Count NaN in resampled per codebook:", [torch.isnan(x).sum().item() for x in resampled_per_codebook])
 
     # Compute all reductions.
     # Stack across codebooks → [new_T, K, card]

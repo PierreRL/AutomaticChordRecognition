@@ -236,9 +236,6 @@ def main():
     DIR = f"{args.output_dir}/{args.exp_name}"
     os.makedirs(DIR, exist_ok=True)
 
-    # Load the dataset filenames
-    
-
     # Create datasets
     (
         train_dataset,
