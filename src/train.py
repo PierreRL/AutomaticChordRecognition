@@ -11,6 +11,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from src.losses.structured_loss import StructuredLoss
 from src.models.crnn import CRNN
 from src.data.dataset import FixedLengthRandomChordDataset, FixedLengthChordDataset
 from src.utils import get_torch_device, collate_fn, write_json, NUM_CHORDS, N_BINS, EarlyStopper
@@ -29,6 +30,8 @@ class TrainingArgs:
         decrease_lr_epochs: int = 15,
         validate_every: int = 5,
         mask_X: bool = True,
+        structured_loss: bool = False,
+        structured_loss_alpha: float = 0.5,
         use_weighted_loss: bool = False,
         weight_alpha: float = 0.65,
         weight_decay: float = 0.0,
@@ -50,6 +53,8 @@ class TrainingArgs:
         self.decrease_lr_epochs = decrease_lr_epochs
         self.mask_X = mask_X
         self.do_validation = do_validation
+        self.structured_loss = structured_loss
+        self.structured_loss_alpha = structured_loss_alpha
         self.use_weighted_loss = use_weighted_loss
         self.weight_alpha = weight_alpha
         self.weight_decay = weight_decay
@@ -74,6 +79,8 @@ class TrainingArgs:
             "early_stopping": self.early_stopping,
             "validate_every": self.validate_every,
             "mask_X": self.mask_X,
+            "structured_loss": self.structured_loss,
+            "structured_loss_alpha": self.structured_loss_alpha,
             "weight_loss": self.use_weighted_loss,
             "weight_alpha": self.weight_alpha,
             "weight_decay": self.weight_decay,
@@ -124,7 +131,11 @@ def train_model(
         weights = weights.to(device)
     else:
         weights = None
-    criterion = nn.CrossEntropyLoss(ignore_index=-1, weight=weights)
+
+    if args.structured_loss:
+        criterion = StructuredLoss(alpha=args.structured_loss_alpha, class_weights=weights)
+    else:
+        criterion = nn.CrossEntropyLoss(ignore_index=-1, weight=weights)
 
     # Optimiser
     if args.optimiser == "adam":
@@ -183,8 +194,13 @@ def train_model(
                 outputs = model(features)
 
             # Flatten the outputs and labels
-            outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
             labels = labels.view(-1)  # (B*frames) 
+            if args.structured_loss:
+                # Structured output is a tuple of (chord_output, root_output, pitch_class_output)
+                outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
+            else:
+                # Flatten the outputs and labels
+                outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
 
             # Compute the loss and backpropagate
             loss = criterion(outputs, labels)
@@ -222,13 +238,21 @@ def train_model(
             else:
                 outputs = model(cqts)
 
-            # Flatten the outputs and labels across the batch and frames
-            outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
             labels = labels.view(-1)  # (B*frames)
+            if args.structured_loss:
+                outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
+            else:
+                # Flatten the outputs and labels
+                outputs = outputs.view(-1, outputs.shape[-1])
 
             # Compute the loss and accuracy
             loss = criterion(outputs, labels)
             val_loss += loss.item()
+
+            if args.structured_loss:
+                # Use the chord output for accuracy
+                outputs = outputs[0]
+                
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()

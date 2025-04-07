@@ -32,6 +32,7 @@ class CRNN(BaseACR):
         activation: str = "relu",
         hmm_smoothing: bool = True,
         hmm_alpha: float = 0.2,
+        structured_loss: bool = False,
         use_cqt: bool = True,
         use_generative_features: bool = False,
         gen_down_dimension: int = 256,
@@ -71,6 +72,7 @@ class CRNN(BaseACR):
         self.use_generative_features = use_generative_features
         self.gen_dimension = gen_dimension
         self.gen_down_dimension = gen_down_dimension
+        self.structured_loss = structured_loss
 
         if self.activation not in ["relu", "prelu"]:
             raise ValueError(f"Invalid activation function: {self.activation}")
@@ -132,6 +134,12 @@ class CRNN(BaseACR):
 
         # Final dense layer
         out_dim = encoder_hidden_size if cr2 else 2 * encoder_hidden_size
+
+        if self.structured_loss:
+            self.root_dense = nn.Linear(out_dim, NUM_CHORDS)
+            self.pitch_class_dense = nn.Linear(out_dim, 12)
+            out_dim += NUM_CHORDS + 12 # We concat the root and pitch class outputs to the final output
+
         self.dense = nn.Linear(out_dim, num_classes)
 
     def forward(
@@ -188,15 +196,24 @@ class CRNN(BaseACR):
         else:
             x = feature_list[0]  # Either cqt alone or generative alone
 
-        print(x[0][0])
-
         x, _ = self.bi_gru_encoder(x)  # (B, frames, 2E)
 
         if self.cr2:
             x, _ = self.bi_gru_decoder(x)  # (B, frames, 2E) again
 
+        if self.structured_loss:
+            # Compute root and pitch class outputs
+            root_out = self.root_dense(x)
+            pitch_class_out = self.pitch_class_dense(x)
+            # Concatenate root and pitch class outputs to the final output
+            x = torch.cat((x, root_out, pitch_class_out), dim=2) # (B, frames, 2E + NUM_CHORDS + 12)
+        
         x = self.dense(x)  # (B, frames, num_classes)
 
+        if self.structured_loss:
+            # Return the root and pitch class outputs separately
+            return x, root_out, pitch_class_out
+        
         return x
 
     def __str__(self):
@@ -214,6 +231,8 @@ class CRNN(BaseACR):
             "use_cqt": self.use_cqt,
             "use_generative_features": self.use_generative_features,
             "gen_dimension": self.gen_dimension,
+            "gen_down_dimension": self.gen_down_dimension,
+            "structured_loss": self.structured_loss,
         }
 
 

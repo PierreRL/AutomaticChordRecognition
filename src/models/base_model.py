@@ -36,6 +36,10 @@ class BaseACR(torch.nn.Module):
                 output = self(features, gens)
             else:
                 output = self(features) 
+            
+            if hasattr(self, "structured_loss"):
+                output = output[0]
+                
             if hasattr(self, "hmm_smoother"):
                 output = self.hmm_smoother(output, device)
         return torch.argmax(output, dim=-1)

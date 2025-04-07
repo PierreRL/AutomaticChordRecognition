@@ -166,16 +166,33 @@ def main():
         action="store_true",
         help="Whether to ignore class label X for training.",
     )
-    parser.add_argument(
-        "--weight_loss",
-        action="store_true",
-        help="Whether to use weighted loss.",
-    )
+    # parser.add_argument(
+    #     "--weight_loss",
+    #     action="store_true",
+    #     help="Whether to use weighted loss.",
+    # )
     parser.add_argument(
         "--weight_alpha",
         type=float,
         default=0.55,
         help="Alpha smoothing parameter for the weighted loss.",
+    )
+    parser.add_argument(
+        "--no_weight_loss",
+        dest="weight_loss",
+        action="store_false",
+        help="Disable weighted loss.",
+    )
+    parser.add_argument(
+        "--structured_loss",
+        action="store_true",
+        help="Use structured loss.",
+    )
+    parser.add_argument(
+        "--structured_loss_alpha",
+        type=float,
+        default=0.2,
+        help="Alpha parameter for the structured loss.",
     )
     parser.add_argument(
         "--no_hmm_smoothing",
@@ -275,6 +292,7 @@ def main():
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
             gen_dimension=args.generative_features_dim,
+            structured_loss=args.structured_loss,
         )
     elif args.model == "logistic":
         model = LogisticACR(
@@ -337,6 +355,8 @@ def main():
         decrease_lr_epochs=args.decrease_lr_epochs,
         decrease_lr_factor=args.decrease_lr_factor,
         mask_X=args.mask_X,
+        structured_loss=args.structured_loss,
+        structured_loss_alpha=args.structured_loss_alpha,
         use_weighted_loss=args.weight_loss,
         weight_alpha=args.weight_alpha,
         weight_decay=args.weight_decay,

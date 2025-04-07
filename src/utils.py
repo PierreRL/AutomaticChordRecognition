@@ -239,6 +239,82 @@ def get_pitch_classes(chord_str: str):
 
     return tuple(sorted(prime_form_chord))
 
+@lru_cache(maxsize=None)
+def get_pitch_classes_from_id(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> torch.Tensor:
+    """
+    Get the pitch classes from a chord id. These are not root transposed.
+
+    Args:
+        chord_id (int): The chord id.
+
+    Returns:
+        Tensor (long): A binary vector of length 12, where each index corresponds to a pitch class.
+    """
+    if use_small_vocab:
+        raise NotImplementedError("Small vocabulary get pitch classes not implemented")
+    
+    # If the chord id is out of range, raise an error
+    if chord_id < 0 or chord_id > 170:
+        raise ValueError("Chord id must be in the range 0-170.")
+    # If the chord is N or X, return a Tensor of zeros 12 long
+    if chord_id == 0 or chord_id == 1:
+        return torch.zeros(12, dtype=torch.long)
+    
+
+    # Get quality and root from the chord id
+    root = get_chord_root(chord_id, return_idx=True)
+    quality_idx = get_chord_quality(chord_id, return_idx=True)
+
+    # Define the templates
+    templates = [
+        [0, 4, 7], # Major
+        [0, 3, 7], # Minor
+        [0, 3, 6], # Diminished
+        [0, 4, 8], # Augmented
+        [0, 3, 7, 9], # Minor 6
+        [0, 4, 7, 9], # Major 6
+        [0, 3, 7, 10], # Minor 7
+        [0, 3, 7, 11], # Minor Major 7
+        [0, 4, 7, 11], # Major 7
+        [0, 4, 7, 10], # 7
+        [0, 3, 6, 9], # Diminished 7
+        [0, 3, 6, 10], # Half Diminished 7
+        [0, 2, 7], # Suspended 2 
+        [0, 5, 7], # Suspended 4
+    ]
+    # Get the quality from the templates
+    pitches_quality = templates[quality_idx]
+
+    # Add root to each pitch class 
+    pitch_classes = [(pitch + root) % 12 for pitch in pitches_quality]
+
+    # Create a binary vector of length 12
+    binary_vector = torch.zeros(12, dtype=torch.long)
+    
+    # Set the corresponding indices to 1 for the pitch classes
+    for pitch in pitch_classes:
+        binary_vector[pitch] = 1  # Ensure pitch is in the range 0-11
+    
+    return binary_vector
+
+def get_pitch_classes_batch(chord_ids: torch.Tensor, use_small_vocab: bool = False) -> torch.Tensor:
+    """
+    Get the pitch classes for a batch of chord IDs, applied over a sequence.
+
+    Args:
+        chord_ids (Tensor): A tensor of shape (B) where each element is a chord_id.
+        use_small_vocab (bool): Whether to use a small vocabulary (default: False).
+
+    Returns:
+        Tensor: A tensor of binary vectors (batch_size, T, 12) representing the pitch classes.
+    """
+
+    # Apply the get_pitch_classes_from_id function to each element in the flattened tensor
+    pitch_classes = torch.stack([get_pitch_classes_from_id(chord_id.item(), use_small_vocab) for chord_id in chord_ids])
+    return pitch_classes
+
+
+
 
 @lru_cache(maxsize=None)
 def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
@@ -319,7 +395,7 @@ def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
 
 
 @lru_cache(maxsize=None)
-def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
+def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False) -> str:
     """
     Get the root of a chord id.
 
@@ -336,39 +412,63 @@ def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             raise ValueError("Chord id must be in the range 0-24.")
 
         if id == 0:
-            return "N"
+            return "N" if not return_idx else 0
 
         if id == 1:
-            return "X"
+            return "X" if not return_idx else 1
+        
+        idx = (id - 2) % 12
+        if return_idx:
+            return idx
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        root = root_name[(id - 2) % 12]
+        root = root_name[idx]
 
         return root
 
     else:
-        # Large vocabulary (0-170)
-        if id < 0 or id > 170:
-            raise ValueError("Chord id must be in the range 0-170.")
+        # Large vocabulary (0-169)
+        if id < 0 or id > 169:
+            raise ValueError(f"Chord id must be in the range 0-170, but got {id}.")
 
         if id == 0:
-            return "N"
+            return "N" if not return_idx else 0
         elif id == 1:
-            return "X"
+            return "X" if not return_idx else 1
 
         # Subtract 2 to account for N and X
         id -= 2
-
         root = id // 14
+        if return_idx:
+            return root + 2 # Offset by 2 for N and X
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[root]
 
         return root
+    
+def get_chord_root_batch(chord_ids: torch.Tensor) -> torch.Tensor:
+    """
+    Get the root of the chord for a batch of chord IDs, applied over a sequence.
+
+    Args:
+        chord_ids (Tensor): A tensor of shape (batch_size, T) where each element is a chord_id.
+        return_as_idx (bool): Whether to return the root as an index (default: False).
+
+    Returns:
+        Tensor: A tensor of roots with shape (batch_size, T).
+    """
+    # Flatten the input tensor (batch_size * T,)
+    flat_chord_ids = chord_ids.view(-1)
+
+    # Apply the get_chord_root function to each element in the flattened tensor
+    roots = torch.Tensor([get_chord_root(chord_id.item(), return_idx=True) for chord_id in flat_chord_ids]).view(chord_ids.size()).long()
+
+    return roots
 
 
 @lru_cache(maxsize=None)
-def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
+def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False) -> str:
     """
     Get the quality of a chord id.
 
@@ -385,12 +485,16 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             raise ValueError("Chord id must be in the range 0-24.")
 
         if id == 0:
-            return "N"
+            return "N" if not return_idx else 0
 
         if id == 1:
-            return "X"
+            return "X" if not return_idx else 1
+        
+        idx = (id - 2) // 12
+        if return_idx:
+            return idx
 
-        quality = "maj" if (id - 2) // 12 == 0 else "min"
+        quality = "maj" if idx == 0 else "min"
         return quality
 
     else:
@@ -399,14 +503,17 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             raise ValueError("Chord id must be in the range 0-170.")
 
         if id == 0:
-            return "N"
+            return "N" if not return_idx else 0
         elif id == 1:
-            return "X"
+            return "X" if not return_idx else 1
 
         # Subtract 2 to account for N and X
         id -= 2
 
         quality_index = id % 14
+
+        if return_idx:
+            return quality_index
 
         templates = [
             "maj",
@@ -427,6 +534,7 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
 
         quality = templates[quality_index]
         return quality
+    
 
 
 @lru_cache(maxsize=None)
@@ -612,7 +720,7 @@ def get_chord_annotation(
     return frames
 
 
-def get_torch_device(allow_mps=True):
+def get_torch_device(allow_mps=False):
     """
     Get the torch device to use for training.
 
@@ -760,10 +868,9 @@ class EarlyStopper:
 
 
 if __name__ == "__main__":
-    # Test get_pitch_classes
-    print(get_chord_quality(13))
-    print(get_chord_root(13))
-
-    for i in range(2, 16):
-        print(i, id_to_chord(i))
-        print(get_chord_root(i), get_chord_quality(i))
+    # Test get_pitch_classes_from_id
+    chord_id = chord_to_id("E#:7")
+    # Get pitch classes
+    pitch_classes = get_pitch_classes_from_id(chord_id)
+    print(f"Chord id: {chord_id}")
+    print(f"Pitch classes: {pitch_classes}")

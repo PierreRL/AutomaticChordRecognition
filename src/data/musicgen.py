@@ -282,7 +282,7 @@ def extract_song_hidden_representation(
     # Insert each codebook at top-level ("codebook_0", etc.)
     for k in range(K):
         # Convert each codebook’s final tensor to numpy if desired
-        result[f"codebook_{k}"] = resampled_per_codebook[k].cpu().detach().numpy()
+        result[f"codebook_{k}"] = resampled_per_codebook[k]
 
     return result
 
