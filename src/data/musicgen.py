@@ -225,6 +225,19 @@ def extract_song_hidden_representation(
         print(batch_logits.isnan().any())
         print("Count NaN in batch logits:", torch.isnan(batch_logits).sum().item())
 
+        # Counts of nans per codebook
+        for k in range(K):
+            print(f"Count NaN in batch logits codebook {k}:", torch.isnan(batch_logits[:, k]).sum().item())
+        
+        # Count of invalid steps (0 means invalid)
+        mask = lm_output.mask
+        valid_steps = torch.sum(mask, dim=2)
+        print("Count of valid steps:", valid_steps)
+        invalid_steps = torch.sum(mask == 0, dim=2)
+        print("Count of invalid steps:", invalid_steps)
+        print("Count of NaN in mask:", torch.isnan(mask).sum().item())
+
+
         # For each chunk in the batch, accumulate logits.
         T_chunk = batch_logits.shape[2]
         for j in range(B):
