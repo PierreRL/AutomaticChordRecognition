@@ -44,7 +44,7 @@ def main(
     print('Extracting features...')
     for filename in tqdm(filenames):
         # Skip if the file already exists
-        if os.path.exists(f"{dir}/cache/{hop_length}/gen-{model_size}/avg/{filename}.pt"):
+        if os.path.exists(f"{dir}/cache/{hop_length}/gen-{model_size}/codebook_4/{filename}.pt"):
             print(f"Skipping {filename} as it already exists.")
             continue
 
