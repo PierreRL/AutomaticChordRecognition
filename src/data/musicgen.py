@@ -153,12 +153,6 @@ def extract_song_hidden_representation(
     
     # Get hidden state dimensionality (assume from first embedding layer).
     D = model.lm.emb[0].embedding_dim
-
-    # Preallocate accumulators for the global hidden state and a weight mask.
-    K = model.lm.num_codebooks  # number of codebooks (e.g., 4)
-    card = model.lm.linears[0].out_features # cardinality of the first codebook (same for all)
-    global_logits_dict = {k: torch.zeros(1, global_frames, card, device=device) for k in range(K)}
-    global_weights = torch.zeros(1, global_frames, 1, device=device)
     
     # Determine chunking parameters.
     chunk_samples = int(max_chunk_length * sr)  # chunk length in samples.
@@ -187,6 +181,14 @@ def extract_song_hidden_representation(
         chunk_list.append(chunk)  # each chunk is [1, channels, chunk_samples]
     
     num_chunks = len(chunk_list)
+
+        # Global accumulators for each codebook.
+    K = model.lm.num_codebooks  # number of codebooks (e.g., 4)
+    # Use LM linear layer output features as "card"
+    card = model.lm.linears[0].out_features
+    global_logits = torch.zeros(K, global_frames, card, device=device)
+    global_weights = torch.zeros(1, global_frames, 1, device=device)
+    
 
     # Process chunks in batches to limit memory usage.
     for i in range(0, num_chunks, max_batch_size):
