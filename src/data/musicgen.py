@@ -31,9 +31,9 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
-    local_path = os.path.expanduser(f"/exports/eddie/scratch/s2147950/.cache/huggingface/musicgen-{model_size}")
-    model = MusicGen.get_pretrained(local_path, device=device)
+    model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
+    # local_path = os.path.expanduser(f"/exports/eddie/scratch/s2147950/.cache/huggingface/musicgen-{model_size}")
+    # model = MusicGen.get_pretrained(local_path, device=device)
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()
     model.lm.eval()
@@ -140,8 +140,15 @@ def extract_song_hidden_representation(
 
     model.compression_model = model.compression_model.to(device)
 
+    print(f"Using device: {device}")
+    print("Model:")
+    print(model)
+
     # Load the audio file.
     wav, sr = get_wav(filename, dir=dir, device=device, target_sr=model.sample_rate)
+
+    print(f"Loaded {filename} with shape {wav.shape} and sample rate {sr}")
+    print(wav.isnan().any())
 
     total_samples = wav.shape[-1]
     total_duration = total_samples / sr  # in seconds
@@ -188,25 +195,34 @@ def extract_song_hidden_representation(
     card = model.lm.linears[0].out_features
     global_logits = torch.zeros(K, global_frames, card, device=device)
     global_weights = torch.zeros(1, global_frames, 1, device=device)
-    
 
+    print("Init done, starting chunks:")
     # Process chunks in batches to limit memory usage.
     for i in range(0, num_chunks, max_batch_size):
         batch_chunks = torch.cat(chunk_list[i : i + max_batch_size], dim=0)  # [B, channels, chunk_samples] where B <= max_batch_size
         # Pass through compression model.
+        print(f"Processing chunks {i} to {i + max_batch_size} of {num_chunks}...")
         with torch.no_grad():
             # codes shape: [B, K, S_chunk]
             codes, _ = model.compression_model.encode(batch_chunks)
+        
+        print(f"Codes shape: {codes.shape}")
+        print(codes.isnan().any())
         # Prepare conditions for each chunk in batch.
         B = codes.shape[0]
-        conditions = [ConditioningAttributes(text={'description': 'a song'}) for _ in range(B)]
-        # conditions = []
+        # conditions = [ConditioningAttributes(text={'description': 'a song'}) for _ in range(B)]
+
+        print("Computing predictions...")
+        conditions = []
         with torch.no_grad():
             # LM compute_predictions: logits shape: [B, K, T_chunk, card]
             lm_output = model.lm.compute_predictions(codes, conditions=conditions, stage=-1, keep_only_valid_steps=True, 
-            # condition_tensors=condition_tensors
+            condition_tensors=condition_tensors
             )
             batch_logits = lm_output.logits  # [B, K, T_chunk, card]
+        
+        print(f"Batch logits shape: {batch_logits.shape}")
+        print(batch_logits.isnan().any())
 
         # For each chunk in the batch, accumulate logits.
         T_chunk = batch_logits.shape[2]
@@ -225,11 +241,17 @@ def extract_song_hidden_representation(
     # Average overlapping regions.
     global_logits = global_logits / global_weights  # shape: [K, global_frames, card]
 
+    print("Global logits shape:", global_logits.shape)
+    print(global_logits.isnan().any())
+
     resampled_per_codebook = []
     for k in range(K):
         logits_k = global_logits[k].unsqueeze(0)  # [1, global_frames, card]
         resampled = resample_hidden_states(logits_k, model, frame_length)  # [1, new_T, card]
         resampled_per_codebook.append(resampled.squeeze(0))  # [new_T, card]
+
+    print("Resampled per codebook shape:", [x.shape for x in resampled_per_codebook])
+    print("Resampled per codebook NaN:", [x.isnan().any() for x in resampled_per_codebook])
 
    # Compute all reductions.
     # Stack across codebooks → [new_T, K, card]
@@ -255,9 +277,28 @@ def extract_song_hidden_representation(
     return result
 
 
+def main():
+    # Example usage
+    model = get_musicgen_model("small", device='cpu')
+    filename =  get_filenames()[0]
+    dir = "./data/processed/"
+    max_chunk_length = 5.0 # seconds
+    frame_length = 4096 / 44100  # ~0.093 seconds
 
+    result = extract_song_hidden_representation(
+        filename,
+        dir,
+        model,
+        max_chunk_length,
+        frame_length
+    )
+    
+    print(result)
 
-"""
+if __name__ == "__main__":
+    main()
+
+    """
 Legacy behaviour in extracting hidden states from layers within the model. Warning: not tested thoroughly! It does run but the representations may not function as expected.
 """
 
@@ -451,24 +492,3 @@ Legacy behaviour in extracting hidden states from layers within the model. Warni
 #         final_dict[idx] = hs_resampled.squeeze(0)  # remove batch dim: [T', D]
 
 #     return final_dict
-
-def main():
-    # Example usage
-    model = get_musicgen_model("small", device='cpu')
-    filename =  get_filenames()[0]
-    dir = "./data/processed/"
-    max_chunk_length = 5.0 # seconds
-    frame_length = 4096 / 44100  # ~0.093 seconds
-
-    result = extract_song_hidden_representation(
-        filename,
-        dir,
-        model,
-        max_chunk_length,
-        frame_length
-    )
-    
-    print(result)
-
-if __name__ == "__main__":
-    main()
