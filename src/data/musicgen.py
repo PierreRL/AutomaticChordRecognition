@@ -269,9 +269,13 @@ def extract_song_hidden_representation(
                                chunk_global_start : chunk_global_start + valid_T, 
                                0] += codebook_mask_k
 
-    # Only divide those elements where global_weights != 0
-    w_mask = (global_weights != 0)
-    global_logits[w_mask] = global_logits[w_mask] / global_weights[w_mask]
+    # global_logits: [K, T, card]
+    # global_weights: [1, T, 1] 
+    # We want them both to be [K, T, card].
+    global_weights_expanded = global_weights.expand_as(global_logits)
+    w_mask = (global_weights_expanded != 0)
+    global_logits[w_mask] = global_logits[w_mask] / global_weights_expanded[w_mask]
+
 
     print("Global logits shape:", global_logits.shape)
     print(global_logits.isnan().any())
