@@ -32,9 +32,6 @@ def main(
     model = get_musicgen_model(model_size=model_size, device=device)
     frame_length = hop_length / SR
 
-    # for layer_idx in layer_indices:
-    #     os.makedirs(f"{dir}/cache/{hop_length}/gen/{layer_idx}", exist_ok=True)
-
     if end_idx is None:
         end_idx = len(filenames)
     if start_idx > end_idx:
@@ -54,8 +51,8 @@ def main(
             frame_length=frame_length
         )
         for reduction, song_repr in song_repr_dict.items():
-            os.makedirs(f"{dir}/cache/{hop_length}/gen/{reduction}", exist_ok=True)
-            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen/{reduction}/{filename}.pt")
+            os.makedirs(f"{dir}/cache/{hop_length}/gen-{model_size}/{reduction}", exist_ok=True)
+            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen-{model_size}/{reduction}/{filename}.pt")
 
 
 if __name__ == "__main__":

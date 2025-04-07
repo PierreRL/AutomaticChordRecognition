@@ -31,9 +31,9 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
-    # local_path = os.path.expanduser(f"/exports/eddie/scratch/s2147950/.cache/huggingface/musicgen-{model_size}")
-    # model = MusicGen.get_pretrained(local_path, device=device)
+    # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
+    local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    model = MusicGen.get_pretrained(local_path, device=device)
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()
     model.lm.eval()
@@ -223,6 +223,7 @@ def extract_song_hidden_representation(
         
         print(f"Batch logits shape: {batch_logits.shape}")
         print(batch_logits.isnan().any())
+        print("Count NaN in batch logits:", torch.isnan(batch_logits).sum().item())
 
         # For each chunk in the batch, accumulate logits.
         T_chunk = batch_logits.shape[2]
@@ -252,6 +253,7 @@ def extract_song_hidden_representation(
 
     print("Resampled per codebook shape:", [x.shape for x in resampled_per_codebook])
     print("Resampled per codebook NaN:", [x.isnan().any() for x in resampled_per_codebook])
+    print("Count NaN in resampled per codebook:", [torch.isnan(x).sum().item() for x in resampled_per_codebook])
 
    # Compute all reductions.
     # Stack across codebooks → [new_T, K, card]
@@ -298,7 +300,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-    """
+"""
 Legacy behaviour in extracting hidden states from layers within the model. Warning: not tested thoroughly! It does run but the representations may not function as expected.
 """
 
