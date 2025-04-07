@@ -19,6 +19,7 @@ def main(
     os.makedirs(output_dir, exist_ok=True)
 
     filenames = os.listdir(input_dir)
+    filenames = [f for f in filenames if f.endswith(".mp3")]
     filenames = [os.path.splitext(f)[0] for f in filenames]
     if start_idx is not None and end_idx is not None:
         filenames = filenames[start_idx:end_idx]
