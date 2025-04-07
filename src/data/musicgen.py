@@ -269,13 +269,9 @@ def extract_song_hidden_representation(
                                chunk_global_start : chunk_global_start + valid_T, 
                                0] += codebook_mask_k
 
-    # Average overlapping regions.
-    global_logits = torch.divide(
-        global_logits,      # shape: [K, global_frames, card]
-        global_weights,     # shape: [1, global_frames, 1]
-        out=torch.zeros_like(global_logits),  
-        where=(global_weights != 0)
-    )
+    # Only divide those elements where global_weights != 0
+    w_mask = (global_weights != 0)
+    global_logits[w_mask] = global_logits[w_mask] / global_weights[w_mask]
 
     print("Global logits shape:", global_logits.shape)
     print(global_logits.isnan().any())
