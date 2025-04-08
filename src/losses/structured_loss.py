@@ -52,9 +52,7 @@ class StructuredLoss(nn.Module):
         chord_output, root_output, pitch_class_output = output
 
         # Overall chord loss
-        chord_loss = F.cross_entropy(
-            chord_output, target, ignore_index=self.ignore_index
-        )
+        chord_loss = F.cross_entropy(chord_output, target, ignore_index=self.ignore_index)
 
         # Mask out invalid targets (and optional "X" pitches)
         valid_mask = target != self.ignore_index  # (B*T,)
@@ -65,23 +63,15 @@ class StructuredLoss(nn.Module):
         # Root loss
         root_output_valid = root_output[valid_mask]  # (N_valid, num_root_classes)
         root = get_chord_root_batch(valid_targets).long().to(device)  # (N_valid,)
-        root_loss = F.cross_entropy(
-            root_output_valid,
-            root,
-        )
+        root_loss = F.cross_entropy(root_output_valid, root)
 
         # Pitch class loss
-        valid_pitch_class_output = pitch_class_output[valid_mask]  # Shape: (N_valid, 12)
-        pitch_classes = get_pitch_classes_batch(valid_targets).float().to(device)  # Shape: (N_valid, 12)
-        pitch_class_loss = F.binary_cross_entropy_with_logits(
-            valid_pitch_class_output, pitch_classes, reduction='mean'
-        )
+        valid_pitch_class_output = pitch_class_output[valid_mask]  # Shape: (N_valid, 14)
+        pitch_classes = get_pitch_classes_batch(valid_targets).float().to(device)  # Shape: (N_valid, 14)
+        pitch_class_loss = F.binary_cross_entropy_with_logits(valid_pitch_class_output, pitch_classes, reduction='mean')
 
         # Weighted convex combination
-        combined_loss = (
-            (1 - self.alpha) * chord_loss +
-            self.alpha * (root_loss + pitch_class_loss)
-        )
+        combined_loss = (1 - self.alpha) * chord_loss + self.alpha * (root_loss + pitch_class_loss)
 
         return combined_loss
 

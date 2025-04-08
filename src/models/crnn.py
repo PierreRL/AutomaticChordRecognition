@@ -136,9 +136,9 @@ class CRNN(BaseACR):
         out_dim = encoder_hidden_size if cr2 else 2 * encoder_hidden_size
 
         if self.structured_loss:
-            self.root_dense = nn.Linear(out_dim, NUM_CHORDS)
+            self.root_dense = nn.Linear(out_dim, 14) # 12 for root, 2 for "X" and "N"
             self.pitch_class_dense = nn.Linear(out_dim, 12)
-            out_dim += NUM_CHORDS + 12 # We concat the root and pitch class outputs to the final output
+            out_dim += 14 + 12 # We concat the root and pitch class outputs to the final output
 
         self.dense = nn.Linear(out_dim, num_classes)
 

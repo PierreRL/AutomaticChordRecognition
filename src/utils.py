@@ -259,10 +259,9 @@ def get_pitch_classes_from_id(chord_id: int, use_small_vocab: bool = SMALL_VOCAB
     # If the chord is N or X, return a Tensor of zeros 12 long
     if chord_id == 0 or chord_id == 1:
         return torch.zeros(12, dtype=torch.long)
-    
 
     # Get quality and root from the chord id
-    root = get_chord_root(chord_id, return_idx=True)
+    root = get_chord_root(chord_id, return_idx=True) - 2 # Offset by 2 for N and X
     quality_idx = get_chord_quality(chord_id, return_idx=True)
 
     # Define the templates
@@ -419,7 +418,7 @@ def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx
         
         idx = (id - 2) % 12
         if return_idx:
-            return idx
+            return idx + 2 # Offset by 2 for N and X
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[idx]
@@ -869,8 +868,10 @@ class EarlyStopper:
 
 if __name__ == "__main__":
     # Test get_pitch_classes_from_id
-    chord_id = chord_to_id("E#:7")
+    chord_id = chord_to_id("G#:dim7")
     # Get pitch classes
     pitch_classes = get_pitch_classes_from_id(chord_id)
+    root = (get_chord_root(chord_id, return_idx=True) - 2) % 12
     print(f"Chord id: {chord_id}")
     print(f"Pitch classes: {pitch_classes}")
+    print(f"Root: {root}")
