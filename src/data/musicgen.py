@@ -98,7 +98,7 @@ def resample_hidden_states(
     hidden_states_perm = hidden_states.permute(0, 2, 1)
     
     # Use linear interpolation along the time dimension.
-    resampled = F.interpolate(hidden_states_perm, size=new_T, mode='linear', align_corners=False)
+    resampled = F.interpolate(hidden_states_perm, size=new_T, mode='area', align_corners=False)
     
     # Permute back to [B, new_T, D]
     resampled = resampled.permute(0, 2, 1)
