@@ -12,6 +12,8 @@ from src.models.logistic_acr import LogisticACR
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
+    N_MELS,
+    N_FFT,
     write_json,
     generate_experiment_name,
 )
@@ -92,6 +94,12 @@ def main():
     )
     parser.add_argument(
         "--momentum", type=float, default=0.9, help="Momentum for SGD optimizer."
+    )
+    parser.add_argument(
+        "--spectrogram_type",
+        type=str,
+        default="cqt",
+        help="Type of spectrogram to use. Values: cqt, linear, mel, chroma",
     )
     parser.add_argument(
         "--cqt_pitch_shift",
@@ -283,6 +291,7 @@ def main():
         mask_X=args.mask_X,
         gen_reduction=args.gen_reduction if args.use_generative_features else None,
         gen_model_size=args.gen_model_size if args.use_generative_features else None,
+        spectrogram_type=args.spectrogram_type,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
@@ -292,10 +301,18 @@ def main():
         args.epochs = 1
         args.output_dir = "experiments_fdr"
 
+    input_features_mapping = {
+        "cqt": N_BINS,
+        "linear": N_FFT // 2 + 1,
+        "mel": N_MELS,
+        "chroma": 12,
+    }
+    input_features = input_features_mapping.get(args.spectrogram_type, N_BINS)
+
     # Initialize the model
     if args.model == "crnn":
         model = CRNN(
-            input_features=N_BINS,
+            input_features=input_features,
             num_classes=NUM_CHORDS,
             cr2=args.cr2,
             hidden_size=args.hidden_size,
@@ -310,14 +327,14 @@ def main():
         )
     elif args.model == "logistic":
         model = LogisticACR(
-            input_features=N_BINS,
+            input_features=input_features,
             num_classes=NUM_CHORDS,
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
         )
     elif args.model == "cnn":
         model = CNN(
-            input_features=N_BINS,
+            input_features=input_features,
             num_classes=NUM_CHORDS,
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
@@ -408,7 +425,7 @@ def main():
 
     if args.train_split  == '60':
         # Validation set
-        print("Evaluation model on validation set...")
+        print("Evaluating model on validation set...")
         val_metrics = evaluate_model(model, val_final_test_dataset)
         write_json(val_metrics, f"{DIR}/val_metrics.json")
 
@@ -419,9 +436,9 @@ def main():
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
-    # print("Evaluating model on train...")
-    # train_metrics = evaluate_model(model, train_final_test_dataset)
-    # write_json(train_metrics, f"{DIR}/train_metrics.json")
+    print("Evaluating model on train...")
+    train_metrics = evaluate_model(model, train_final_test_dataset)
+    write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")

@@ -30,6 +30,7 @@ class FullChordDataset(Dataset):
         gen_reduction: str = "concat",
         gen_model_size: str = "large",
         small_vocab: bool = SMALL_VOCABULARY,
+        spectrogram_type: str = "cqt",
         use_augs=False,
         dev_mode=False
     ):
@@ -44,6 +45,7 @@ class FullChordDataset(Dataset):
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
             gen_reduction (str): The reduction method to use for the generative features. Options are 'concat', 'avg', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'.
             gen_model_size (str): The size of the generative model to use. Options are 'large' or 'small'.
+            spectrogram_type (str): The type of spectrogram to use. Options are 'cqt', 'chroma', 'linear' or 'mel'.
             use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
         """
@@ -66,8 +68,16 @@ class FullChordDataset(Dataset):
         assert self.gen_model_size in ['large', 'small'], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
         assert self.gen_reduction in ['avg', 'concat', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
 
+        dir_mapping = {
+            'cqt': 'cqts',
+            'chroma': 'chroma_cqts',
+            'linear': 'linear',
+            'mel': 'mels',
+        }
+        feature_dir = dir_mapping.get(spectrogram_type, 'cqts')
+
         self.use_augs = use_augs
-        self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
+        self.feature_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/{feature_dir}"
         self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen-{self.gen_model_size}/{self.gen_reduction}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
@@ -76,7 +86,7 @@ class FullChordDataset(Dataset):
                 f"{self.input_dir}/cache/{self.hop_length}/chords_small_vocab"
             )
         if self.use_augs:
-            self.aug_cqt_cache_dir = f"{self.cqt_cache_dir}/augs"
+            self.aug_cqt_cache_dir = f"{self.feature_cache_dir}/augs"
             self.aug_chord_cache_dir = f"{self.chord_cache_dir}/augs"
             self.aug_gen_cache_dir = f"{self.gen_cache_dir}/augs"
 
@@ -170,7 +180,7 @@ class FullChordDataset(Dataset):
 
         aug = pitch_aug is not None and pitch_aug != 0 and self.use_augs
 
-        cqt_dir = self.cqt_cache_dir if not aug else self.aug_cqt_cache_dir
+        cqt_dir = self.feature_cache_dir if not aug else self.aug_cqt_cache_dir
         chord_dir = self.chord_cache_dir if not aug else self.aug_chord_cache_dir
         gen_dir = self.gen_cache_dir if not aug else self.aug_gen_cache_dir        
 
@@ -212,6 +222,7 @@ class FixedLengthRandomChordDataset(Dataset):
         mask_X=False,
         gen_reduction="concat",
         gen_model_size="large",
+        spectrogram_type="cqt",
         input_dir="./data/processed/",
     ):
         """
@@ -231,7 +242,8 @@ class FixedLengthRandomChordDataset(Dataset):
             gen_reduction=gen_reduction,
             gen_model_size=gen_model_size,
             input_dir=input_dir,
-            use_augs=audio_pitch_shift
+            use_augs=audio_pitch_shift,
+            spectrogram_type=spectrogram_type,
         )
         self.audio_pitch_shift = audio_pitch_shift
         self.aug_shift_prob = aug_shift_prob
@@ -323,6 +335,7 @@ class FixedLengthChordDataset(Dataset):
         mask_X=False,
         gen_reduction="concat",
         gen_model_size="large",
+        spectrogram_type="cqt",
         input_dir="./data/processed/",
     ):
         """
@@ -343,6 +356,7 @@ class FixedLengthChordDataset(Dataset):
             input_dir=input_dir,
             gen_reduction=gen_reduction,
             gen_model_size=gen_model_size,
+            spectrogram_type=spectrogram_type,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -397,6 +411,7 @@ def generate_datasets(
     aug_shift_prob: float = 0.5,
     gen_reduction: str = 'concat',
     gen_model_size: str = 'large',
+    spectrogram_type: str = 'cqt',
     subset_size=None,
 ):
     """
@@ -443,6 +458,7 @@ def generate_datasets(
         aug_shift_prob=aug_shift_prob,
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
+        spectrogram_type=spectrogram_type,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -452,6 +468,7 @@ def generate_datasets(
         input_dir=input_dir,
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
+        spectrogram_type=spectrogram_type,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,
@@ -460,6 +477,7 @@ def generate_datasets(
         input_dir=input_dir,
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
+        spectrogram_type=spectrogram_type,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
@@ -468,6 +486,7 @@ def generate_datasets(
         input_dir=input_dir,
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
+        spectrogram_type=spectrogram_type,
     )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
@@ -476,6 +495,7 @@ def generate_datasets(
         input_dir=input_dir,
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
+        spectrogram_type=spectrogram_type,
     )
     return (
         train_dataset,

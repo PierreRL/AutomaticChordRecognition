@@ -9,16 +9,16 @@ EDDIE = os.getenv("EDDIE")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={DATA_HOME}/experiments/gen_reductions --use_generative_features --no_cqt"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={DATA_HOME}/experiments/spectrogram_types"
 
-gen_reductions = ['avg', 'concat', 'codebook_0' , 'codebook_1', 'codebook_2', 'codebook_3']
+spectrogram_types = ["cqt", "mel", "linear", "chroma"]
 
 output_file = open("./scripts/experiments.txt", "w")
 
-for reduction in gen_reductions:
+for spectrogram in spectrogram_types:
     # and recorded in the output data by the python script
     expt_call = (
-        f"{base_call} --exp_name=reduction_{reduction} --gen_reduction={reduction} "
+        f"{base_call} --exp_name={spectrogram} --spectrogram_type={spectrogram}"
     )
     print(expt_call, file=output_file)
 
