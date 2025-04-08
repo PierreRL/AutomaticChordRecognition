@@ -10,15 +10,14 @@ DATA_HOME = f"{REPO_HOME}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/gen_layers "
 
-gen_layers = list(range(48,0,-8))
+gen_reductions = ['avg', 'concat', 'codebook_0' , 'codebook_1', 'codebook_2', 'codebook_3']
 
 output_file = open("./scripts/experiments.txt", "w")
 
-for layer in gen_layers:
-    # Note that we don't set a seed for rep - a seed is selected at random
+for reduction in gen_reductions:
     # and recorded in the output data by the python script
     expt_call = (
-        f"{base_call} --exp_name=layer_{layer} --gen_layer={layer} --no_cqt --use_generative_features --segment_length=10"
+        f"{base_call} --exp_name=reduction_{reduction} --gen_reduction={reduction} "
     )
     print(expt_call, file=output_file)
 

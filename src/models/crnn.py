@@ -35,7 +35,7 @@ class CRNN(BaseACR):
         structured_loss: bool = False,
         use_cqt: bool = True,
         use_generative_features: bool = False,
-        gen_down_dimension: int = 256,
+        gen_down_dimension: int = 128,
         gen_dimension: int = 2048,
     ):
         """

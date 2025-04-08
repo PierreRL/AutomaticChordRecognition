@@ -226,10 +226,22 @@ def main():
         help="Dimensionality of each generative feature vector per frame.",
     )
     parser.add_argument(
-        "--gen_layer",
+        "--gen_down_dimension",
         type=int,
-        default=24,
-        help="Number of layers in the generative model.",
+        default=128,
+        help="Dimensionality of the generative feature vector after projection.",
+    )
+    parser.add_argument(
+        "--gen_reduction",
+        type=str,
+        default="avg",
+        help="Reduction method for generative features. Values: avg, concat, codebook_0, codebook_1, codebook_2, codebook_3.",
+    )
+    parser.add_argument(
+        "--gen_model_size",
+        type=str,
+        default="large",
+        help="Size of the generative model. Values: small, large.",
     )
     parser.add_argument(
         "--job_id",
@@ -269,7 +281,8 @@ def main():
         aug_shift_prob=args.aug_shift_prob,
         hop_length=args.hop_length,
         mask_X=args.mask_X,
-        gen_layer=args.gen_layer if args.use_generative_features else None,
+        gen_reduction=args.gen_reduction if args.use_generative_features else None,
+        gen_model_size=args.gen_model_size if args.use_generative_features else None,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
@@ -291,7 +304,8 @@ def main():
             hmm_alpha=args.hmm_alpha,
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
-            gen_dimension=args.generative_features_dim,
+            gen_down_dimension=args.gen_down_dimension,
+            gen_dimension= 4 * args.generative_features_dim if args.gen_reduction == "concat" else args.generative_features_dim, # Concat 4 codebooks, all other reductions are 1 codebook
             structured_loss=args.structured_loss,
         )
     elif args.model == "logistic":
@@ -310,7 +324,6 @@ def main():
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
             gen_dimension=args.generative_features_dim,
-            gen_down_dimension=args.generative_features_dim,
             num_layers=args.num_layers,
             kernel_size=args.cnn_kernel_size,
             channels=args.cnn_channels,
@@ -340,7 +353,6 @@ def main():
         "hmm_alpha": args.hmm_alpha,
         "use_cqt": args.use_cqt,
         "use_generative_features": args.use_generative_features,
-        "gen_layer": args.gen_layer,
         "args": vars(args),
     }
     write_json(run_metadata, f"{DIR}/metadata.json")

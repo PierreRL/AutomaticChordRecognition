@@ -27,7 +27,8 @@ class FullChordDataset(Dataset):
         hop_length: int = HOP_LENGTH,
         mask_X: bool = False,
         input_dir: str = "./data/processed",
-        gen_layer: int = 18,
+        gen_reduction: str = "concat",
+        gen_model_size: str = "large",
         small_vocab: bool = SMALL_VOCABULARY,
         use_augs=False,
         dev_mode=False
@@ -41,7 +42,8 @@ class FullChordDataset(Dataset):
             mask_X (bool): If True, the dataset masks the class label X as -1 to be ignored by the loss function.
             input_dir (str): The directory where the audio files are stored.
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
-            gen_layer (int): The layer of the generative features to use.
+            gen_reduction (str): The reduction method to use for the generative features. Options are 'concat', 'avg', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'.
+            gen_model_size (str): The size of the generative model to use. Options are 'large' or 'small'.
             use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
         """
@@ -59,10 +61,14 @@ class FullChordDataset(Dataset):
         self.hop_length = hop_length
         self.mask_X = mask_X
         self.dev_mode = dev_mode
-        self.gen_layer = gen_layer
+        self.gen_reduction = gen_reduction
+        self.gen_model_size = gen_model_size
+        assert self.gen_model_size in ['large', 'small'], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
+        assert self.gen_reduction in ['avg', 'concat', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
+
         self.use_augs = use_augs
         self.cqt_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/cqts"
-        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen/{self.gen_layer}"
+        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen-{self.gen_model_size}/{self.gen_reduction}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
         if self.small_vocab:
@@ -177,7 +183,7 @@ class FullChordDataset(Dataset):
             gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True, map_location=get_torch_device())
         except FileNotFoundError:
             # If the generative features are not found, use None. It is later converted to an empty tensor.
-            if self.dev_mode or self.gen_layer is None:
+            if self.dev_mode or self.gen_reduction is None:
                 gen = None
             else:
                 raise FileNotFoundError(
@@ -204,7 +210,8 @@ class FixedLengthRandomChordDataset(Dataset):
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,
-        gen_layer=24,
+        gen_reduction="concat",
+        gen_model_size="large",
         input_dir="./data/processed/",
     ):
         """
@@ -221,7 +228,8 @@ class FixedLengthRandomChordDataset(Dataset):
             filenames=filenames,
             hop_length=hop_length,
             mask_X=mask_X,
-            gen_layer=gen_layer,
+            gen_reduction=gen_reduction,
+            gen_model_size=gen_model_size,
             input_dir=input_dir,
             use_augs=audio_pitch_shift
         )
@@ -277,7 +285,7 @@ class FixedLengthRandomChordDataset(Dataset):
             cqt_patch = torch.cat(
                 (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
             )
-            if self.full_dataset.gen_layer is not None:
+            if self.full_dataset.gen_reduction is not None:
                 gen_features_patch = torch.cat(
                     (gen_features, torch.zeros((pad_length, gen_features.shape[1])))
                 )
@@ -313,7 +321,8 @@ class FixedLengthChordDataset(Dataset):
         filenames=None,
         hop_length=HOP_LENGTH,
         mask_X=False,
-        gen_layer=24,
+        gen_reduction="concat",
+        gen_model_size="large",
         input_dir="./data/processed/",
     ):
         """
@@ -332,7 +341,8 @@ class FixedLengthChordDataset(Dataset):
             hop_length=hop_length,
             mask_X=mask_X,
             input_dir=input_dir,
-            gen_layer=gen_layer,
+            gen_reduction=gen_reduction,
+            gen_model_size=gen_model_size,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -385,7 +395,8 @@ def generate_datasets(
     cqt_pitch_shift: bool = False,
     audio_pitch_shift: bool = False,
     aug_shift_prob: float = 0.5,
-    gen_layer: int = 24,
+    gen_reduction: str = 'concat',
+    gen_model_size: str = 'large',
     subset_size=None,
 ):
     """
@@ -430,7 +441,8 @@ def generate_datasets(
         cqt_pitch_shift=cqt_pitch_shift,
         audio_pitch_shift=audio_pitch_shift,
         aug_shift_prob=aug_shift_prob,
-        gen_layer=gen_layer,
+        gen_reduction=gen_reduction,
+        gen_model_size=gen_model_size,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -438,28 +450,32 @@ def generate_datasets(
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
-        gen_layer=gen_layer,
+        gen_reduction=gen_reduction,
+        gen_model_size=gen_model_size,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
-        gen_layer=gen_layer,
+        gen_reduction=gen_reduction,
+        gen_model_size=gen_model_size,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
-        gen_layer=gen_layer,
+        gen_reduction=gen_reduction,
+        gen_model_size=gen_model_size,
     )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
         hop_length=hop_length,
         mask_X=mask_X,
         input_dir=input_dir,
-        gen_layer=gen_layer,
+        gen_reduction=gen_reduction,
+        gen_model_size=gen_model_size,
     )
     return (
         train_dataset,
