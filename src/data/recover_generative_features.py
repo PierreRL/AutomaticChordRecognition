@@ -54,7 +54,7 @@ def reconstruct_from_concat(
                 continue
 
         # Load the concat representation
-        concat_tensor = torch.load(concat_path)  # shape: [T, K * card]
+        concat_tensor = torch.load(concat_path, map_location="cpu")
         T, concat_dim = concat_tensor.shape
         if concat_dim % K != 0:
             raise ValueError(
