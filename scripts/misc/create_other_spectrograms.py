@@ -9,7 +9,7 @@ REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
 input_dir = f"{DATA_HOME}/audio"
-output_dir = f"{DATA_HOME}/cache/4096/"
+output_dir = f"{DATA_HOME}/cache/4096"
 
 chroma = f"python {REPO_HOME}/src/data/create_chroma_cqts.py --input_dir={input_dir} --output_dir={output_dir}/chroma_cqts"
 
