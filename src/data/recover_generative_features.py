@@ -85,7 +85,7 @@ def main():
                         help="Path to the main directory containing 'cache' subfolders.")
     parser.add_argument("--hop_length", type=int, default=4096,
                         help="Hop length in subfolder naming.")
-    parser.add_argument("--model_size", type=str, default="largel",
+    parser.add_argument("--model_size", type=str, default="large",
                         help="Model size in subfolder naming, e.g. 'small'.")
     parser.add_argument("--K", type=int, default=4,
                         help="Number of codebooks.")
