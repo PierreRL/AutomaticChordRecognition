@@ -9,7 +9,7 @@ EDDIE = os.getenv("EDDIE")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={DATA_HOME}/experiments/spectrogram_types"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/spectrogram_types"
 
 spectrogram_types = ["cqt", "mel", "linear", "chroma"]
 
