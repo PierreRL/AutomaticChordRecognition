@@ -9,7 +9,6 @@ def reconstruct_from_concat(
     hop_length: int,
     model_size: str,
     K: int,
-    skip_if_exists: bool = False
 ):
     """
     Reconstruct 'avg' and 'codebook_<k>' representations from the 'concat' PT files.
@@ -48,11 +47,6 @@ def reconstruct_from_concat(
         avg_path = os.path.join(avg_dir, concat_file)
         codebook_paths = [os.path.join(codebook_dirs[k], concat_file) for k in range(K)]
 
-        # If skipping, only do so if all needed files exist
-        if skip_if_exists:
-            if os.path.exists(avg_path) and all(os.path.exists(cp) for cp in codebook_paths):
-                continue
-
         # Load the concat representation
         concat_tensor = torch.load(concat_path, map_location="cpu")
         T, concat_dim = concat_tensor.shape
@@ -89,8 +83,6 @@ def main():
                         help="Model size in subfolder naming, e.g. 'small'.")
     parser.add_argument("--K", type=int, default=4,
                         help="Number of codebooks.")
-    parser.add_argument("--skip_if_exists", action="store_true",
-                        help="If given, skip processing files that already have avg + all codebooks saved.")
     args = parser.parse_args()
 
     reconstruct_from_concat(
@@ -98,7 +90,6 @@ def main():
         hop_length=args.hop_length,
         model_size=args.model_size,
         K=args.K,
-        skip_if_exists=args.skip_if_exists
     )
 
 if __name__ == "__main__":
