@@ -10,7 +10,7 @@ import json
 import numpy as np
 import torch
 from functools import lru_cache
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 # Music processing libraries
 import librosa
@@ -23,6 +23,8 @@ SR = 44100
 HOP_LENGTH = 4096
 BINS_PER_OCTAVE = 36
 N_BINS = BINS_PER_OCTAVE * 6
+N_MELS = BINS_PER_OCTAVE * 6
+N_FFT = 2048
 
 if SMALL_VOCABULARY:
     NUM_CHORDS = 26
@@ -97,6 +99,14 @@ def get_annotation_metadata(filename):
     return metadata
 
 
+def load_audio(filename: str, override_dir: str = None, sr: int = SR) -> np.ndarray:
+    path = os.path.join(override_dir or "./data/processed/audio/", f"{filename}.mp3")
+    return librosa.load(path, sr=sr)[0]
+
+def to_tensor_if_needed(x: np.ndarray, return_as_tensor: bool = True) -> Union[torch.Tensor, np.ndarray]:
+    x = x.T  # (freq, time) → (time, freq)
+    return torch.tensor(x, dtype=torch.float32) if return_as_tensor else x
+
 def get_cqt(
     filename: str,
     override_dir: str = None,
@@ -107,47 +117,61 @@ def get_cqt(
     fmin: float = librosa.note_to_hz("C1"),
     absolute: bool = True,
     return_as_tensor: bool = True,
-) -> torch.Tensor:
-    """
-    Compute the log CQT of an audio file.
-
-    Args:
-        filename (str): The filename of the audio file to load.
-        sr (int): The sample rate of the audio file.
-        hop_length (int): The hop length of the CQT.
-        n_bins (int): The number of bins in the CQT.
-        bins_per_octave (int): The number of bins per octave in the CQT.
-        fmin (float): The minimum frequency of the CQT.
-
-    Returns:
-        cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
-    """
-    # Default hyperparameters from https://brianmcfee.net/papers/crnn_chord.pdf
-    if override_dir is not None:
-        src = librosa.load(
-            os.path.join(f"{override_dir}", f"{filename}.mp3"), sr=sr
-        )[0]
-    else:
-        src = librosa.load(
-            os.path.join("./data/processed/audio/", f"{filename}.mp3"), sr=sr
-        )[0]
-
-    cqt = librosa.cqt(
-        src,
-        sr=sr,
-        hop_length=hop_length,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        fmin=fmin,
-    )
-    if absolute: # Discard phase information
+):
+    src = load_audio(filename, override_dir, sr)
+    cqt = librosa.cqt(src, sr=sr, hop_length=hop_length, n_bins=n_bins, bins_per_octave=bins_per_octave, fmin=fmin)
+    if absolute:
         cqt = np.abs(cqt)
-
     cqt = librosa.amplitude_to_db(cqt)
+    return to_tensor_if_needed(cqt, return_as_tensor)
 
-    if return_as_tensor:
-        return torch.tensor(cqt, dtype=torch.float32).T
-    return cqt.T
+def get_mel_spectrogram(
+    filename: str,
+    override_dir: str = None,
+    sr: int = SR,
+    hop_length: int = HOP_LENGTH,
+    n_mels: int = N_MELS,
+    n_fft: int = N_FFT,
+    fmin: float = librosa.note_to_hz("C1"),
+    absolute: bool = True,
+    return_as_tensor: bool = True,
+):
+    src = load_audio(filename, override_dir, sr)
+    mel = librosa.feature.melspectrogram(y=src, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, fmin=fmin)
+    if absolute:
+        mel = np.abs(mel)
+    mel = librosa.amplitude_to_db(mel)
+    return to_tensor_if_needed(mel, return_as_tensor)
+
+def get_chroma_cqt(
+    filename: str,
+    override_dir: str = None,
+    sr: int = SR,
+    hop_length: int = HOP_LENGTH,
+    bins_per_octave: int = BINS_PER_OCTAVE,
+    fmin: float = librosa.note_to_hz("C1"),
+    return_as_tensor: bool = True,
+):
+    src = load_audio(filename, override_dir, sr)
+    chroma = librosa.feature.chroma_cqt(y=src, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave, fmin=fmin, n_chroma=12, n_octaves=6)
+    return to_tensor_if_needed(chroma, return_as_tensor)
+
+def get_linear_spectrogram(
+    filename: str,
+    override_dir: str = None,
+    sr: int = SR,
+    hop_length: int = HOP_LENGTH,
+    n_bins: int = N_BINS,
+    n_fft: int = N_FFT,
+    absolute: bool = True,
+    return_as_tensor: bool = True,
+):
+    src = load_audio(filename, override_dir, sr)
+    spec = librosa.stft(src, n_fft=n_fft, hop_length=hop_length, win_length=n_bins, window="hann")
+    if absolute:
+        spec = np.abs(spec)
+    spec = librosa.amplitude_to_db(spec)
+    return to_tensor_if_needed(spec, return_as_tensor)
 
 
 def pitch_shift_cqt(

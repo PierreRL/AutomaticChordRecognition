@@ -21,13 +21,13 @@ This will output the model, training history and evaluation metrics to a folder 
 
 ## Repo Guide
 
-- `/src` contains the core python scripts to run. This contains sub-folders and files:
+- `/src` contains the core python scripts to run. This contains:
     - `/src/models`: models and decoder
     - `/src/data`: data loading and generation
-    - `run.py`: trains and evaluates a model. 
+    - `/src/losses`: custom loss functions
+    - `run.py`: trains and evaluates a model
     - `train.py`
     - `eval.py`
-
     - `utils.py`: contains many useful functions.
 - `/data` should contain the data relevant to this project. The data can be made available at request by emailing *first[dot]last[at]gmail.com*.
 - `/notebooks`: python notebooks for analysing the data and results.
