@@ -62,7 +62,7 @@ def reconstruct_from_concat(
         avg_rep = stacked.mean(dim=1)
 
         # Extract each codebook -> shape: [T, card]
-        codebook_reps = [stacked[:, k, :] for k in range(K)]
+        codebook_reps = [stacked[:, k, :].contiguous() for k in range(K)]
 
         # Save average representation
         torch.save(avg_rep, avg_path)
