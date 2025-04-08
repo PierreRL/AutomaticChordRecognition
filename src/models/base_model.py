@@ -37,7 +37,7 @@ class BaseACR(torch.nn.Module):
             else:
                 output = self(features) 
             
-            if hasattr(self, "structured_loss"):
+            if hasattr(self, "structured_loss") and self.structured_loss:
                 output = output[0]
                 
             if hasattr(self, "hmm_smoother"):
