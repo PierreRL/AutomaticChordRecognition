@@ -6,7 +6,7 @@ USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"{EDDIE}/data/processed"
+DATA_HOME = f"{REPO_HOME}/data/processed"
 
 input_dir = f"{DATA_HOME}/audio"
 files = os.listdir(input_dir)
