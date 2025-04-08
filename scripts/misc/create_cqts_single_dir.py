@@ -9,7 +9,7 @@ REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
 input_dir = f"{DATA_HOME}/audio"
-output_dir = f"{DATA_HOME}/cached/4096/cqts/"
+output_dir = f"{DATA_HOME}/cache/4096/cqts/"
 
 os.makedirs(output_dir, exist_ok=True)
 files = os.listdir(input_dir)
