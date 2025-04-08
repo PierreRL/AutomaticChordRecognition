@@ -65,8 +65,8 @@ class FullChordDataset(Dataset):
         self.dev_mode = dev_mode
         self.gen_reduction = gen_reduction
         self.gen_model_size = gen_model_size
-        assert self.gen_model_size in ['large', 'small'], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
-        assert self.gen_reduction in ['avg', 'concat', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
+        assert self.gen_model_size in ['large', 'small', None], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
+        assert self.gen_reduction in ['avg', 'concat', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3', None], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
 
         dir_mapping = {
             'cqt': 'cqts',
