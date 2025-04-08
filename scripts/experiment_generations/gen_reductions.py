@@ -8,7 +8,7 @@ USER = os.getenv("USER")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{REPO_HOME}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/gen_reductions --use_generative_features"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={REPO_HOME}/experiments/gen_reductions --use_generative_features --no_cqt"
 
 gen_reductions = ['avg', 'concat', 'codebook_0' , 'codebook_1', 'codebook_2', 'codebook_3']
 
