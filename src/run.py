@@ -426,18 +426,18 @@ def main():
     if args.train_split  == '60':
         # Validation set
         print("Evaluating model on validation set...")
-        val_metrics = evaluate_model(model, val_final_test_dataset)
+        val_metrics = evaluate_model(model, val_final_test_dataset, batch_size=16)
         write_json(val_metrics, f"{DIR}/val_metrics.json")
 
     if args.train_split != '100':
         # Test set
         print("Evaluating model on test...")
-        test_metrics = evaluate_model(model, test_dataset)
+        test_metrics = evaluate_model(model, test_dataset, batch_size=16)
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
     print("Evaluating model on train...")
-    train_metrics = evaluate_model(model, train_final_test_dataset)
+    train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=16)
     write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     print("=" * 50)
