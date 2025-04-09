@@ -2,26 +2,12 @@
 # ====================
 # Options for sbatch
 # ====================
-
-# Location for stdout log - see https://slurm.schedmd.com/sbatch.html#lbAH
 #SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
-
-# Location for stderr log - see https://slurm.schedmd.com/sbatch.html#lbAH
 #SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
-
-# Maximum number of nodes to use for the job
-# #SBATCH --nodes=1
-
-# Generic resources to use - typically you'll want gpu:n to get n gpus
-#SBATCH --gres=gpu:1
-
-# Megabytes of RAM required. Check `cluster-status` for node configurations
-#SBATCH --mem=8000
-
-# Number of CPUs to use. Check `cluster-status` for node configurations
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:a6000:1
+#SBATCH --mem=32G
 #SBATCH --cpus-per-task=1
-
-# Maximum time for the job to run, format: days-hours:minutes:seconds
 #SBATCH --time=01:00:00
 
 echo "Starting job $SLURM_JOB_ID"
@@ -29,16 +15,8 @@ echo "Running on $SLURM_JOB_NODELIST"
 echo "Job submitted at `date`"
 echo "-----------------------------------"
 
-# ===================
-# Environment setup
-# ===================
-
 echo "Setting up bash enviroment"
-
-# Make available all commands on $PATH as on headnode
 source ~/.bashrc
-
-# Make script bail out after first error
 set -e
 
 # Make your own folder on the node's scratch disk
@@ -52,12 +30,7 @@ mkdir -p ${SCRATCH_HOME}
 
 # Set up the virtual environment
 echo "Loading modules"
-
-VENV_DIR=~/ug4_venv
-python3 -m venv ~/ug4_venv
-source $VENV_DIR/bin/activate
-pip install --upgrade pip
-pip install -r ~/LeadSheetTranscription/requirements.txt
+source ~/ug4_venv/bin/activatee
 
 
 # Move data
@@ -72,26 +45,23 @@ mkdir -p ${dest_path}  # make it if required
 
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
-# Empty the output directory
-# rm -rf ${SCRATCH_HOME}/experiments
-mkdir -p ${SCRATCH_HOME}/experiments
-
 echo "Running script"
 cd ${repo_home}
 
-# Run script
-python ${repo_home}/src/run.py --exp_name='testing_slurm' --input_dir=${dest_path} --output_dir=${SCRATCH_HOME}/experiments
+experiment_text_file=$1
+COMMAND="`sed '1q;d' ${experiment_text_file}`"
+echo "Running command from file: ${COMMAND}"
+eval "${COMMAND}"
+python /home/s2147950/LeadSheetTranscription/src/data/create_generative_features.py --dir=/home/s2147950/LeadSheetTranscription/data/processed --start_idx=519 --end_idx=520 --output_dir=${SCRATCH_HOME}/gen-large
 
 # ======================================
 # Move output data from scratch to DFS
 # ======================================
-# This presumes your command wrote data to some known directory. In this
-# example, send it back to the DFS with rsync
 
 echo "Moving output data back to DFS"
 
-src_path=${SCRATCH_HOME}/experiments
-dest_path=${repo_home}/experiments/
+src_path=${SCRATCH_HOME}/gen-large
+dest_path=${repo_home}/gen_from_node
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # =========================

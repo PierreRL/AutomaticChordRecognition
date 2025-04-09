@@ -17,11 +17,14 @@ from src.data.musicgen import get_musicgen_model, extract_song_hidden_representa
 def main(
     hop_length=4096,
     dir = "./data/processed",
+    output_dir=None,
     model_size="large",
     start_idx=0,
     end_idx=None,
     max_chunk_length=5
 ):
+    if output_dir is None:
+        output_dir = f"{dir}/cache/{hop_length}/gen-{model_size}"
     device = get_torch_device(allow_mps=False)
     print(f"Using device: {device}")
     dataset = FullChordDataset(hop_length=hop_length, input_dir=dir)
@@ -44,7 +47,7 @@ def main(
     print('Extracting features...')
     for filename in tqdm(filenames):
         # Skip if the file already exists
-        if os.path.exists(f"{dir}/cache/{hop_length}/gen-{model_size}/codebook_3/{filename}.pt"):
+        if os.path.exists(f"{output_dir}/{reduction}/codebook_3/{filename}.pt"):
             print(f"Skipping {filename} as it already exists.")
             continue
 
@@ -56,8 +59,8 @@ def main(
             frame_length=frame_length
         )
         for reduction, song_repr in song_repr_dict.items():
-            os.makedirs(f"{dir}/cache/{hop_length}/gen-{model_size}/{reduction}", exist_ok=True)
-            torch.save(song_repr, f"{dir}/cache/{hop_length}/gen-{model_size}/{reduction}/{filename}.pt")
+            os.makedirs(f"{output_dir}/{reduction}", exist_ok=True)
+            torch.save(song_repr, f"{output_dir}/{reduction}/{filename}.pt")
 
 
 if __name__ == "__main__":
@@ -74,6 +77,12 @@ if __name__ == "__main__":
         type=str,
         default="./data/processed",
         help="Directory for input and output. Expects audio files in dir/audio and will output to dir/gen.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=None,
+        help="Optional different directory for output. If not provided, will use dir/gen.",
     )
     parser.add_argument(
         "--model_size",
