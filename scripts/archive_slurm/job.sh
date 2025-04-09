@@ -30,7 +30,7 @@ mkdir -p ${SCRATCH_HOME}
 
 # Set up the virtual environment
 echo "Loading modules"
-source ~/ug4_venv/bin/activatee
+source ~/ug4_venv/bin/activate
 
 
 # Move data
