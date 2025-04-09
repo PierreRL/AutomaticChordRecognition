@@ -37,6 +37,7 @@ class TrainingArgs:
         weight_decay: float = 0.0,
         optimiser: str = "adam",
         momentum: float = 0.9,
+        use_crf: bool = False,
         lr_scheduler: str = "cosine",
         hop_length: int = 4096,
         save_dir: str = "data/models/",
@@ -60,6 +61,7 @@ class TrainingArgs:
         self.weight_decay = weight_decay
         self.optimiser = optimiser
         self.momentum = momentum
+        self.use_crf = use_crf
         self.lr_scheduler = lr_scheduler
         self.hop_length = hop_length
         self.save_dir = save_dir
@@ -86,6 +88,7 @@ class TrainingArgs:
             "weight_decay": self.weight_decay,
             "optimiser": self.optimiser,
             **({"momentum": self.momentum} if self.optimiser == "sgd" else {}),
+            "crf": self.use_crf,
             "lr_scheduler": self.lr_scheduler,
             "decrease_lr_factor": self.decrease_lr_factor,
             "decrease_lr_epochs": self.decrease_lr_epochs,
@@ -193,17 +196,21 @@ def train_model(
             else:
                 outputs = model(features)
 
-            # Flatten the outputs and labels
-            labels = labels.view(-1)  # (B*frames) 
-            if args.structured_loss:
-                # Structured output is a tuple of (chord_output, root_output, pitch_class_output)
-                outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
-            else:
+            # Compute the loss
+            if not args.use_crf: # CRF uses different loss
                 # Flatten the outputs and labels
-                outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
+                labels = labels.view(-1)  # (B*frames) 
+                
+                if args.structured_loss:
+                    # Structured output is a tuple of (chord_output, root_output, pitch_class_output)
+                    outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
+                else:
+                    # Flatten the outputs and labels
+                    outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
+                loss = criterion(outputs, labels)
+            else:
+                loss = -model.crf(outputs, labels, reduction='mean', mask=(labels != -1))
 
-            # Compute the loss and backpropagate
-            loss = criterion(outputs, labels)
             loss.backward()
             optimiser.step()
             train_loss += loss.item()
@@ -238,24 +245,32 @@ def train_model(
             else:
                 outputs = model(cqts)
 
-            labels = labels.view(-1)  # (B*frames)
-            if args.structured_loss:
-                outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
-            else:
-                # Flatten the outputs and labels
-                outputs = outputs.view(-1, outputs.shape[-1])
-
-            # Compute the loss and accuracy
-            loss = criterion(outputs, labels)
-            val_loss += loss.item()
-
-            if args.structured_loss:
-                # Use the chord output for accuracy
-                outputs = outputs[0]
+            if not args.use_crf:
+                # Normal decoding
+                labels = labels.view(-1)
+                if args.structured_loss:
+                    outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
+                else:
+                    outputs = outputs.view(-1, outputs.shape[-1])
+                loss = criterion(outputs, labels)
+                if args.structured_loss:
+                    outputs = outputs[0]
+                _, predicted = torch.max(outputs, 1)
+                correct += (predicted == labels).sum().item()
+                total += labels.size(0)
+            else: 
+                # Decode with CRF
+                emissions = outputs  # (B, frames, num_classes)
+                mask = labels != -1
+                loss = -model.crf(emissions, labels, mask=mask, reduction='mean')
+                predictions = model.crf.decode(emissions, mask=mask)
                 
-            _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+                # Flatten predictions and labels
+                for pred_seq, label_seq, mask_seq in zip(predictions, labels, mask):
+                    true_len = mask_seq.sum().item()
+                    pred_seq = torch.tensor(pred_seq, device=device)
+                    correct += (pred_seq == label_seq[:true_len]).sum().item()
+                    total += true_len
 
         val_loss /= len(val_loader)
         accuracy = correct / total

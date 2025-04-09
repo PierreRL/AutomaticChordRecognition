@@ -11,6 +11,7 @@ import autorootcwd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchcrf import CRF
 
 from src.models.base_model import BaseACR
 from src.utils import NUM_CHORDS, get_torch_device
@@ -37,6 +38,7 @@ class CRNN(BaseACR):
         use_generative_features: bool = False,
         gen_down_dimension: int = 128,
         gen_dimension: int = 2048,
+        crf: bool = False,
     ):
         """
         Initializes the CRNN model.
@@ -73,6 +75,8 @@ class CRNN(BaseACR):
         self.gen_dimension = gen_dimension
         self.gen_down_dimension = gen_down_dimension
         self.structured_loss = structured_loss
+        if crf:
+            self.crf = CRF(num_classes, batch_first=True)
 
         if self.activation not in ["relu", "prelu"]:
             raise ValueError(f"Invalid activation function: {self.activation}")

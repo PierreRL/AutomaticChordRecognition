@@ -152,22 +152,23 @@ def evaluate_model(
             device
         )
 
-        if hasattr(model, "use_generative_features") and model.use_generative_features:
-            predictions = model.predict(
-                batch_cqts, batch_gens, device=device
-            ).to(device)
+        # Compute valid frame mask
+        if SMALL_VOCABULARY:
+            valid_mask = batch_labels != -1
         else:
-            predictions = model.predict(batch_cqts).to(device)
+            valid_mask = torch.logical_and(
+                batch_labels != -1, batch_labels != chord_to_id_map["X"]
+            )
+
+        if hasattr(model, "use_generative_features") and model.use_generative_features:
+            predictions = model.predict(batch_cqts, batch_gens, mask=valid_mask, device=device).to(device)
+        else:
+            predictions = model.predict(batch_cqts, mask=valid_mask).to(device)
 
         for i in range(batch_labels.shape[0]):  # Iterate over songs in the batch
-            if SMALL_VOCABULARY:
-                valid_mask = batch_labels[i] != -1
-            else:
-                valid_mask = torch.logical_and(
-                    batch_labels[i] != -1, batch_labels[i] != chord_to_id_map["X"]
-                )
-            filtered_references = batch_labels[i][valid_mask].cpu().numpy()
-            filtered_hypotheses = predictions[i][valid_mask].cpu().numpy()
+
+            filtered_references = batch_labels[i][valid_mask[i]].cpu().numpy()
+            filtered_hypotheses = predictions[i][valid_mask[i]].cpu().numpy()
 
             all_hypotheses.extend(filtered_hypotheses)
             all_references.extend(filtered_references)

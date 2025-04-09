@@ -203,6 +203,11 @@ def main():
         help="Alpha parameter for the structured loss.",
     )
     parser.add_argument(
+        "--crf",
+        action="store_true",
+        help="Use CRF module."
+    )
+    parser.add_argument(
         "--no_hmm_smoothing",
         dest="hmm_smoothing",
         action="store_false",
@@ -259,6 +264,22 @@ def main():
     )
 
     args = parser.parse_args()
+
+    assert args.train_split in ["60", "80", "100"], "train_split must be 60, 80, or 100."
+    assert args.spectrogram_type in ["cqt", "linear", "mel", "chroma"], "spectrogram_type must be cqt, linear, mel, or chroma."
+    assert args.model in ["crnn", "logistic", "cnn"], "model must be crnn, logistic, or cnn."
+    assert args.gen_reduction in ["avg", "concat", "codebook_0", "codebook_1", "codebook_2", "codebook_3"], "gen_reduction must be avg, concat, codebook_0, codebook_1, codebook_2, or codebook_3."
+    assert args.gen_model_size in ["small", "large"], "gen_model_size must be small or large."
+    assert args.optimiser in ["adam", "sgd"], "optimiser must be adam or sgd."
+    assert args.lr_scheduler in ["cosine", "plateau", "none"], "lr_scheduler must be cosine, plateau, or none."
+
+    # Cannot have CRF and HMM
+    if args.crf and args.hmm_smoothing:
+        raise ValueError("Cannot use both CRF and HMM smoothing.")
+    
+    # Cannot have structured loss and CRF
+    if args.structured_loss and args.crf:
+        raise ValueError("Cannot use both structured loss and CRF.")
 
     if not args.exp_name:
         args.exp_name = generate_experiment_name()
@@ -324,6 +345,7 @@ def main():
             gen_down_dimension=args.gen_down_dimension,
             gen_dimension= 4 * args.generative_features_dim if args.gen_reduction == "concat" else args.generative_features_dim, # Concat 4 codebooks, all other reductions are 1 codebook
             structured_loss=args.structured_loss,
+            crf=args.crf
         )
     elif args.model == "logistic":
         model = LogisticACR(
@@ -392,6 +414,7 @@ def main():
         lr_scheduler=args.lr_scheduler,
         optimiser=args.optimiser,
         momentum=args.momentum,
+        use_crf=args.crf,
         early_stopping=args.early_stopping if args.enable_early_stopping else None,
         do_validation=args.train_split == '60',
         save_dir=f"{DIR}",
@@ -436,9 +459,9 @@ def main():
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
-    print("Evaluating model on train...")
-    train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=16)
-    write_json(train_metrics, f"{DIR}/train_metrics.json")
+    # print("Evaluating model on train...")
+    # train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=16)
+    # write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")
