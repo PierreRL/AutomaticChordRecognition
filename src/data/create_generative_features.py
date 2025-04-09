@@ -47,7 +47,7 @@ def main(
     print('Extracting features...')
     for filename in tqdm(filenames):
         # Skip if the file already exists
-        if os.path.exists(f"{output_dir}/{reduction}/codebook_3/{filename}.pt"):
+        if os.path.exists(f"{output_dir}/concat/{filename}.pt"):
             print(f"Skipping {filename} as it already exists.")
             continue
 
