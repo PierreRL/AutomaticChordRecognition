@@ -17,6 +17,7 @@ from src.utils import (
     SR,
     BINS_PER_OCTAVE
 )
+from src.data.beats.beatwise_resampling import resample_features_by_beat, get_beatwise_chord_annotation
 
 
 # Create a torch dataset
@@ -32,7 +33,9 @@ class FullChordDataset(Dataset):
         small_vocab: bool = SMALL_VOCABULARY,
         spectrogram_type: str = "cqt",
         use_augs=False,
-        dev_mode=False
+        dev_mode=False,
+        beat_wise_resample: bool = False,        # <-- new flag
+        beat_resample_interval: float = 1, 
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -89,6 +92,9 @@ class FullChordDataset(Dataset):
             self.aug_cqt_cache_dir = f"{self.feature_cache_dir}/augs"
             self.aug_chord_cache_dir = f"{self.chord_cache_dir}/augs"
             self.aug_gen_cache_dir = f"{self.gen_cache_dir}/augs"
+
+        self.beat_wise_resample = beat_wise_resample
+        self.beat_resample_interval = beat_resample_interval
 
 
     def __len__(self):
@@ -199,6 +205,28 @@ class FullChordDataset(Dataset):
                 raise FileNotFoundError(
                     f"Generative features not found for {filename}. Please run the generative feature extraction script."
                 )
+            
+        # If beat-wise resampling is enabled, resample all modalities:
+        if self.beat_wise_resample:
+            # Resample features using your previously defined torch-compatible function:
+            cqt = resample_features_by_beat(
+                features=cqt,
+                filename=filename,
+                beat_interval=self.beat_resample_interval,
+                hop_length=self.hop_length,
+                sample_rate=SR,
+            )
+            # Do the same for generative features if available:
+            if gen is not None and gen.shape[0] > 0:
+                gen = resample_features_by_beat(
+                    features=gen,
+                    filename=filename,
+                    beat_interval=self.beat_resample_interval,
+                    hop_length=self.hop_length,
+                    sample_rate=SR,
+                )
+            # Resample chords:
+            chord_ids = get_beatwise_chord_annotation(filename, beat_interval=self.beat_resample_interval)
             
         return cqt, gen, chord_ids
 

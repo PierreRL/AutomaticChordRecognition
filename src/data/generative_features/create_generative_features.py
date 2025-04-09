@@ -115,6 +115,7 @@ if __name__ == "__main__":
     main(
         hop_length=args.hop_length,
         dir=args.dir,
+        output_dir=args.output_dir,
         model_size=args.model_size,
         max_chunk_length=args.max_chunk_length,
         start_idx=args.start_idx,
