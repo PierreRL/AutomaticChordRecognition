@@ -201,7 +201,7 @@ def get_linear_spectrogram(
     return_as_tensor: bool = True,
 ):
     src = load_audio(filename, override_dir, sr)
-    spec = librosa.stft(src, n_fft=n_fft, hop_length=hop_length, win_length=n_bins, window="hann")
+    spec = librosa.stft(src, n_fft=n_fft, hop_length=hop_length, window="hann")
     if absolute:
         spec = np.abs(spec)
     spec = librosa.amplitude_to_db(spec)
