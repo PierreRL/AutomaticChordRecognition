@@ -47,11 +47,7 @@ src_path=${repo_home}/data/processed
 
 echo "Running script"
 cd ${repo_home}
-
-experiment_text_file=$1
-COMMAND="`sed '1q;d' ${experiment_text_file}`"
-echo "Running command from file: ${COMMAND}"
-eval "${COMMAND}"
+echo "Running script"
 python /home/s2147950/LeadSheetTranscription/src/data/create_generative_features.py --dir=/home/s2147950/LeadSheetTranscription/data/processed --start_idx=519 --end_idx=520 --output_dir=${SCRATCH_HOME}/gen-large
 
 # ======================================
