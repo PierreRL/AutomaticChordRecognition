@@ -18,7 +18,7 @@ if len(files) % max_group_size != 0:
         "This may lead to uneven distribution of files across groups."
     )
 
-base_call = f"python {REPO_HOME}/src/data/create_generative_features.py --dir={DATA_HOME}"
+base_call = f"python {REPO_HOME}/src/data/generative_features/create_generative_features.py --dir={DATA_HOME}"
 
 output_file = open("./scripts/experiments.txt", "w")
 
