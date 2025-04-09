@@ -3,11 +3,24 @@
 # Options for sbatch
 # ====================
 
+# Location for stdout log - see https://slurm.schedmd.com/sbatch.html#lbAH
 #SBATCH --output=/home/%u/slurm_logs/slurm-%A_%a.out
+
+# Location for stderr log - see https://slurm.schedmd.com/sbatch.html#lbAH
 #SBATCH --error=/home/%u/slurm_logs/slurm-%A_%a.out
-#SBATCH --gres=gpu:a6000:1
+
+# Maximum number of nodes to use for the job
+# #SBATCH --nodes=1
+
+# Generic resources to use - typically you'll want gpu:n to get n gpus
+##SBATCH --gres=gpu:a6000:1
+
+# Megabytes of RAM required. Check `cluster-status` for node configurations
 #SBATCH --mem=24G
+# Number of CPUs to use. Check `cluster-status` for node configurations
 #SBATCH --cpus-per-task=1
+
+# Maximum time for the job to run, format: days-hours:minutes:seconds
 #SBATCH --time=10:00:00
 
 echo "Starting job $SLURM_JOB_ID"
@@ -83,12 +96,14 @@ echo "Command ran successfully!"
 
 echo "Moving output data back to DFS"
 
-# src_path=${SCRATCH_HOME}/experiments
-# dest_path=${repo_home}/experiments/
-# rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
+src_path=${SCRATCH_HOME}/
+dest_path=${repo_home}/gen_from_node
+mkdir -p ${dest_path}  # make it if required
+rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
+\
 # Clean up the node's scratch disk
-# rm -r ${SCRATCH_HOME}
+rm -r ${SCRATCH_HOME}
 
 
 # =========================
