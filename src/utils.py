@@ -9,6 +9,8 @@ import random
 import json
 import numpy as np
 import torch
+import re
+import unicodedata
 from functools import lru_cache
 from typing import List, Tuple, Union
 
@@ -63,6 +65,38 @@ def get_split_filenames(dir: str = 'data/processed/') -> Tuple[List, List, List]
 
     return splits["train"], splits["val"], splits["test"]
 
+
+def get_raw_beats(filename, override_dir=None):
+    """
+    Retrieves the raw beat annotation pre-computed using madmom.
+
+    Args:
+        filenames (list): The filenames of the JAMS files to load.
+
+    Returns:
+        beats (ndarray): A list of beats for each file.
+    """
+    filename = sanitize_filename(filename)
+    if override_dir is not None:
+        return np.load(os.path.join(f"{override_dir}/", f"{filename}.npy"))
+    
+    return np.load(os.path.join("./data/processed/beats/", f"{filename}.npy"))
+
+
+def sanitize_filename(name):
+    # Normalize Unicode (e.g., é vs e + ́)
+    name = unicodedata.normalize("NFC", name)
+
+    # Lowercase
+    name = name.lower()
+
+    # Replace spaces with underscores
+    name = name.replace(" ", "_")
+
+    # Remove all characters *except* letters, numbers, underscores, hyphens, and dots
+    name = re.sub(r"[^\w\-.]", "", name)
+
+    return name
 
 @lru_cache(maxsize=None)
 def get_raw_chord_annotation(filename, override_dir=None):

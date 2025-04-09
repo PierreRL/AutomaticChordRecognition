@@ -31,8 +31,15 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     - model (MusicGen): The pretrained model.
     """
     assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
-    # model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
-    local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    EDDIE = os.environ.get("EDDIE")
+    if EDDIE is not None:
+        # If running on Eddie, use the local path for the model.
+        local_path = os.path.join(EDDIE, f"musicgen-{model_size}")
+    elif os.path.exists(f"~/musicgen-{model_size}"):
+        local_path = os.path.expanduser(f"~/musicgen-{model_size}")
+    else:
+        model = MusicGen.get_pretrained('facebook/musicgen-' + model_size, device=device)
+
     model = MusicGen.get_pretrained(local_path, device=device)
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()

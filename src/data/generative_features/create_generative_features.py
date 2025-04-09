@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from src.data.dataset import FullChordDataset
 from src.utils import get_filenames, get_torch_device, SR
-from src.data.musicgen import get_musicgen_model, extract_song_hidden_representation
+from data.generative_features.musicgen import get_musicgen_model, extract_song_hidden_representation
 
 
 def main(
