@@ -57,6 +57,7 @@ echo "Moving output data back to DFS"
 
 src_path=${SCRATCH_HOME}/gen-large
 dest_path=${repo_home}/gen_from_node
+mkdir -p ${dest_path}  # make it if required
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 # =========================
