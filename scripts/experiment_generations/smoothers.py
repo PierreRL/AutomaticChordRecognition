@@ -9,7 +9,7 @@ EDDIE = os.getenv("EDDIE")
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
 DATA_HOME = f"{EDDIE}/data/processed"
 
-base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/smoothers"
+base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/smoothers --no_weight_loss"
 output_file = open("./scripts/experiments.txt", "w")
 
 expt_call = (
