@@ -195,7 +195,6 @@ def get_linear_spectrogram(
     override_dir: str = None,
     sr: int = SR,
     hop_length: int = HOP_LENGTH,
-    n_bins: int = N_BINS,
     n_fft: int = N_FFT,
     absolute: bool = True,
     return_as_tensor: bool = True,
