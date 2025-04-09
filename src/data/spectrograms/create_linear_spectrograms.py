@@ -30,7 +30,6 @@ def main(
         linear_spectrogram = get_linear_spectrogram(
             filename, hop_length=hop_length, override_dir=input_dir
         )
-        print(linear_spectrogram.shape)
         torch.save(linear_spectrogram, f"{output_dir}/{filename}.pt")
 
 

@@ -27,8 +27,8 @@ def main(
         output_dir = f"{dir}/cache/{hop_length}/gen-{model_size}"
     device = get_torch_device(allow_mps=False)
     print(f"Using device: {device}")
-    dataset = FullChordDataset(hop_length=hop_length, input_dir=dir)
-    os.makedirs(dataset.gen_cache_dir, exist_ok=True)
+
+    os.makedirs(output_dir, exist_ok=True)
 
     filenames = get_filenames(dir=f"{dir}/audio")
     print('Loading model...')
