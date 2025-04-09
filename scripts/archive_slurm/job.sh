@@ -40,10 +40,10 @@ repo_home=/home/${USER}/LeadSheetTranscription
 src_path=${repo_home}/data/processed
 
 # input data directory path on the scratch disk of the node
-dest_path=${SCRATCH_HOME}/data/processed
-mkdir -p ${dest_path}  # make it if required
+# dest_path=${SCRATCH_HOME}/data/processed
+# mkdir -p ${dest_path}  # make it if required
 
-rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
+# rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 echo "Running script"
 cd ${repo_home}
