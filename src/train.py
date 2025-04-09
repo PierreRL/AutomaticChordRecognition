@@ -252,7 +252,8 @@ def train_model(
                     outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
                 else:
                     outputs = outputs.view(-1, outputs.shape[-1])
-                val_loss = criterion(outputs, labels)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item()
                 if args.structured_loss:
                     outputs = outputs[0]
                 _, predicted = torch.max(outputs, 1)
@@ -262,7 +263,8 @@ def train_model(
                 # Decode with CRF
                 emissions = outputs  # (B, frames, num_classes)
                 mask = labels != -1
-                val_loss = -model.crf(emissions, labels, mask=mask, reduction='mean')
+                loss = -model.crf(emissions, labels, mask=mask, reduction='mean')
+                val_loss += loss.item()
                 predictions = model.crf.decode(emissions, mask=mask)
                 
                 # Flatten predictions and labels
