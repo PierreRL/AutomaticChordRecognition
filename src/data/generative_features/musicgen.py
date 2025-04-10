@@ -18,6 +18,7 @@ from torchaudio.transforms import Resample
 from audiocraft.models import MusicGen
 from MusiConGen.audiocraft.audiocraft.models import MusicGen as MusiConGen
 from audiocraft.modules.conditioners import ConditioningAttributes
+from MusiConGen.audiocraft.audiocraft.modules.conditioners import ConditioningAttributes as MusiConGenConditioningAttributes
 
 from src.utils import get_torch_device, get_filenames
 
@@ -42,10 +43,10 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
         path = f"facebook/musicgen-{model_size}"
 
     if model_size == "chord":
-        # Load the MusiConGen model for chord generation
         model = MusiConGen.get_pretrained(path, device=device)
     else:
         model = MusicGen.get_pretrained(path, device=device)
+        
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()
     model.lm.eval()
@@ -170,8 +171,13 @@ def extract_song_hidden_representation(
     chunk_samples = int(max_chunk_length * sr)  # chunk length in samples.
     hop_samples = int(chunk_samples * (1 - overlap_ratio))  # hop size between chunks.
 
+    # If the model is a MusiConGen model, we need to set the condition provider.
+    if isinstance(model, MusiConGen):
+        neutral_condition = MusiConGenConditioningAttributes(text={'description': ''})
+    else:
+        neutral_condition = ConditioningAttributes(text={'description': ''})
+
     # Conditioning attributes for the LM.
-    neutral_condition = ConditioningAttributes(text={'description': ''})
     tokenized = model.lm.condition_provider.tokenize([neutral_condition])
     condition_tensors = model.lm.condition_provider(tokenized)
 
