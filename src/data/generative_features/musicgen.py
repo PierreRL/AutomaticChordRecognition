@@ -35,7 +35,7 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     if EDDIE is not None:
         # If running on Eddie, use the local path for the model.
         path = os.path.join(EDDIE, f"musicgen-{model_size}")
-    elif os.path.exists(f"~/musicgen-{model_size}"):
+    elif os.path.exists(os.path.expanduser(f"~/musicgen-{model_size}")):
         path = os.path.expanduser(f"~/musicgen-{model_size}")
     else:
         path = f"facebook/musicgen-{model_size}"
