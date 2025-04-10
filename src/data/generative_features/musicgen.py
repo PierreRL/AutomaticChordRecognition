@@ -16,6 +16,7 @@ import torchaudio
 from torchaudio.transforms import Resample
 
 from audiocraft.models import MusicGen
+from MusiConGen.audiocraft.audiocraft.models import MusicGen as MusiConGen
 from audiocraft.modules.conditioners import ConditioningAttributes
 
 from src.utils import get_torch_device, get_filenames
@@ -40,7 +41,11 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     else:
         path = f"facebook/musicgen-{model_size}"
 
-    model = MusicGen.get_pretrained(path, device=device)
+    if model_size == "chord":
+        # Load the MusiConGen model for chord generation
+        model = MusiConGen.get_pretrained(path, device=device)
+    else:
+        model = MusicGen.get_pretrained(path, device=device)
     model.lm = model.lm.float()
     model.compression_model = model.compression_model.float()
     model.lm.eval()
