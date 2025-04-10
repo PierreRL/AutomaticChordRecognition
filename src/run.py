@@ -254,7 +254,7 @@ def main():
         "--gen_model_size",
         type=str,
         default="large",
-        help="Size of the generative model. Values: small, large.",
+        help="Size of the generative model. Values: small, large, chord.",
     )
     parser.add_argument(
         "--job_id",
@@ -269,7 +269,7 @@ def main():
     assert args.spectrogram_type in ["cqt", "linear", "mel", "chroma"], "spectrogram_type must be cqt, linear, mel, or chroma."
     assert args.model in ["crnn", "logistic", "cnn"], "model must be crnn, logistic, or cnn."
     assert args.gen_reduction in ["avg", "concat", "codebook_0", "codebook_1", "codebook_2", "codebook_3"], "gen_reduction must be avg, concat, codebook_0, codebook_1, codebook_2, or codebook_3."
-    assert args.gen_model_size in ["small", "large"], "gen_model_size must be small or large."
+    assert args.gen_model_size in ["small", "large", "chord"], "gen_model_size must be small or large."
     assert args.optimiser in ["adam", "sgd"], "optimiser must be adam or sgd."
     assert args.lr_scheduler in ["cosine", "plateau", "none"], "lr_scheduler must be cosine, plateau, or none."
 

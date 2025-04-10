@@ -30,7 +30,7 @@ def get_musicgen_model(model_size: str, device: str = "cuda"):
     Returns:
     - model (MusicGen): The pretrained model.
     """
-    assert model_size in ["small", "large"], "Model size must be 'small' or 'large'."
+    assert model_size in ["small", "large", "chord"], "Model size must be 'small' or 'large'."
     EDDIE = os.environ.get("EDDIE")
     if EDDIE is not None:
         # If running on Eddie, use the local path for the model.
