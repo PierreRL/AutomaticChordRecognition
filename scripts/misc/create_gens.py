@@ -11,13 +11,7 @@ DATA_HOME = f"{REPO_HOME}/data/processed"
 input_dir = f"{DATA_HOME}/audio"
 files = os.listdir(input_dir)
 files = [f for f in files if f.endswith(".mp3")]
-max_group_size = 203
-if len(files) % max_group_size != 0:
-    print(
-        f"Warning: {len(files)} files in {input_dir} not divisible by {max_group_size}. "
-        "This may lead to uneven distribution of files across groups."
-    )
-
+max_group_size = 1300
 base_call = f"python {REPO_HOME}/src/data/generative_features/create_generative_features.py --dir={DATA_HOME}"
 
 output_file = open("./scripts/experiments.txt", "w")
