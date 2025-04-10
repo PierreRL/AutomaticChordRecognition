@@ -218,13 +218,20 @@ def extract_song_hidden_representation(
         conditions = []
         with torch.no_grad():
             # logits: [B, K, T_chunk, card]
-            lm_output = model.lm.compute_predictions(
-                codes, 
-                conditions=conditions, 
-                stage=-1, 
-                keep_only_valid_steps=True, 
-                condition_tensors=condition_tensors
-            )
+            if isinstance(model, MusiConGen):
+                lm_output = model.lm.compute_predictions(
+                    codes, 
+                    conditions=neutral_condition, 
+                    condition_tensors=condition_tensors
+                )
+            else:
+                lm_output = model.lm.compute_predictions(
+                    codes, 
+                    conditions=conditions, 
+                    stage=-1, 
+                    keep_only_valid_steps=True, 
+                    condition_tensors=condition_tensors
+                )
             batch_logits = lm_output.logits
             mask = lm_output.mask  # [B, K, T_chunk], 1=valid, 0=invalid
         
