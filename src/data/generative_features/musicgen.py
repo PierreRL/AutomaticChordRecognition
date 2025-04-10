@@ -17,8 +17,8 @@ from torchaudio.transforms import Resample
 
 from audiocraft.models import MusicGen
 from MusiConGen.audiocraft.audiocraft.models import MusicGen as MusiConGen
-from audiocraft.modules.conditioners import ConditioningAttributes
-from MusiConGen.audiocraft.audiocraft.modules.conditioners import ConditioningAttributes as MusiConGenConditioningAttributes
+from audiocraft.modules.conditioners import ConditioningAttributes, WavCondition
+from MusiConGen.audiocraft.audiocraft.modules.conditioners import ConditioningAttributes as MusiConGenConditioningAttributes, WavCondition as MusiConGenWavCondition, BeatCondition, ChordCondition
 
 from src.utils import get_torch_device, get_filenames
 
@@ -172,10 +172,7 @@ def extract_song_hidden_representation(
     hop_samples = int(chunk_samples * (1 - overlap_ratio))  # hop size between chunks.
 
     # If the model is a MusiConGen model, we need to set the condition provider.
-    if isinstance(model, MusiConGen):
-        neutral_condition = MusiConGenConditioningAttributes(text={'description': ''})
-    else:
-        neutral_condition = ConditioningAttributes(text={'description': ''})
+    neutral_condition = build_neutral_condition_from_wav(model, wav, device=device, sample_rate=sr)
 
     # Conditioning attributes for the LM.
     tokenized = model.lm.condition_provider.tokenize([neutral_condition])
@@ -303,6 +300,65 @@ def extract_song_hidden_representation(
     #     result[f"codebook_{k}"] = resampled_per_codebook[k]
 
     return result
+
+def build_neutral_condition_from_wav(model, wav, device="cuda", sample_rate=32000):
+    """
+    Create a complete conditioning attributes instance that uses the provided wav
+    for 'self_wav' conditioning, and neutral (dummy) values for beat and chord.
+    
+    Args:
+      model: A MusicGen or MusiConGen model.
+      wav (torch.Tensor): The wav tensor that you already have.
+      device (str): The device on which the tensors should live.
+      sample_rate (int): Sample rate for the wav.
+      
+    Returns:
+      A ConditioningAttributes instance with fields:
+         - text: an empty description,
+         - wav: using the provided wav,
+         - beat: a dummy zero tensor,
+         - chord: a dummy zero tensor.
+         - joint_embed: left empty.
+    """
+    if isinstance(model, MusiConGen):
+        cond = MusiConGenConditioningAttributes(text={'description': ''})
+        cond.wav['self_wav'] = MusiConGenWavCondition(
+            wav,
+            torch.tensor([wav.shape[-1]], device=device),
+            sample_rate=[sample_rate],
+            path=[None],
+            seek_time=[None]
+        )
+        cond.beat['beat'] = BeatCondition(
+            torch.zeros((1, 1, 1), device=device),
+            torch.tensor([0], device=device),
+            bpm=[None],
+            path=[None],
+            seek_frame=[None]
+        )
+        cond.chord['chord'] = ChordCondition(
+            torch.zeros((1, 12, 1), device=device),
+            torch.tensor([0], device=device),
+            bpm=[None],
+            path=[None],
+            seek_frame=[None]
+        )
+    else:
+        cond = ConditioningAttributes(text={'description': ''})
+        cond.wav['self_wav'] = WavCondition(
+            wav, 
+            torch.tensor([wav.shape[-1]], device=device),
+            sample_rate=[sample_rate],
+            path=[None],
+            seek_time=[None]
+        )
+    
+
+    
+    # If joint embedding conditions are expected and you have a default, add them here.
+    cond.joint_embed = {}
+    
+    return cond
 
 
 def main():
