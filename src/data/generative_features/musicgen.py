@@ -174,8 +174,10 @@ def extract_song_hidden_representation(
     # If the model is a MusiConGen model, we need to set the condition provider.
     neutral_condition = build_neutral_condition_from_wav(model, wav, device=device, sample_rate=sr)
 
+    neutral_conditions = [neutral_condition for _ in range(B)]
+
     # Conditioning attributes for the LM.
-    tokenized = model.lm.condition_provider.tokenize([neutral_condition])
+    tokenized = model.lm.condition_provider.tokenize(neutral_conditions)
     condition_tensors = model.lm.condition_provider(tokenized)
 
     # Get list of start indices for chunks.
