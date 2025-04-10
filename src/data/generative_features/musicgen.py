@@ -174,11 +174,9 @@ def extract_song_hidden_representation(
     # If the model is a MusiConGen model, we need to set the condition provider.
     neutral_condition = build_neutral_condition_from_wav(model, wav, device=device, sample_rate=sr)
 
-    neutral_conditions = [neutral_condition for _ in range(B)]
-
     # Conditioning attributes for the LM.
-    tokenized = model.lm.condition_provider.tokenize(neutral_conditions)
-    condition_tensors = model.lm.condition_provider(tokenized)
+    # tokenized = model.lm.condition_provider.tokenize(neutral_conditions)
+    # condition_tensors = model.lm.condition_provider(tokenized)
 
     # Get list of start indices for chunks.
     start_indices = []
@@ -217,22 +215,21 @@ def extract_song_hidden_representation(
         # Prepare conditions for each chunk in batch.
         B = codes.shape[0]
         # conditions = [ConditioningAttributes(text={'description': 'a song'}) for _ in range(B)]
+        neutral_conditions = [neutral_condition for _ in range(B)]
         conditions = []
         with torch.no_grad():
             # logits: [B, K, T_chunk, card]
             if isinstance(model, MusiConGen):
                 lm_output = model.lm.compute_predictions(
                     codes, 
-                    conditions=conditions, 
-                    condition_tensors=condition_tensors
+                    conditions=neutral_conditions
                 )
             else:
                 lm_output = model.lm.compute_predictions(
                     codes, 
-                    conditions=conditions, 
+                    conditions=neutral_conditions,
                     stage=-1, 
-                    keep_only_valid_steps=True, 
-                    condition_tensors=condition_tensors
+                    keep_only_valid_steps=True
                 )
             batch_logits = lm_output.logits
             mask = lm_output.mask  # [B, K, T_chunk], 1=valid, 0=invalid
