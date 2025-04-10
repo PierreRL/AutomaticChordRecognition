@@ -221,7 +221,7 @@ def extract_song_hidden_representation(
             if isinstance(model, MusiConGen):
                 lm_output = model.lm.compute_predictions(
                     codes, 
-                    conditions=neutral_condition, 
+                    conditions=conditions, 
                     condition_tensors=condition_tensors
                 )
             else:
