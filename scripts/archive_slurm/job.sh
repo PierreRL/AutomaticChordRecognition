@@ -47,7 +47,7 @@ src_path=${repo_home}/data/processed
 
 echo "Running script"
 cd ${repo_home}
-python /home/s2147950/LeadSheetTranscription/src/data/create_generative_features.py --dir=/home/s2147950/LeadSheetTranscription/data/processed --start_idx=519 --end_idx=1213 --output_dir=${SCRATCH_HOME}/gen-large
+python /home/s2147950/LeadSheetTranscription/src/data/create_generative_features.py --dir=/home/s2147950/LeadSheetTranscription/data/processed --start_idx=518 --end_idx=1213 --output_dir=${SCRATCH_HOME}/gen-large
 
 # ======================================
 # Move output data from scratch to DFS
