@@ -3,12 +3,74 @@ Script to compute beat-wise chord annotations (for chord loss) from raw chord an
 """
 
 import autorootcwd
-import numpy as np
-from typing import List
 import torch
 
+from src.utils import (
+    get_raw_beats,
+    get_raw_chord_annotation,
+    chord_to_id,
+    SR,
+    HOP_LENGTH,
+)
 
-from src.utils import get_raw_beats, get_raw_chord_annotation, SR, HOP_LENGTH
+
+def get_resampled_full_beats(
+    filename: str, beat_interval: int = 1, perfect_beat_resample: bool = False
+) -> list:
+    """
+    Compute beat-wise chord annotations by aligning raw chord annotations with provided beat times.
+
+    For each beat interval (between consecutive beat times), the chord is chosen
+    as the one that overlaps the interval for the longest total duration.
+
+    Returns 'full' beats in that it includes 0 and the song end time.
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the audio file (without extension) for which to compute
+        beat-wise chord annotations.
+    beat_interval : float
+        The desired beat interval rate. For example, 1 means one annotation per beat,
+        0.5 inserts an annotation halfway through each beat (i.e. twice per beat),
+        and 2 groups beats by 2.
+
+    Returns
+    -------
+    beat_chords : list of str
+        List of chord labels (as strings), one per beat interval.
+    """
+    # Load chord annotations. Expected to be a sorted iterable of Observation objects.
+    ann = get_raw_chord_annotation(filename)
+
+    if perfect_beat_resample:
+        beat_times = get_perfect_beats_from_ann(ann)
+    else:
+        beat_times = get_raw_beats(filename)
+
+    # Filter out any beat times that occur after the song end.
+    song_start = 0.0
+    song_end = max(obs.time + obs.duration for obs in ann)
+    beat_times = [bt for bt in beat_times if bt <= song_end]
+
+    # Remove duplicates and sort the list.
+    beat_times = sorted(set(beat_times))
+
+    # Remove first and last beat time if within 0.1 seconds of song start or end.
+    if beat_times[0] < song_start + 0.1:
+        beat_times = beat_times[1:]
+    if beat_times[-1] > song_end - 0.1:
+        beat_times = beat_times[:-1]
+
+    # Create a full list of interval boundaries: from song_start, through the provided beat_times, to song_end.
+    if beat_times[0] != 0:
+        beat_times = [song_start] + list(beat_times)
+
+    if beat_times[-1] < song_end:
+        beat_times = list(beat_times) + [song_end]
+
+    return resample_boundaries(beat_times, beat_interval)
+
 
 def resample_boundaries(boundaries, beat_interval=1):
     """
@@ -37,6 +99,13 @@ def resample_boundaries(boundaries, beat_interval=1):
     if beat_interval == 1:
         return boundaries
     elif beat_interval < 1:
+        # Assert that beat_interval is a positive float that is 1 / n for some n.
+        assert (
+            0 < beat_interval < 1
+        ), "beat_interval must be a positive float less than 1"
+        assert 1 / beat_interval == int(
+            1 / beat_interval
+        ), "beat_interval must be 1 / n for some n"
         subdivisions = int(round(1 / beat_interval))
         new_boundaries = []
         for i in range(len(boundaries) - 1):
@@ -49,13 +118,42 @@ def resample_boundaries(boundaries, beat_interval=1):
         new_boundaries.append(boundaries[-1])
         return new_boundaries
     else:  # beat_interval > 1: group beats
+        assert (
+            beat_interval.is_integer()
+        ), "beat_interval must be an integer when greater than 1"
         grouping = int(round(beat_interval))
         new_boundaries = boundaries[::grouping]
         if new_boundaries[-1] != boundaries[-1]:
             new_boundaries.append(boundaries[-1])
         return new_boundaries
 
-def get_beatwise_chord_annotation(filename, beat_interval=1):
+
+def get_perfect_beats_from_ann(ann):
+    """
+    Compute perfect beat times from the raw chord annotations.
+
+    Parameters
+    ----------
+    ann : list of Observation
+        List of chord annotations.
+
+    Returns
+    -------
+    perfect_beats : list of float
+        List of perfect beat times.
+    """
+    perfect_beats = []
+    for obs in ann:
+        # Add the start and end times to the perfect beats.
+        perfect_beats.append(obs.time)
+    perfect_beats = perfect_beats[1:]  # Remove the first beat time
+    # Remove duplicates and sort the list.
+    return sorted(set(perfect_beats))
+
+
+def get_beatwise_chord_annotation(
+    filename, beat_interval=1, perfect_beat_resample=False, return_as_string=False
+):
     """
     Compute beat-wise discrete chord annotations by aligning raw chord annotations
     with provided beat times.
@@ -72,34 +170,21 @@ def get_beatwise_chord_annotation(filename, beat_interval=1):
         The desired beat interval rate. For example, 1 means one annotation per beat,
         0.5 inserts an annotation halfway through each beat (i.e. twice per beat),
         and 2 groups beats by 2.
+    perfect_beat_resample : bool
+        If True, use perfect beat times from the chord annotations instead of the raw beat times.
+    return_as_string : bool
+        If True, return the chord annotations as a list of strings instead of a tensor of chord ids.
 
     Returns
     -------
-    beat_chords : list of str
-        List of chord labels (as strings), one per beat interval.
+    beat_chords : list of str or torch.Tensor
     """
     # Load chord annotations. Expected to be a sorted iterable of Observation objects.
+    beat_times = get_resampled_full_beats(
+        filename, beat_interval, perfect_beat_resample
+    )
     ann = get_raw_chord_annotation(filename)
 
-    song_start = 0.0
-    # Determine song end as the maximum end time among all chord observations.
-    song_end = max(obs.time + obs.duration for obs in ann)
-
-    beat_times = get_raw_beats(filename)
-
-    # Filter out any beat times that occur after the song end.
-    beat_times = [bt for bt in beat_times if bt <= song_end]
-
-    # Create a full list of interval boundaries: from song_start, through the provided beat_times, to song_end.
-    if beat_times[0] != 0:
-        beat_times = [song_start] + list(beat_times)
-
-    if beat_times[-1] < song_end:
-        beat_times = list(beat_times) + [song_end]
-
-    # Apply resampling of boundaries based on beat_interval.
-    boundaries = resample_boundaries(boundaries, beat_interval)
-    
     beat_chords = []
 
     for i in range(len(beat_times) - 1):
@@ -120,10 +205,19 @@ def get_beatwise_chord_annotation(filename, beat_interval=1):
         selected_chord = max(chord_overlaps.items(), key=lambda x: x[1])[0]
         beat_chords.append(selected_chord)
 
-    return beat_chords
+    if return_as_string:
+        return beat_chords
+
+    return torch.tensor([chord_to_id(chord) for chord in beat_chords])
 
 
-def resample_features_by_beat(features, filename, beat_interval=1, hop_length=HOP_LENGTH, sample_rate=SR):
+def resample_features_by_beat(
+    features,
+    filename,
+    beat_interval=1,
+    frame_rate=SR / HOP_LENGTH,
+    perfect_beat_resample=False,
+):
     """
     Resample a feature matrix to beat-synchronous representation by aggregating (averaging)
     the frames that fall into each beat interval. This implementation assumes that
@@ -137,54 +231,41 @@ def resample_features_by_beat(features, filename, beat_interval=1, hop_length=HO
       beat_interval : float, optional (default=1)
                     The desired beat interval rate. For example, 1 means one annotation per beat;
                     0.5 inserts an annotation halfway through each beat.
-      hop_length  : int
-                    The hop length (in samples) used when computing the features.
-      sample_rate : int, optional (default=SR)
-                    The sample rate (in Hz) of the audio from which features were computed.
+      frame_rate  : float, optional (default=100.0)
+                    The frame rate (in Hz), i.e., number of frames per second.
 
     Returns:
       beat_features : torch.Tensor of shape (n_beats, feature_dim)
                       A new feature matrix where each row is the aggregated (averaged)
                       feature vector corresponding to a beat interval.
     """
-    # Get raw beats and chord annotations.
-    beat_times = get_raw_beats(filename)
-    ann = get_raw_chord_annotation(filename)
-    song_start = 0.0
-    # Determine song end as the maximum end time among all chord observations.
-    song_end = max(obs.time + obs.duration for obs in ann)
-    beat_times = [bt for bt in beat_times if bt <= song_end]
-    # Ensure boundaries include song start and song end.
-    if beat_times[0] != 0:
-        beat_times = [song_start] + List(beat_times)
-    if beat_times[-1] < song_end:
-        beat_times = List(beat_times) + [song_end]
 
-    # Resample beat times based on the desired beat_interval.
-    beat_times = resample_boundaries(beat_times, beat_interval)
-    
-    # Compute the time for each frame using the hop_length and sample_rate.
+    beat_times = get_resampled_full_beats(
+        filename, beat_interval, perfect_beat_resample
+    )
+
+    # Calculate frame times using the frame rate
     n_frames = features.shape[0]
-    frame_times = (torch.arange(n_frames, device=features.device, dtype=torch.float) * hop_length + hop_length / 2) / sample_rate
+    frame_times = (
+        torch.arange(n_frames, device=features.device, dtype=torch.float) + 0.5
+    ) / frame_rate
 
-    beat_features = []  # List to collect beat-level features
+    beat_features = []
 
-    # Iterate over beat intervals.
     for i in range(len(beat_times) - 1):
         start_time = beat_times[i]
         end_time = beat_times[i + 1]
-        
-        # Find the indices of frames that fall inside the current beat interval.
         indices = torch.where((frame_times >= start_time) & (frame_times < end_time))[0]
-        
-        if indices.numel() == 0:
-            raise ValueError(f"No frames found for beat interval: {start_time} - {end_time}")
 
-        # Average the features of all frames in this interval.
+        if indices.numel() == 0:
+            raise ValueError(
+                f"No frames found for beat interval: {start_time} - {end_time}"
+            )
+
         beat_vec = torch.mean(features[indices], dim=0)
         beat_features.append(beat_vec)
 
-    # Optionally, process the final beat: average all frames starting at the last beat time.
+    # Optionally average frames after the last beat time
     last_start = beat_times[-1]
     indices = torch.where(frame_times >= last_start)[0]
     if indices.numel() > 0:
