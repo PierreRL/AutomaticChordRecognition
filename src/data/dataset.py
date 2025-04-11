@@ -5,6 +5,7 @@ import torch
 import random
 from torch import Tensor
 from typing import Tuple, List, Optional
+import numpy as np
 
 from src.utils import (
     pitch_shift_cqt,
@@ -15,9 +16,13 @@ from src.utils import (
     NUM_CHORDS,
     HOP_LENGTH,
     SR,
-    BINS_PER_OCTAVE
+    BINS_PER_OCTAVE,
 )
-from src.data.beats.beatwise_resampling import resample_features_by_beat, get_beatwise_chord_annotation
+from src.data.beats.beatwise_resampling import (
+    resample_features_by_beat,
+    get_beatwise_chord_annotation,
+    get_resampled_full_beats,
+)
 
 
 # Create a torch dataset
@@ -34,8 +39,9 @@ class FullChordDataset(Dataset):
         spectrogram_type: str = "cqt",
         use_augs=False,
         dev_mode=False,
-        beat_wise_resample: bool = False,        # <-- new flag
-        beat_resample_interval: float = 1, 
+        beat_wise_resample: bool = False,  # <-- new flag
+        beat_resample_interval: float = 1,
+        perfect_beat_resample: bool = False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -51,6 +57,9 @@ class FullChordDataset(Dataset):
             spectrogram_type (str): The type of spectrogram to use. Options are 'cqt', 'chroma', 'linear' or 'mel'.
             use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
+            beat_wise_resample (bool): If True, resample all modalities by beat.
+            beat_resample_interval (float): The beat interval to use for resampling.
+            perfect_beat_resample (bool): If True, resample all modalities by beat using the perfect beat annotation provided by the labels.
         """
         if not filenames:
             print("Using all filenames!")
@@ -68,19 +77,33 @@ class FullChordDataset(Dataset):
         self.dev_mode = dev_mode
         self.gen_reduction = gen_reduction
         self.gen_model_size = gen_model_size
-        assert self.gen_model_size in ['large', 'small', None], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
-        assert self.gen_reduction in ['avg', 'concat', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3', None], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
+        assert self.gen_model_size in [
+            "large",
+            "small",
+            None,
+        ], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
+        assert self.gen_reduction in [
+            "avg",
+            "concat",
+            "codebook_0",
+            "codebook_1",
+            "codebook_2",
+            "codebook_3",
+            None,
+        ], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
 
         dir_mapping = {
-            'cqt': 'cqts',
-            'chroma': 'chroma_cqts',
-            'linear': 'linear',
-            'mel': 'mels',
+            "cqt": "cqts",
+            "chroma": "chroma_cqts",
+            "linear": "linear",
+            "mel": "mels",
         }
-        feature_dir = dir_mapping.get(spectrogram_type, 'cqts')
+        feature_dir = dir_mapping.get(spectrogram_type, "cqts")
 
         self.use_augs = use_augs
-        self.feature_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/{feature_dir}"
+        self.feature_cache_dir = (
+            f"{self.input_dir}/cache/{self.hop_length}/{feature_dir}"
+        )
         self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen-{self.gen_model_size}/{self.gen_reduction}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
@@ -95,7 +118,7 @@ class FullChordDataset(Dataset):
 
         self.beat_wise_resample = beat_wise_resample
         self.beat_resample_interval = beat_resample_interval
-
+        self.perfect_beat_resample = perfect_beat_resample
 
     def __len__(self):
         return len(self.filenames)
@@ -107,15 +130,17 @@ class FullChordDataset(Dataset):
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
-    
+
     def get_aug_item(self, idx, pitch_aug: int) -> Tuple[Tensor, Tensor]:
         cqt, gen, chord_ids = self.__get_cached_item(idx, pitch_aug)
         if self.mask_X:
             chord_ids = torch.where(chord_ids == 1, -1, chord_ids)
 
         return self.get_minimum_length_frame(cqt, gen, chord_ids)
-    
-    def get_minimum_length_frame(self, *tensors: Optional["Tensor"]) -> Tuple[Optional["Tensor"], ...]:
+
+    def get_minimum_length_frame(
+        self, *tensors: Optional["Tensor"]
+    ) -> Tuple[Optional["Tensor"], ...]:
         """
         Returns each non-None tensor trimmed to the minimum length along the first dimension
         among all provided non-None tensors, and returns None in slots corresponding to None inputs.
@@ -132,7 +157,7 @@ class FullChordDataset(Dataset):
         valid_tensors = [t for t in tensors if t is not None]
         if not valid_tensors:
             return (EMPTY_TENSOR, EMPTY_TENSOR, EMPTY_TENSOR)
-        
+
         min_length = min(t.shape[0] for t in valid_tensors)
         return tuple(t[:min_length] if t is not None else EMPTY_TENSOR for t in tensors)
 
@@ -146,7 +171,7 @@ class FullChordDataset(Dataset):
 
         Returns:
             weights (Tensor): The chord loss weights, normalized.
-        """ 
+        """
         all_chord_ids = torch.cat(
             [self[i][2].flatten() for i in range(len(self))]
         )  # Flatten all chord IDs
@@ -188,7 +213,7 @@ class FullChordDataset(Dataset):
 
         cqt_dir = self.feature_cache_dir if not aug else self.aug_cqt_cache_dir
         chord_dir = self.chord_cache_dir if not aug else self.aug_chord_cache_dir
-        gen_dir = self.gen_cache_dir if not aug else self.aug_gen_cache_dir        
+        gen_dir = self.gen_cache_dir if not aug else self.aug_gen_cache_dir
 
         if aug:
             filename = f"{filename}_shifted_{pitch_aug}"
@@ -196,7 +221,11 @@ class FullChordDataset(Dataset):
         cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True)
         chord_ids = torch.load(f"{chord_dir}/{filename}.pt")
         try:
-            gen = torch.load(f"{gen_dir}/{filename}.pt", weights_only=True, map_location=get_torch_device())
+            gen = torch.load(
+                f"{gen_dir}/{filename}.pt",
+                weights_only=True,
+                map_location=get_torch_device(),
+            )
         except FileNotFoundError:
             # If the generative features are not found, use None. It is later converted to an empty tensor.
             if self.dev_mode or self.gen_reduction is None:
@@ -205,7 +234,7 @@ class FullChordDataset(Dataset):
                 raise FileNotFoundError(
                     f"Generative features not found for {filename}. Please run the generative feature extraction script."
                 )
-            
+
         # If beat-wise resampling is enabled, resample all modalities:
         if self.beat_wise_resample:
             # Resample features using your previously defined torch-compatible function:
@@ -213,8 +242,8 @@ class FullChordDataset(Dataset):
                 features=cqt,
                 filename=filename,
                 beat_interval=self.beat_resample_interval,
-                hop_length=self.hop_length,
-                sample_rate=SR,
+                perfect_beat_resample=self.perfect_beat_resample,
+                frame_rate=SR / self.hop_length,
             )
             # Do the same for generative features if available:
             if gen is not None and gen.shape[0] > 0:
@@ -222,13 +251,40 @@ class FullChordDataset(Dataset):
                     features=gen,
                     filename=filename,
                     beat_interval=self.beat_resample_interval,
-                    hop_length=self.hop_length,
-                    sample_rate=SR,
+                    perfect_beat_resample=self.perfect_beat_resample,
+                    frame_rate=SR / self.hop_length,
                 )
             # Resample chords:
-            chord_ids = get_beatwise_chord_annotation(filename, beat_interval=self.beat_resample_interval)
-            
+            chord_ids = get_beatwise_chord_annotation(
+                filename,
+                beat_interval=self.beat_resample_interval,
+                perfect_beat_resample=self.perfect_beat_resample,
+            )
+
         return cqt, gen, chord_ids
+
+    def get_beats(self, idx):
+        """
+        Get the 'beat times' for the features provided by this class. If beat-wise resampling is enabled, we use the actual beats from the song. Otherwise, return the 'beats' from the CQT.
+        Args:
+            idx (int): The index of the song.
+        Returns:
+            A list of beat times.
+        """
+        filename = self.filenames[idx]
+        if self.beat_wise_resample:
+            # If beat-wise resampling is enabled, use the resampled beat times.
+            return get_resampled_full_beats(
+                filename=filename,
+                beat_interval=self.beat_resample_interval,
+                perfect_beat_resample=self.perfect_beat_resample,
+            )
+        else:
+            # Otherwise, 'beats' are the CQT frames.
+            cqt = self[idx][0]
+            # Get the beat times from the CQT. [0, hop_length, 2*hop_length, ..., n * hop_length]
+            beats = torch.arange(cqt.shape[0] + 1) * self.hop_length / SR
+            return beats.tolist()
 
     def get_filename(self, idx):
         return self.filenames[idx]
@@ -252,6 +308,9 @@ class FixedLengthRandomChordDataset(Dataset):
         gen_model_size="large",
         spectrogram_type="cqt",
         input_dir="./data/processed/",
+        beat_wise_resample=False,
+        beat_resample_interval=1,
+        perfect_beat_resample=False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -272,6 +331,9 @@ class FixedLengthRandomChordDataset(Dataset):
             input_dir=input_dir,
             use_augs=audio_pitch_shift,
             spectrogram_type=spectrogram_type,
+            beat_wise_resample=beat_wise_resample,
+            beat_resample_interval=beat_resample_interval,
+            perfect_beat_resample=perfect_beat_resample,
         )
         self.audio_pitch_shift = audio_pitch_shift
         self.aug_shift_prob = aug_shift_prob
@@ -296,53 +358,98 @@ class FixedLengthRandomChordDataset(Dataset):
         shift = 0
         if self.audio_pitch_shift:
             shift = self.get_random_shift()
-        
+
         if shift == 0:
-            full_cqt, gen_features, full_chord_ids, = self.full_dataset[idx]
+            (
+                full_cqt,
+                gen_features,
+                full_chord_ids,
+            ) = self.full_dataset[idx]
         else:
-            full_cqt, gen_features, full_chord_ids = self.full_dataset.get_aug_item(idx, shift)
-
-        # Convert segment length in seconds to segment length in frames
-        segment_length_samples = int(
-            self.segment_length * (SR / self.full_dataset.hop_length)
-        )
-
-        if full_cqt.shape[0] > segment_length_samples:
-            # If the full data is longer than the desired frame length, take a random slice
-            start_idx = torch.randint(
-                0, full_cqt.shape[0] - segment_length_samples, (1,)
-            ).item()
-            cqt_patch = full_cqt[start_idx : start_idx + segment_length_samples]
-            gen_features_patch = gen_features[
-                start_idx : start_idx + segment_length_samples
-            ]
-            chord_ids_patch = full_chord_ids[
-                start_idx : start_idx + segment_length_samples
-            ]
-        else:
-            # If the full data is shorter than the desired segment length, pad it
-            pad_length = segment_length_samples - full_cqt.shape[0]
-            cqt_patch = torch.cat(
-                (full_cqt, torch.zeros((pad_length, full_cqt.shape[1])))
+            full_cqt, gen_features, full_chord_ids = self.full_dataset.get_aug_item(
+                idx, shift
             )
-            if self.full_dataset.gen_reduction is not None:
-                gen_features_patch = torch.cat(
-                    (gen_features, torch.zeros((pad_length, gen_features.shape[1])))
+
+        # Trim the features to a given sample length
+        if self.full_dataset.beat_wise_resample:
+            # Get beat timestamps (in seconds) for this song
+            beats = self.full_dataset.get_beats(idx)
+            song_duration = beats[-1]
+            # Sample a random starting time such that [t_start, t_start + segment_length] lies within the song.
+            t_start = random.uniform(0, song_duration - self.segment_length)
+            t_end = t_start + self.segment_length
+
+            # Select all beat indices with some overlap with the segment [t_start, t_end].
+            beat_indices = [
+                i
+                for i in range(len(beats) - 1)
+                if max(beats[i], t_start) < min(beats[i + 1], t_end)
+            ]
+            if not beat_indices:
+                raise ValueError(
+                    f"No beats found between {t_start:.2f} and {t_end:.2f} seconds in song {self.full_dataset.get_filename(idx)}."
                 )
+
+            # Slice the beat-synchronous features using these beat indices.
+            cqt_patch = full_cqt[beat_indices, :]
+            # If not the empty tensor
+            if gen_features is not None and gen_features.shape[0] > 0:
+                gen_features_patch = gen_features[beat_indices, :]
             else:
                 gen_features_patch = torch.empty(0)
-            chord_ids_patch = torch.cat(
-                (
-                    full_chord_ids,
-                    torch.full((pad_length,), -1),
-                )  # Use -1 as a padding label
+            chord_ids_patch = full_chord_ids[beat_indices]
+        else:
+            # Use the standard method based on frames
+            segment_length_samples = int(
+                self.segment_length * (SR / self.full_dataset.hop_length)
             )
+            if full_cqt.shape[0] > segment_length_samples:
+                start_idx = torch.randint(
+                    0, full_cqt.shape[0] - segment_length_samples, (1,)
+                ).item()
+                cqt_patch = full_cqt[start_idx : start_idx + segment_length_samples]
+                gen_features_patch = gen_features[
+                    start_idx : start_idx + segment_length_samples
+                ]
+                chord_ids_patch = full_chord_ids[
+                    start_idx : start_idx + segment_length_samples
+                ]
+            else:
+                pad_length = segment_length_samples - full_cqt.shape[0]
+                cqt_patch = torch.cat(
+                    [
+                        full_cqt,
+                        torch.zeros(
+                            (pad_length, full_cqt.shape[1]), device=full_cqt.device
+                        ),
+                    ]
+                )
+                if self.full_dataset.gen_reduction is not None:
+                    gen_features_patch = torch.cat(
+                        [
+                            gen_features,
+                            torch.zeros(
+                                (pad_length, gen_features.shape[1]),
+                                device=gen_features.device,
+                            ),
+                        ]
+                    )
+                else:
+                    gen_features_patch = torch.empty(0)
+                chord_ids_patch = torch.cat(
+                    [
+                        full_chord_ids,
+                        torch.full((pad_length,), -1, device=full_chord_ids.device),
+                    ]
+                )
 
         if self.cqt_pitch_shift:
             shift = self.get_random_shift()
             if shift != 0:
                 cqt_patch = pitch_shift_cqt(cqt_patch, shift, BINS_PER_OCTAVE)
-                chord_ids_patch = torch.tensor(transpose_chord_id_vector(chord_ids_patch, shift), dtype=torch.long)
+                chord_ids_patch = torch.tensor(
+                    transpose_chord_id_vector(chord_ids_patch, shift), dtype=torch.long
+                )
 
         return cqt_patch, gen_features_patch, chord_ids_patch
 
@@ -365,6 +472,9 @@ class FixedLengthChordDataset(Dataset):
         gen_model_size="large",
         spectrogram_type="cqt",
         input_dir="./data/processed/",
+        beat_wise_resample=False,
+        beat_resample_interval=1,
+        perfect_beat_resample=False,
     ):
         """
         Creates an instance of the FixedLengthChordDataset class.
@@ -385,6 +495,9 @@ class FixedLengthChordDataset(Dataset):
             gen_reduction=gen_reduction,
             gen_model_size=gen_model_size,
             spectrogram_type=spectrogram_type,
+            beat_wise_resample=beat_wise_resample,
+            beat_resample_interval=beat_resample_interval,
+            perfect_beat_resample=perfect_beat_resample,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -401,25 +514,54 @@ class FixedLengthChordDataset(Dataset):
             data (list): A list of tuples, where each tuple is a fixed length frame of features and chord annotation.
         """
         data = []
-
-        # Convert segment length in seconds to segment length in frames
-        self.segment_length_samples = int(
-            self.segment_length * SR / self.full_dataset.hop_length
-        )
-
-        #  Loop over each song in the dataset
-        for i in range(len(self.full_dataset)):
-            cqt, gen, chord_ids  = self.full_dataset[i]
-            # Loop over each 'segment' in the song
-            for j in range(0, cqt.shape[0], self.segment_length_samples):
-                data.append(
-                    (
-                        cqt[j : j + self.segment_length_samples],
-                        gen[j : j + self.segment_length_samples],
-                        chord_ids[j : j + self.segment_length_samples],
+        # If beat-wise resampling is not enabled, use the frame-based segmentation as before.
+        if not self.full_dataset.beat_wise_resample:
+            self.segment_length_samples = int(
+                self.segment_length * SR / self.full_dataset.hop_length
+            )
+            for i in range(len(self.full_dataset)):
+                cqt, gen, chord_ids = self.full_dataset[i]
+                # Loop over each segment using the fixed frame length.
+                for j in range(0, cqt.shape[0], self.segment_length_samples):
+                    data.append(
+                        (
+                            cqt[j : j + self.segment_length_samples],
+                            gen[j : j + self.segment_length_samples],
+                            chord_ids[j : j + self.segment_length_samples],
+                        )
                     )
+            return data
+        else:
+            # For beat-wise resampling we approximately partition the song into segments
+            for i in range(len(self.full_dataset)):
+                cqt, gen, chord_ids = self.full_dataset[i]
+                # Get the beat boundaries for this song.
+                beats = self.full_dataset.get_beats(
+                    i
+                )  # Assumed to be a list of times (in seconds)
+                total_duration = beats[-1]
+                # Decide how many segments you want; segment_length is a guideline (in seconds).
+                num_segments = max(
+                    1, int(np.ceil(total_duration / self.segment_length))
                 )
-        return data
+
+                # Partition the B beat intervals evenly into num_segments segments.
+                B = len(beats) - 1
+                boundaries = np.linspace(0, B, num_segments + 1, dtype=int)
+                # Now generate segments that cover the whole song without overlapping beats.
+                for j in range(num_segments):
+                    start_idx = boundaries[j]
+                    end_idx = boundaries[j + 1]
+                    if end_idx <= start_idx:
+                        continue  # Safeguard.
+                    cqt_seg = cqt[start_idx:end_idx]
+                    if gen is not None:
+                        gen_seg = gen[start_idx:end_idx]
+                    else:
+                        gen_seg = None
+                    chord_seg = chord_ids[start_idx:end_idx]
+                    data.append((cqt_seg, gen_seg, chord_seg))
+            return data
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
         return self.data[idx]
@@ -428,8 +570,22 @@ class FixedLengthChordDataset(Dataset):
         return len(self.data)
 
 
+class IndexedDataset(Dataset):
+    def __init__(self, dataset: Dataset):
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        # Get the original data from the dataset
+        data = self.dataset[index]
+        # Return both the data and the index
+        return data, index
+
+
 def generate_datasets(
-    train_split:str,
+    train_split: str,
     input_dir: str,
     segment_length: int,
     mask_X: bool,
@@ -437,9 +593,12 @@ def generate_datasets(
     cqt_pitch_shift: bool = False,
     audio_pitch_shift: bool = False,
     aug_shift_prob: float = 0.5,
-    gen_reduction: str = 'concat',
-    gen_model_size: str = 'large',
-    spectrogram_type: str = 'cqt',
+    gen_reduction: str = "concat",
+    gen_model_size: str = "large",
+    spectrogram_type: str = "cqt",
+    beat_wise_resample: bool = False,
+    beat_resample_interval: float = 1,
+    perfect_beat_resample: bool = False,
     subset_size=None,
 ):
     """
@@ -462,10 +621,6 @@ def generate_datasets(
         val_final_test_dataset (FullChordDataset): The validation dataset for the final test.
     """
     train_filenames, val_filenames, test_filenames = get_split_filenames(input_dir)
-    if subset_size:
-        train_filenames = train_filenames[:subset_size]
-        val_filenames = val_filenames[:subset_size]
-        test_filenames = test_filenames[:subset_size]
 
     if train_split == "80":
         train_filenames = train_filenames + val_filenames
@@ -474,7 +629,12 @@ def generate_datasets(
         train_filenames = train_filenames + val_filenames + test_filenames
         val_filenames = []
         test_filenames = []
-    
+
+    if subset_size:
+        train_filenames = train_filenames[:subset_size]
+        val_filenames = val_filenames[:subset_size]
+        test_filenames = test_filenames[:subset_size]
+
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         segment_length=segment_length,
@@ -487,6 +647,9 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
         spectrogram_type=spectrogram_type,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -497,6 +660,9 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
         spectrogram_type=spectrogram_type,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,
@@ -506,6 +672,9 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
         spectrogram_type=spectrogram_type,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
@@ -515,6 +684,9 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
         spectrogram_type=spectrogram_type,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample,
     )
     val_final_test_dataset = FullChordDataset(
         filenames=val_filenames,
@@ -524,6 +696,9 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_size=gen_model_size,
         spectrogram_type=spectrogram_type,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample,
     )
     return (
         train_dataset,

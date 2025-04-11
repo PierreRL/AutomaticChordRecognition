@@ -14,7 +14,14 @@ from torch.utils.data import DataLoader
 from src.losses.structured_loss import StructuredLoss
 from src.models.crnn import CRNN
 from src.data.dataset import FixedLengthRandomChordDataset, FixedLengthChordDataset
-from src.utils import get_torch_device, collate_fn, write_json, NUM_CHORDS, N_BINS, EarlyStopper
+from src.utils import (
+    get_torch_device,
+    collate_fn,
+    write_json,
+    NUM_CHORDS,
+    N_BINS,
+    EarlyStopper,
+)
 
 
 class TrainingArgs:
@@ -123,7 +130,9 @@ def train_model(
 
     model = model.to(device)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn
+    )
     val_loader = DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_fn
     )
@@ -136,7 +145,9 @@ def train_model(
         weights = None
 
     if args.structured_loss:
-        criterion = StructuredLoss(alpha=args.structured_loss_alpha, class_weights=weights)
+        criterion = StructuredLoss(
+            alpha=args.structured_loss_alpha, class_weights=weights
+        )
     else:
         criterion = nn.CrossEntropyLoss(ignore_index=-1, weight=weights)
 
@@ -187,29 +198,40 @@ def train_model(
         torch.set_grad_enabled(True)
         model.train()
         train_loss = 0.0
-        for i, (features, gens, labels) in enumerate(train_loader):
-            features, gens, labels = features.to(device), gens.to(device), labels.to(device)
+        for features, gens, labels in train_loader:
+            features, gens, labels = (
+                features.to(device),
+                gens.to(device),
+                labels.to(device),
+            )
             optimiser.zero_grad()
 
-            if hasattr(model, 'use_generative_features') and model.use_generative_features:
+            if (
+                hasattr(model, "use_generative_features")
+                and model.use_generative_features
+            ):
                 outputs = model(features, gens)
             else:
                 outputs = model(features)
 
             # Compute the loss
-            if not args.use_crf: # CRF uses different loss
+            if not args.use_crf:  # CRF uses different loss
                 # Flatten the outputs and labels
-                labels = labels.view(-1)  # (B*frames) 
-                
+                labels = labels.view(-1)  # (B*frames)
+
                 if args.structured_loss:
                     # Structured output is a tuple of (chord_output, root_output, pitch_class_output)
                     outputs = tuple(out.view(-1, out.shape[-1]) for out in outputs)
                 else:
                     # Flatten the outputs and labels
-                    outputs = outputs.view(-1, outputs.shape[-1])  # (B*frames, num_classes)
+                    outputs = outputs.view(
+                        -1, outputs.shape[-1]
+                    )  # (B*frames, num_classes)
                 loss = criterion(outputs, labels)
             else:
-                loss = -model.crf(outputs, labels, reduction='mean', mask=(labels != -1))
+                loss = -model.crf(
+                    outputs, labels, reduction="mean", mask=(labels != -1)
+                )
 
             loss.backward()
             optimiser.step()
@@ -240,7 +262,10 @@ def train_model(
         for i, (features, gens, labels) in enumerate(val_loader):
             cqts, gens, labels = features.to(device), gens.to(device), labels.to(device)
 
-            if hasattr(model, 'use_generative_features') and model.use_generative_features:
+            if (
+                hasattr(model, "use_generative_features")
+                and model.use_generative_features
+            ):
                 outputs = model(cqts, gens)
             else:
                 outputs = model(cqts)
@@ -259,14 +284,14 @@ def train_model(
                 _, predicted = torch.max(outputs, 1)
                 correct += (predicted == labels).sum().item()
                 total += labels.size(0)
-            else: 
+            else:
                 # Decode with CRF
                 emissions = outputs  # (B, frames, num_classes)
                 mask = labels != -1
-                loss = -model.crf(emissions, labels, mask=mask, reduction='mean')
+                loss = -model.crf(emissions, labels, mask=mask, reduction="mean")
                 val_loss += loss.item()
                 predictions = model.crf.decode(emissions, mask=mask)
-                
+
                 # Flatten predictions and labels
                 for pred_seq, label_seq, mask_seq in zip(predictions, labels, mask):
                     true_len = mask_seq.sum().item()
@@ -322,13 +347,14 @@ def train_model(
 
     return history
 
+
 def get_and_save_history(
     train_losses: list,
     val_losses: list,
     val_accuracies: list,
     learning_rates: list,
     save_dir: str,
-    save_filename: str = 'training_history.json'
+    save_filename: str = "training_history.json",
 ):
     """
     Save the training history to a file.

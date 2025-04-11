@@ -52,7 +52,7 @@ def get_filenames(dir: str = "data/processed/audio") -> list:
     return filenames
 
 
-def get_split_filenames(dir: str = 'data/processed/') -> Tuple[List, List, List]:
+def get_split_filenames(dir: str = "data/processed/") -> Tuple[List, List, List]:
     """Get the filenames for the train, validation, and test sets.
 
     Returns:
@@ -79,7 +79,7 @@ def get_raw_beats(filename, override_dir=None):
     filename = sanitize_filename(filename)
     if override_dir is not None:
         return np.load(os.path.join(f"{override_dir}/", f"{filename}.npy"))
-    
+
     return np.load(os.path.join("./data/processed/beats/", f"{filename}.npy"))
 
 
@@ -98,6 +98,7 @@ def sanitize_filename(name):
 
     return name
 
+
 @lru_cache(maxsize=None)
 def get_raw_chord_annotation(filename, override_dir=None):
     """
@@ -115,6 +116,20 @@ def get_raw_chord_annotation(filename, override_dir=None):
         jam = jams.load(os.path.join("./data/processed/chords/", f"{filename}.jams"))
     chord_ann = jam.annotations.search(namespace="chord")[0]
     return chord_ann.data
+
+
+def get_chord_seq(filename):
+    """
+    Retrieves the chord sequence from a JAMS file.
+
+    Args:
+        filename (str): The filename of the JAMS file to load.
+
+    Returns:
+        chord_seq (list[str]): A list of chord annotations.
+    """
+    chord_ann = get_raw_chord_annotation(filename)
+    return [chord.value for chord in chord_ann]
 
 
 @lru_cache(maxsize=None)
@@ -137,9 +152,13 @@ def load_audio(filename: str, override_dir: str = None, sr: int = SR) -> np.ndar
     path = os.path.join(override_dir or "./data/processed/audio/", f"{filename}.mp3")
     return librosa.load(path, sr=sr)[0]
 
-def to_tensor_if_needed(x: np.ndarray, return_as_tensor: bool = True) -> Union[torch.Tensor, np.ndarray]:
+
+def to_tensor_if_needed(
+    x: np.ndarray, return_as_tensor: bool = True
+) -> Union[torch.Tensor, np.ndarray]:
     x = x.T  # (freq, time) → (time, freq)
     return torch.tensor(x, dtype=torch.float32) if return_as_tensor else x
+
 
 def get_cqt(
     filename: str,
@@ -153,11 +172,19 @@ def get_cqt(
     return_as_tensor: bool = True,
 ):
     src = load_audio(filename, override_dir, sr)
-    cqt = librosa.cqt(src, sr=sr, hop_length=hop_length, n_bins=n_bins, bins_per_octave=bins_per_octave, fmin=fmin)
+    cqt = librosa.cqt(
+        src,
+        sr=sr,
+        hop_length=hop_length,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        fmin=fmin,
+    )
     if absolute:
         cqt = np.abs(cqt)
     cqt = librosa.amplitude_to_db(cqt)
     return to_tensor_if_needed(cqt, return_as_tensor)
+
 
 def get_mel_spectrogram(
     filename: str,
@@ -171,11 +198,14 @@ def get_mel_spectrogram(
     return_as_tensor: bool = True,
 ):
     src = load_audio(filename, override_dir, sr)
-    mel = librosa.feature.melspectrogram(y=src, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, fmin=fmin)
+    mel = librosa.feature.melspectrogram(
+        y=src, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels, fmin=fmin
+    )
     if absolute:
         mel = np.abs(mel)
     mel = librosa.amplitude_to_db(mel)
     return to_tensor_if_needed(mel, return_as_tensor)
+
 
 def get_chroma_cqt(
     filename: str,
@@ -187,8 +217,17 @@ def get_chroma_cqt(
     return_as_tensor: bool = True,
 ):
     src = load_audio(filename, override_dir, sr)
-    chroma = librosa.feature.chroma_cqt(y=src, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave, fmin=fmin, n_chroma=12, n_octaves=6)
+    chroma = librosa.feature.chroma_cqt(
+        y=src,
+        sr=sr,
+        hop_length=hop_length,
+        bins_per_octave=bins_per_octave,
+        fmin=fmin,
+        n_chroma=12,
+        n_octaves=6,
+    )
     return to_tensor_if_needed(chroma, return_as_tensor)
+
 
 def get_linear_spectrogram(
     filename: str,
@@ -296,8 +335,11 @@ def get_pitch_classes(chord_str: str):
 
     return tuple(sorted(prime_form_chord))
 
+
 @lru_cache(maxsize=None)
-def get_pitch_classes_from_id(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> torch.Tensor:
+def get_pitch_classes_from_id(
+    chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY
+) -> torch.Tensor:
     """
     Get the pitch classes from a chord id. These are not root transposed.
 
@@ -309,7 +351,7 @@ def get_pitch_classes_from_id(chord_id: int, use_small_vocab: bool = SMALL_VOCAB
     """
     if use_small_vocab:
         raise NotImplementedError("Small vocabulary get pitch classes not implemented")
-    
+
     # If the chord id is out of range, raise an error
     if chord_id < 0 or chord_id > 170:
         raise ValueError("Chord id must be in the range 0-170.")
@@ -318,42 +360,45 @@ def get_pitch_classes_from_id(chord_id: int, use_small_vocab: bool = SMALL_VOCAB
         return torch.zeros(12, dtype=torch.long)
 
     # Get quality and root from the chord id
-    root = get_chord_root(chord_id, return_idx=True) - 2 # Offset by 2 for N and X
+    root = get_chord_root(chord_id, return_idx=True) - 2  # Offset by 2 for N and X
     quality_idx = get_chord_quality(chord_id, return_idx=True)
 
     # Define the templates
     templates = [
-        [0, 4, 7], # Major
-        [0, 3, 7], # Minor
-        [0, 3, 6], # Diminished
-        [0, 4, 8], # Augmented
-        [0, 3, 7, 9], # Minor 6
-        [0, 4, 7, 9], # Major 6
-        [0, 3, 7, 10], # Minor 7
-        [0, 3, 7, 11], # Minor Major 7
-        [0, 4, 7, 11], # Major 7
-        [0, 4, 7, 10], # 7
-        [0, 3, 6, 9], # Diminished 7
-        [0, 3, 6, 10], # Half Diminished 7
-        [0, 2, 7], # Suspended 2 
-        [0, 5, 7], # Suspended 4
+        [0, 4, 7],  # Major
+        [0, 3, 7],  # Minor
+        [0, 3, 6],  # Diminished
+        [0, 4, 8],  # Augmented
+        [0, 3, 7, 9],  # Minor 6
+        [0, 4, 7, 9],  # Major 6
+        [0, 3, 7, 10],  # Minor 7
+        [0, 3, 7, 11],  # Minor Major 7
+        [0, 4, 7, 11],  # Major 7
+        [0, 4, 7, 10],  # 7
+        [0, 3, 6, 9],  # Diminished 7
+        [0, 3, 6, 10],  # Half Diminished 7
+        [0, 2, 7],  # Suspended 2
+        [0, 5, 7],  # Suspended 4
     ]
     # Get the quality from the templates
     pitches_quality = templates[quality_idx]
 
-    # Add root to each pitch class 
+    # Add root to each pitch class
     pitch_classes = [(pitch + root) % 12 for pitch in pitches_quality]
 
     # Create a binary vector of length 12
     binary_vector = torch.zeros(12, dtype=torch.long)
-    
+
     # Set the corresponding indices to 1 for the pitch classes
     for pitch in pitch_classes:
         binary_vector[pitch] = 1  # Ensure pitch is in the range 0-11
-    
+
     return binary_vector
 
-def get_pitch_classes_batch(chord_ids: torch.Tensor, use_small_vocab: bool = False) -> torch.Tensor:
+
+def get_pitch_classes_batch(
+    chord_ids: torch.Tensor, use_small_vocab: bool = False
+) -> torch.Tensor:
     """
     Get the pitch classes for a batch of chord IDs, applied over a sequence.
 
@@ -366,10 +411,13 @@ def get_pitch_classes_batch(chord_ids: torch.Tensor, use_small_vocab: bool = Fal
     """
 
     # Apply the get_pitch_classes_from_id function to each element in the flattened tensor
-    pitch_classes = torch.stack([get_pitch_classes_from_id(chord_id.item(), use_small_vocab) for chord_id in chord_ids])
+    pitch_classes = torch.stack(
+        [
+            get_pitch_classes_from_id(chord_id.item(), use_small_vocab)
+            for chord_id in chord_ids
+        ]
+    )
     return pitch_classes
-
-
 
 
 @lru_cache(maxsize=None)
@@ -451,7 +499,9 @@ def chord_to_id(chord: str, use_small_vocab: bool = SMALL_VOCABULARY) -> int:
 
 
 @lru_cache(maxsize=None)
-def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False) -> str:
+def get_chord_root(
+    id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False
+) -> str:
     """
     Get the root of a chord id.
 
@@ -472,10 +522,10 @@ def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx
 
         if id == 1:
             return "X" if not return_idx else 1
-        
+
         idx = (id - 2) % 12
         if return_idx:
-            return idx + 2 # Offset by 2 for N and X
+            return idx + 2  # Offset by 2 for N and X
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[idx]
@@ -496,13 +546,14 @@ def get_chord_root(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx
         id -= 2
         root = id // 14
         if return_idx:
-            return root + 2 # Offset by 2 for N and X
+            return root + 2  # Offset by 2 for N and X
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[root]
 
         return root
-    
+
+
 def get_chord_root_batch(chord_ids: torch.Tensor) -> torch.Tensor:
     """
     Get the root of the chord for a batch of chord IDs, applied over a sequence.
@@ -518,13 +569,24 @@ def get_chord_root_batch(chord_ids: torch.Tensor) -> torch.Tensor:
     flat_chord_ids = chord_ids.view(-1)
 
     # Apply the get_chord_root function to each element in the flattened tensor
-    roots = torch.Tensor([get_chord_root(chord_id.item(), return_idx=True) for chord_id in flat_chord_ids]).view(chord_ids.size()).long()
+    roots = (
+        torch.Tensor(
+            [
+                get_chord_root(chord_id.item(), return_idx=True)
+                for chord_id in flat_chord_ids
+            ]
+        )
+        .view(chord_ids.size())
+        .long()
+    )
 
     return roots
 
 
 @lru_cache(maxsize=None)
-def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False) -> str:
+def get_chord_quality(
+    id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_idx: bool = False
+) -> str:
     """
     Get the quality of a chord id.
 
@@ -545,7 +607,7 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_
 
         if id == 1:
             return "X" if not return_idx else 1
-        
+
         idx = (id - 2) // 12
         if return_idx:
             return idx
@@ -590,7 +652,6 @@ def get_chord_quality(id: int, use_small_vocab: bool = SMALL_VOCABULARY, return_
 
         quality = templates[quality_index]
         return quality
-    
 
 
 @lru_cache(maxsize=None)
@@ -637,8 +698,8 @@ def id_to_chord(chord_id: int, use_small_vocab: bool = SMALL_VOCABULARY) -> str:
             return "X"
 
         # Subtract 2 to account for N and X
-        root = (chord_id-2) // 14
-        quality_index = (chord_id-2) % 14
+        root = (chord_id - 2) // 14
+        quality_index = (chord_id - 2) % 14
 
         root_name = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         root = root_name[root]
@@ -681,7 +742,7 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
     # If the chord is N, return N
     if chord_id == 0:
         return 0
-    
+
     # If the chord is X, return X
     if chord_id == 1:
         return 1
@@ -693,10 +754,10 @@ def transpose_chord_id(chord_id: int, semitones: int) -> int:
         raise ValueError("Semitones must be in the range -5 to 6.")
 
     # chord_id -= 2  # Offset by 2 for N and X
-    chord_quality = (chord_id-2) % 14
-    chord_root = (chord_id-2) // 14
+    chord_quality = (chord_id - 2) % 14
+    chord_root = (chord_id - 2) // 14
     chord_root_shifted = (chord_root + semitones) % 12
-    chord_id_shifted = (chord_root_shifted * 14 ) + chord_quality + 2
+    chord_id_shifted = (chord_root_shifted * 14) + chord_quality + 2
 
     return chord_id_shifted
 
@@ -788,7 +849,6 @@ def get_torch_device(allow_mps=False):
     if torch.cuda.is_available():
         return torch.device("cuda")
 
-
     # MPS
     if allow_mps and torch.backends.mps.is_available():
         if not torch.backends.mps.is_built():
@@ -799,7 +859,7 @@ def get_torch_device(allow_mps=False):
     return torch.device("cpu")
 
 
-def collate_fn(data: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
+def collate_fn(data: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Collate function for the DataLoader.
 
@@ -818,6 +878,32 @@ def collate_fn(data: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
         chord_ids, batch_first=True, padding_value=-1
     )
     return cqt, gens, chord_ids
+
+
+def collate_fn_indexed(
+    data: List[Tuple],
+) -> Tuple[Tuple[torch.Tensor, torch.Tensor, torch.Tensor], List[str]]:
+    """
+    Collate function for the DataLoader with filenames.
+
+    Args:
+        data (list): A list of tuples, where each tuple is a fixed length frame of features and chord annotation.
+
+    Returns:
+        cqt (torch.Tensor): The log CQT of the audio file. Has shape (num_frames, n_bins).
+        chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
+        filenames (list): A list of filenames corresponding to the data.
+    """
+    data_items, idxs = zip(*data)
+    cqt, gens, chord_ids = zip(*data_items)
+    # Stack the CQTs and chord annotations with padding if necessary
+    cqt = torch.nn.utils.rnn.pad_sequence(cqt, batch_first=True, padding_value=0)
+    gens = torch.nn.utils.rnn.pad_sequence(gens, batch_first=True, padding_value=0)
+    chord_ids = torch.nn.utils.rnn.pad_sequence(
+        chord_ids, batch_first=True, padding_value=-1
+    )
+    idxs = list(idxs)
+    return (cqt, gens, chord_ids), idxs
 
 
 def write_json(dictionary: dict, file: str):

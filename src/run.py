@@ -202,11 +202,7 @@ def main():
         default=0.2,
         help="Alpha parameter for the structured loss.",
     )
-    parser.add_argument(
-        "--crf",
-        action="store_true",
-        help="Use CRF module."
-    )
+    parser.add_argument("--crf", action="store_true", help="Use CRF module.")
     parser.add_argument(
         "--no_hmm_smoothing",
         dest="hmm_smoothing",
@@ -254,7 +250,23 @@ def main():
         "--gen_model_size",
         type=str,
         default="large",
-        help="Size of the generative model. Values: small, large, chord.",
+        help="Size of the generative model. Values: small, large, chord, melody.",
+    )
+    parser.add_argument(
+        "--beat_wise_resample",
+        action="store_true",
+        help="Whether to resample the input features to the beat level.",
+    )
+    parser.add_argument(
+        "--beat_resample_interval",
+        type=float,
+        default=1,
+        help="Interval in seconds for beat-wise resampling.",
+    )
+    parser.add_argument(
+        "--perfect_beat_resample",
+        action="store_true",
+        help="Whether to use perfect beat resampling (uses labels).",
     )
     parser.add_argument(
         "--job_id",
@@ -265,18 +277,47 @@ def main():
 
     args = parser.parse_args()
 
-    assert args.train_split in ["60", "80", "100"], "train_split must be 60, 80, or 100."
-    assert args.spectrogram_type in ["cqt", "linear", "mel", "chroma"], "spectrogram_type must be cqt, linear, mel, or chroma."
-    assert args.model in ["crnn", "logistic", "cnn"], "model must be crnn, logistic, or cnn."
-    assert args.gen_reduction in ["avg", "concat", "codebook_0", "codebook_1", "codebook_2", "codebook_3"], "gen_reduction must be avg, concat, codebook_0, codebook_1, codebook_2, or codebook_3."
-    assert args.gen_model_size in ["small", "large", "chord"], "gen_model_size must be small or large."
+    assert args.train_split in [
+        "60",
+        "80",
+        "100",
+    ], "train_split must be 60, 80, or 100."
+    assert args.spectrogram_type in [
+        "cqt",
+        "linear",
+        "mel",
+        "chroma",
+    ], "spectrogram_type must be cqt, linear, mel, or chroma."
+    assert args.model in [
+        "crnn",
+        "logistic",
+        "cnn",
+    ], "model must be crnn, logistic, or cnn."
+    assert args.gen_reduction in [
+        "avg",
+        "concat",
+        "codebook_0",
+        "codebook_1",
+        "codebook_2",
+        "codebook_3",
+    ], "gen_reduction must be avg, concat, codebook_0, codebook_1, codebook_2, or codebook_3."
+    assert args.gen_model_size in [
+        "small",
+        "large",
+        "chord",
+        "melody",
+    ], "gen_model_size must be small or large."
     assert args.optimiser in ["adam", "sgd"], "optimiser must be adam or sgd."
-    assert args.lr_scheduler in ["cosine", "plateau", "none"], "lr_scheduler must be cosine, plateau, or none."
+    assert args.lr_scheduler in [
+        "cosine",
+        "plateau",
+        "none",
+    ], "lr_scheduler must be cosine, plateau, or none."
 
     # Cannot have CRF and HMM
     if args.crf and args.hmm_smoothing:
         raise ValueError("Cannot use both CRF and HMM smoothing.")
-    
+
     # Cannot have structured loss and CRF
     if args.structured_loss and args.crf:
         raise ValueError("Cannot use both structured loss and CRF.")
@@ -313,6 +354,9 @@ def main():
         gen_reduction=args.gen_reduction if args.use_generative_features else None,
         gen_model_size=args.gen_model_size if args.use_generative_features else None,
         spectrogram_type=args.spectrogram_type,
+        beat_wise_resample=args.beat_wise_resample,
+        beat_resample_interval=args.beat_resample_interval,
+        perfect_beat_resample=args.perfect_beat_resample,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
@@ -343,9 +387,13 @@ def main():
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
             gen_down_dimension=args.gen_down_dimension,
-            gen_dimension= 4 * args.generative_features_dim if args.gen_reduction == "concat" else args.generative_features_dim, # Concat 4 codebooks, all other reductions are 1 codebook
+            gen_dimension=(
+                4 * args.generative_features_dim
+                if args.gen_reduction == "concat"
+                else args.generative_features_dim
+            ),  # Concat 4 codebooks, all other reductions are 1 codebook
             structured_loss=args.structured_loss,
-            crf=args.crf
+            crf=args.crf,
         )
     elif args.model == "logistic":
         model = LogisticACR(
@@ -366,7 +414,7 @@ def main():
             num_layers=args.num_layers,
             kernel_size=args.cnn_kernel_size,
             channels=args.cnn_channels,
-            activation="relu"
+            activation="relu",
         )
     elif args.model == "transformer":
         raise NotImplementedError("Transformer model not implemented yet.")
@@ -416,7 +464,7 @@ def main():
         momentum=args.momentum,
         use_crf=args.crf,
         early_stopping=args.early_stopping if args.enable_early_stopping else None,
-        do_validation=args.train_split == '60',
+        do_validation=args.train_split == "60",
         save_dir=f"{DIR}",
         save_filename="best_model.pth",
     )
@@ -437,45 +485,42 @@ def main():
     # Save the training history dictionary
     write_json(training_history, f"{DIR}/training_history.json")
 
-
     # Validate and test the model
-    
+
     # Load the best model
     model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
     model.eval()
 
     torch.set_grad_enabled(False)
 
-    if args.train_split  == '60':
-        # Validation set
+    # Validation set
+    if args.train_split == "60":
         print("Evaluating model on validation set...")
-        val_metrics = evaluate_model(model, val_final_test_dataset, batch_size=16)
+        val_metrics = evaluate_model(model, val_final_test_dataset)
         write_json(val_metrics, f"{DIR}/val_metrics.json")
 
-    if args.train_split != '100':
-        # Test set
+    # Test set
+    if args.train_split != "100":
         print("Evaluating model on test...")
-        test_metrics = evaluate_model(model, test_dataset, batch_size=16)
+        test_metrics = evaluate_model(model, test_dataset)
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
-    # print("Evaluating model on train...")
-    # train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=16)
-    # write_json(train_metrics, f"{DIR}/train_metrics.json")
+    print("Evaluating model on train...")
+    train_metrics = evaluate_model(model, train_final_test_dataset)
+    write_json(train_metrics, f"{DIR}/train_metrics.json")
+
+    # Calculate elapsed time
+    end_time = datetime.now()
+    elapsed_time = end_time - start_time
+    elapsed_time = str(elapsed_time).split(",")[0]
+    print(f"Elapsed time: {elapsed_time}")
+    run_metadata["elapsed_time"] = str(elapsed_time)
+    write_json(run_metadata, f"{DIR}/metadata.json")
 
     print("=" * 50)
     print(f"Experiment {args.exp_name} completed.")
     print("=" * 50)
-
-    end_time = datetime.now()
-    # Calculate elapsed time in hh:mm:ss
-    elapsed_time = (end_time - start_time)
-    elapsed_time = str(elapsed_time).split(",")[0]  # Get only the first part (hh:mm:ss)
-    print(f"Elapsed time: {elapsed_time}")
-    print("=" * 50)
-    # Save the elapsed time
-    run_metadata["elapsed_time"] = str(elapsed_time)
-    write_json(run_metadata, f"{DIR}/metadata.json")
 
 
 if __name__ == "__main__":
