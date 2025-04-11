@@ -4,6 +4,8 @@
 
 One of the biggest problems highlighted above is low recall on less common qualities. Two common methods for dealing with long-tailed distributions are re-sampling and weighting the loss function.~\citet{CurriculumLearning} also explore the use of curriculum learning as form of re-sampling which we do not explore here. Sampling is explored by~\citet{BalanceRandomForestACR} but they use a different model based on pre-computing chroma vectors and re-sampling these chroma vectors for use in training a random forest for frame-wise decoding. In our setting, re-sampling training patches of audio may be interesting but is left as future work as it would require significant effort to manage sampling many chords at once. Weighting has been explored by~\citet{ACRLargeVocab1} however their weighting is over chord classes and chord `components' which they define in their work. We employ a similar but simpler implementation here.
 
+TODO: Cite Reweighting vs Resampling and claim it won't make a big difference.
+
 A standard method of weighting is to multiply the loss function by the inverse of the given class' frequency, with a parameter controlling the strength of the weighting. This is defined as below.
 
 \begin{equation}

@@ -21,13 +21,13 @@ def main(
     hop_length=4096,
     dir="./data/processed",
     output_dir=None,
-    model_size="large",
+    model_name="large",
     start_idx=0,
     end_idx=None,
     max_chunk_length=5,
 ):
     if output_dir is None:
-        output_dir = f"{dir}/cache/{hop_length}/gen-{model_size}"
+        output_dir = f"{dir}/cache/{hop_length}/gen-{model_name}"
     device = get_torch_device(allow_mps=False)
     print(f"Using device: {device}")
 
@@ -35,7 +35,7 @@ def main(
 
     filenames = get_filenames(dir=f"{dir}/audio")
     print("Loading model...")
-    model = get_musicgen_model(model_size=model_size, device=device)
+    model = get_musicgen_model(model_name=model_name, device=device)
     frame_length = hop_length / SR
 
     if end_idx is None:
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         help="Optional different directory for output. If not provided, will use dir/gen.",
     )
     parser.add_argument(
-        "--model_size",
+        "--model_name",
         type=str,
         default="large",
         help="Size of the model to use. Can be 'small' or 'large'.",
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         hop_length=args.hop_length,
         dir=args.dir,
         output_dir=args.output_dir,
-        model_size=args.model_size,
+        model_name=args.model_name,
         max_chunk_length=args.max_chunk_length,
         start_idx=args.start_idx,
         end_idx=args.end_idx,

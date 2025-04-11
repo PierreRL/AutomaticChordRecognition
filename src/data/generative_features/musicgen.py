@@ -28,32 +28,26 @@ from MusiConGen.audiocraft.audiocraft.modules.conditioners import (
 from src.utils import get_torch_device, get_filenames
 
 
-def get_musicgen_model(model_size: str, device: str = "cuda"):
+def get_musicgen_model(model_name: str, device: str = "cuda"):
     """
     Returns a pretrained MusicGen model.
 
     Args:
-    - model_size (str): The size of the model to load. Either 'small' or 'large'.
+    - model_name (str): The size of the model to load. Either 'small' or 'large'.
 
     Returns:
     - model (MusicGen): The pretrained model.
     """
-    assert model_size in [
-        "small",
-        "large",
-        "chord",
-        "melody",
-    ], "Model size must be 'small' or 'large'."
     EDDIE = os.environ.get("EDDIE")
     if EDDIE is not None:
         # If running on Eddie, use the local path for the model.
-        path = os.path.join(EDDIE, f"musicgen-{model_size}")
-    elif os.path.exists(os.path.expanduser(f"~/musicgen-{model_size}")):
-        path = os.path.expanduser(f"~/musicgen-{model_size}")
+        path = os.path.join(EDDIE, f"musicgen-{model_name}")
+    elif os.path.exists(os.path.expanduser(f"~/musicgen-{model_name}")):
+        path = os.path.expanduser(f"~/musicgen-{model_name}")
     else:
-        path = f"facebook/musicgen-{model_size}"
+        path = f"facebook/musicgen-{model_name}"
 
-    if model_size == "chord":
+    if model_name == "chord":
         model = MusiConGen.get_pretrained(path, device=device)
     else:
         model = MusicGen.get_pretrained(path, device=device)

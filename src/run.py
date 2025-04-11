@@ -246,7 +246,7 @@ def main():
         help="Reduction method for generative features. Values: avg, concat, codebook_0, codebook_1, codebook_2, codebook_3.",
     )
     parser.add_argument(
-        "--gen_model_size",
+        "--gen_model_name",
         type=str,
         default="large",
         help="Size of the generative model. Values: small, large, chord, melody.",
@@ -300,12 +300,6 @@ def main():
         "codebook_2",
         "codebook_3",
     ], "gen_reduction must be avg, concat, codebook_0, codebook_1, codebook_2, or codebook_3."
-    assert args.gen_model_size in [
-        "small",
-        "large",
-        "chord",
-        "melody",
-    ], "gen_model_size must be small or large."
     assert args.optimiser in ["adam", "sgd"], "optimiser must be adam or sgd."
     assert args.lr_scheduler in [
         "cosine",
@@ -351,7 +345,7 @@ def main():
         hop_length=args.hop_length,
         mask_X=args.mask_X,
         gen_reduction=args.gen_reduction if args.use_generative_features else None,
-        gen_model_size=args.gen_model_size if args.use_generative_features else None,
+        gen_model_name=args.gen_model_name if args.use_generative_features else None,
         spectrogram_type=args.spectrogram_type,
         beat_wise_resample=args.beat_wise_resample,
         beat_resample_interval=args.beat_resample_interval,

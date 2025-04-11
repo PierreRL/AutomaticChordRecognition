@@ -34,7 +34,7 @@ class FullChordDataset(Dataset):
         mask_X: bool = False,
         input_dir: str = "./data/processed",
         gen_reduction: str = "concat",
-        gen_model_size: str = "large",
+        gen_model_name: str = "large",
         small_vocab: bool = SMALL_VOCABULARY,
         spectrogram_type: str = "cqt",
         use_augs=False,
@@ -53,7 +53,7 @@ class FullChordDataset(Dataset):
             input_dir (str): The directory where the audio files are stored.
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
             gen_reduction (str): The reduction method to use for the generative features. Options are 'concat', 'avg', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'.
-            gen_model_size (str): The size of the generative model to use. Options are 'large' or 'small'.
+            gen_model_name (str): The size of the generative model to use. Options are 'large' or 'small'.
             spectrogram_type (str): The type of spectrogram to use. Options are 'cqt', 'chroma', 'linear' or 'mel'.
             use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
@@ -76,12 +76,7 @@ class FullChordDataset(Dataset):
         self.mask_X = mask_X
         self.dev_mode = dev_mode
         self.gen_reduction = gen_reduction
-        self.gen_model_size = gen_model_size
-        assert self.gen_model_size in [
-            "large",
-            "small",
-            None,
-        ], f"Invalid model size: {self.gen_model_size}. Must be 'large' or 'small'."
+        self.gen_model_name = gen_model_name
         assert self.gen_reduction in [
             "avg",
             "concat",
@@ -104,7 +99,7 @@ class FullChordDataset(Dataset):
         self.feature_cache_dir = (
             f"{self.input_dir}/cache/{self.hop_length}/{feature_dir}"
         )
-        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen-{self.gen_model_size}/{self.gen_reduction}"
+        self.gen_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/gen-{self.gen_model_name}/{self.gen_reduction}"
         self.chord_cache_dir = f"{self.input_dir}/cache/{self.hop_length}/chords"
         self.small_vocab = small_vocab
         if self.small_vocab:
@@ -305,7 +300,7 @@ class FixedLengthRandomChordDataset(Dataset):
         hop_length=HOP_LENGTH,
         mask_X=False,
         gen_reduction="concat",
-        gen_model_size="large",
+        gen_model_name="large",
         spectrogram_type="cqt",
         input_dir="./data/processed/",
         beat_wise_resample=False,
@@ -327,7 +322,7 @@ class FixedLengthRandomChordDataset(Dataset):
             hop_length=hop_length,
             mask_X=mask_X,
             gen_reduction=gen_reduction,
-            gen_model_size=gen_model_size,
+            gen_model_name=gen_model_name,
             input_dir=input_dir,
             use_augs=audio_pitch_shift,
             spectrogram_type=spectrogram_type,
@@ -469,7 +464,7 @@ class FixedLengthChordDataset(Dataset):
         hop_length=HOP_LENGTH,
         mask_X=False,
         gen_reduction="concat",
-        gen_model_size="large",
+        gen_model_name="large",
         spectrogram_type="cqt",
         input_dir="./data/processed/",
         beat_wise_resample=False,
@@ -493,7 +488,7 @@ class FixedLengthChordDataset(Dataset):
             mask_X=mask_X,
             input_dir=input_dir,
             gen_reduction=gen_reduction,
-            gen_model_size=gen_model_size,
+            gen_model_name=gen_model_name,
             spectrogram_type=spectrogram_type,
             beat_wise_resample=beat_wise_resample,
             beat_resample_interval=beat_resample_interval,
@@ -594,7 +589,7 @@ def generate_datasets(
     audio_pitch_shift: bool = False,
     aug_shift_prob: float = 0.5,
     gen_reduction: str = "concat",
-    gen_model_size: str = "large",
+    gen_model_name: str = "large",
     spectrogram_type: str = "cqt",
     beat_wise_resample: bool = False,
     beat_resample_interval: float = 1,
@@ -645,7 +640,7 @@ def generate_datasets(
         audio_pitch_shift=audio_pitch_shift,
         aug_shift_prob=aug_shift_prob,
         gen_reduction=gen_reduction,
-        gen_model_size=gen_model_size,
+        gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
@@ -658,7 +653,7 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
         gen_reduction=gen_reduction,
-        gen_model_size=gen_model_size,
+        gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
@@ -670,7 +665,7 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
         gen_reduction=gen_reduction,
-        gen_model_size=gen_model_size,
+        gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
@@ -682,7 +677,7 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
         gen_reduction=gen_reduction,
-        gen_model_size=gen_model_size,
+        gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
@@ -694,7 +689,7 @@ def generate_datasets(
         mask_X=mask_X,
         input_dir=input_dir,
         gen_reduction=gen_reduction,
-        gen_model_size=gen_model_size,
+        gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,

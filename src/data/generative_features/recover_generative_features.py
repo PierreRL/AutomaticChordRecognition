@@ -4,29 +4,36 @@ import argparse
 import torch
 from tqdm import tqdm
 
+
 def reconstruct_from_concat(
     data_dir: str,
     hop_length: int,
-    model_size: str,
+    model_name: str,
     K: int,
 ):
     """
     Reconstruct 'avg' and 'codebook_<k>' representations from the 'concat' PT files.
-    
-    For each '.pt' file in {data_dir}/cache/{hop_length}/gen-{model_size}/concat/:
+
+    For each '.pt' file in {data_dir}/cache/{hop_length}/gen-{model_name}/concat/:
       - Load the [T, K*card] concat tensor
       - Reshape into [T, K, card]
       - Compute:
         * avg: mean over the K dimension -> [T, card]
         * codebook_k: each [T, card]
       - Save each representation under:
-          {data_dir}/cache/{hop_length}/gen-{model_size}/avg/
-          {data_dir}/cache/{hop_length}/gen-{model_size}/codebook_k/
+          {data_dir}/cache/{hop_length}/gen-{model_name}/avg/
+          {data_dir}/cache/{hop_length}/gen-{model_name}/codebook_k/
     """
-    concat_dir = os.path.join(data_dir, "cache", str(hop_length), f"gen-{model_size}", "concat")
-    avg_dir = os.path.join(data_dir, "cache", str(hop_length), f"gen-{model_size}", "avg")
+    concat_dir = os.path.join(
+        data_dir, "cache", str(hop_length), f"gen-{model_name}", "concat"
+    )
+    avg_dir = os.path.join(
+        data_dir, "cache", str(hop_length), f"gen-{model_name}", "avg"
+    )
     codebook_dirs = [
-        os.path.join(data_dir, "cache", str(hop_length), f"gen-{model_size}", f"codebook_{k}")
+        os.path.join(
+            data_dir, "cache", str(hop_length), f"gen-{model_name}", f"codebook_{k}"
+        )
         for k in range(K)
     ]
 
@@ -71,26 +78,36 @@ def reconstruct_from_concat(
         for k in range(K):
             torch.save(codebook_reps[k], codebook_paths[k])
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Reconstruct avg/codebook representations from 'concat' PT files."
     )
-    parser.add_argument("--dir", type=str, required=True,
-                        help="Path to the main directory containing 'cache' subfolders.")
-    parser.add_argument("--hop_length", type=int, default=4096,
-                        help="Hop length in subfolder naming.")
-    parser.add_argument("--model_size", type=str, default="large",
-                        help="Model size in subfolder naming, e.g. 'small'.")
-    parser.add_argument("--K", type=int, default=4,
-                        help="Number of codebooks.")
+    parser.add_argument(
+        "--dir",
+        type=str,
+        required=True,
+        help="Path to the main directory containing 'cache' subfolders.",
+    )
+    parser.add_argument(
+        "--hop_length", type=int, default=4096, help="Hop length in subfolder naming."
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        default="large",
+        help="Model size in subfolder naming, e.g. 'small'.",
+    )
+    parser.add_argument("--K", type=int, default=4, help="Number of codebooks.")
     args = parser.parse_args()
 
     reconstruct_from_concat(
         data_dir=args.dir,
         hop_length=args.hop_length,
-        model_size=args.model_size,
+        model_name=args.model_name,
         K=args.K,
     )
+
 
 if __name__ == "__main__":
     main()
