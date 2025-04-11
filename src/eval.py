@@ -220,7 +220,9 @@ def evaluate_model(
         est_beats = dataset.get_beats(song["idx"])
 
         # Get ground-truth chord sequence (one label per reference beat interval).
-        ref_labels, ref_beats = get_chord_seq(filename)
+        ref_labels, ref_beats = get_chord_seq(
+            filename, override_dir=f"{dataset.input_dir}/chords"
+        )
 
         # Convert beat boundaries into intervals.
         est_intervals = np.column_stack((est_beats[:-1], est_beats[1:]))
