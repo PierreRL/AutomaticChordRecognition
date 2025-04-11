@@ -29,7 +29,7 @@ schedulers = ["cosine", "plateau", "none"]
 for lr, scheduler in product(lrs, schedulers):
     exp_name = f"lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --model=logistic --lr={lr} --scheduler={scheduler}"
+    call = f"{base_call} --model=logistic --lr={lr} --lr_scheduler={scheduler}"
     print_to_file(call)
 
 # CNNs
@@ -81,7 +81,7 @@ for _ in range(num_expts):
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = (
         f"{base_call} "
-        f"--kernel_size={k} "
+        f"--cnn_kernel_size={k} "
         f"--cnn_layers={l} "
         f"--cnn_channels={c} "
         f"--hidden_size={h} "
