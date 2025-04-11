@@ -10,8 +10,8 @@ from src.data.dataset import FullChordDataset
 def main(
     create_cqts=True,
     hop_length=4096,
-    input_dir="data/processed",
-    output_dir="data/processed",
+    input_dir="data/processed/audio",
+    output_dir="data/processed/cache",
     create_chords=True,
     start_idx=None,
     end_idx=None,
@@ -32,9 +32,7 @@ def main(
         if create_cqts:
             if os.path.exists(f"{output_dir}/{filename}.pt"):
                 continue
-            cqt = get_cqt(
-                filename, hop_length=hop_length, override_dir=input_dir
-            )
+            cqt = get_cqt(filename, hop_length=hop_length, override_dir=input_dir)
             torch.save(cqt, f"{output_dir}/{filename}.pt")
 
         if create_chords:

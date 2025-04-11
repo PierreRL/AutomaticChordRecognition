@@ -5,9 +5,10 @@ from tqdm import tqdm
 import numpy as np
 from madmom.features.beats import RNNBeatProcessor, DBNBeatTrackingProcessor
 
+
 def main(
     input_dir="data/processed/audio",
-    output_dir="data/processed/cache/beats",
+    output_dir="data/processed/beats",
     start_idx=None,
     end_idx=None,
 ):
@@ -41,6 +42,7 @@ def main(
             np.save(output_path, beats)
         except Exception as e:
             print(f"Failed to process {filename}: {e}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Cache beat timings using madmom.")
