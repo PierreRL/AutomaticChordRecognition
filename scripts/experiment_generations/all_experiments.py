@@ -112,3 +112,10 @@ for _ in range(num_expts):
 # base_call = get_base_call(output_dir, exp_name="large")
 # call = f"{base_call}"
 # print_to_file(call)
+
+# Print number of experiments in the file
+output_file.close()
+with open("./scripts/experiments.txt", "r") as f:
+    lines = f.readlines()
+    print(f"Number of experiments: {len(lines)}")
+    print("Experiments saved to ./scripts/experiments.txt")
