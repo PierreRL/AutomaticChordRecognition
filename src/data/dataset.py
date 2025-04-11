@@ -11,6 +11,7 @@ from src.utils import (
     pitch_shift_cqt,
     get_torch_device,
     get_split_filenames,
+    get_chord_annotation,
     transpose_chord_id_vector,
     SMALL_VOCABULARY,
     NUM_CHORDS,
@@ -37,8 +38,9 @@ class FullChordDataset(Dataset):
         gen_model_name: str = "large",
         small_vocab: bool = SMALL_VOCABULARY,
         spectrogram_type: str = "cqt",
-        use_augs=False,
-        dev_mode=False,
+        use_augs: bool = False,
+        dev_mode: bool = False,
+        input_transitions: bool = False,
         beat_wise_resample: bool = False,  # <-- new flag
         beat_resample_interval: float = 1,
         perfect_beat_resample: bool = False,
@@ -54,6 +56,7 @@ class FullChordDataset(Dataset):
             small_vocab (bool): If True, the dataset uses a small vocabulary of chords.
             gen_reduction (str): The reduction method to use for the generative features. Options are 'concat', 'avg', 'codebook_0', 'codebook_1', 'codebook_2', 'codebook_3'.
             gen_model_name (str): The size of the generative model to use. Options are 'large' or 'small'.
+            input_transitions (bool): If True, the dataset uses transitions in the input features.
             spectrogram_type (str): The type of spectrogram to use. Options are 'cqt', 'chroma', 'linear' or 'mel'.
             use_augs (bool): If True, the dataset uses augmented CQT and chord annotation files.
             dev_mode (bool): If True, we ignore generative features to allow for dataset use for analysis.
@@ -75,6 +78,7 @@ class FullChordDataset(Dataset):
         self.hop_length = hop_length
         self.mask_X = mask_X
         self.dev_mode = dev_mode
+        self.input_transitions = input_transitions
         self.gen_reduction = gen_reduction
         self.gen_model_name = gen_model_name
         assert self.gen_reduction in [
@@ -86,6 +90,10 @@ class FullChordDataset(Dataset):
             "codebook_3",
             None,
         ], f"Invalid reduction: {self.gen_reduction}. Must be 'concat' or 'codebook_3'."
+
+        assert not (
+            self.input_transitions and beat_wise_resample
+        ), "Cannot have input transitions and beat-wise resampling at the same time."
 
         dir_mapping = {
             "cqt": "cqts",
@@ -117,6 +125,20 @@ class FullChordDataset(Dataset):
 
     def __len__(self):
         return len(self.filenames)
+
+    def get_transitions(self, idx):
+        """
+        Get the transitions binary vector for the given index.
+        Args:
+            idx (int): The index of the item to get.
+        Returns:
+            A tensor of transitions.
+        """
+        filename = self.filenames[idx]
+        _, transitions = get_chord_annotation(
+            filename, frame_length=self.hop_length / SR, return_transitions=True
+        )
+        return transitions.long()
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
         cqt, gen, chord_ids = self.__get_cached_item(idx)
@@ -256,6 +278,13 @@ class FullChordDataset(Dataset):
                 perfect_beat_resample=self.perfect_beat_resample,
             )
 
+        if self.input_transitions:
+            # Get transitions for the input features
+            transitions = self.get_transitions(idx)  # Shape: (frames)
+            cqt, transitions = self.get_minimum_length_frame(cqt, transitions)
+            # Concatenate transitions to the CQT
+            cqt = torch.cat((cqt, transitions.unsqueeze(1)), dim=1)
+
         return cqt, gen, chord_ids
 
     def get_beats(self, idx):
@@ -302,6 +331,7 @@ class FixedLengthRandomChordDataset(Dataset):
         gen_reduction="concat",
         gen_model_name="large",
         spectrogram_type="cqt",
+        input_transitions=False,
         input_dir="./data/processed/",
         beat_wise_resample=False,
         beat_resample_interval=1,
@@ -325,6 +355,7 @@ class FixedLengthRandomChordDataset(Dataset):
             gen_model_name=gen_model_name,
             input_dir=input_dir,
             use_augs=audio_pitch_shift,
+            input_transitions=input_transitions,
             spectrogram_type=spectrogram_type,
             beat_wise_resample=beat_wise_resample,
             beat_resample_interval=beat_resample_interval,
@@ -371,7 +402,10 @@ class FixedLengthRandomChordDataset(Dataset):
             beats = self.full_dataset.get_beats(idx)
             song_duration = beats[-1]
             # Sample a random starting time such that [t_start, t_start + segment_length] lies within the song.
-            t_start = random.uniform(0, song_duration - self.segment_length)
+            t_max = max(
+                song_duration - self.segment_length, 0
+            )  # Clip to avoid negative values
+            t_start = random.uniform(0, t_max)
             t_end = t_start + self.segment_length
 
             # Select all beat indices with some overlap with the segment [t_start, t_end].
@@ -466,6 +500,7 @@ class FixedLengthChordDataset(Dataset):
         gen_reduction="concat",
         gen_model_name="large",
         spectrogram_type="cqt",
+        input_transitions=False,
         input_dir="./data/processed/",
         beat_wise_resample=False,
         beat_resample_interval=1,
@@ -490,6 +525,7 @@ class FixedLengthChordDataset(Dataset):
             gen_reduction=gen_reduction,
             gen_model_name=gen_model_name,
             spectrogram_type=spectrogram_type,
+            input_transitions=input_transitions,
             beat_wise_resample=beat_wise_resample,
             beat_resample_interval=beat_resample_interval,
             perfect_beat_resample=perfect_beat_resample,
@@ -588,6 +624,7 @@ def generate_datasets(
     cqt_pitch_shift: bool = False,
     audio_pitch_shift: bool = False,
     aug_shift_prob: float = 0.5,
+    input_transitions: bool = False,
     gen_reduction: str = "concat",
     gen_model_name: str = "large",
     spectrogram_type: str = "cqt",
@@ -642,6 +679,7 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
@@ -655,6 +693,7 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
@@ -667,6 +706,7 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
@@ -679,6 +719,7 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
@@ -691,6 +732,7 @@ def generate_datasets(
         gen_reduction=gen_reduction,
         gen_model_name=gen_model_name,
         spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,

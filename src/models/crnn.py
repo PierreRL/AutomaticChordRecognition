@@ -35,6 +35,7 @@ class CRNN(BaseACR):
         activation: str = "prelu",
         structured_loss: bool = False,
         use_cqt: bool = True,
+        input_transitions: bool = False,
         use_generative_features: bool = False,
         gen_down_dimension: int = 128,
         gen_dimension: int = 2048,
@@ -76,6 +77,7 @@ class CRNN(BaseACR):
         self.cnn_channels = cnn_channels
         self.activation = activation
         self.use_cqt = use_cqt
+        self.input_transitions = input_transitions
         self.use_generative_features = use_generative_features
         self.gen_dimension = gen_dimension
         self.gen_down_dimension = gen_down_dimension
@@ -109,7 +111,7 @@ class CRNN(BaseACR):
             self.freq_collapse = nn.Conv2d(
                 in_channels=cnn_channels,
                 out_channels=36,
-                kernel_size=(1, input_features),
+                kernel_size=(1, self.input_features),
                 padding=(0, 0),
             )
 
@@ -123,6 +125,8 @@ class CRNN(BaseACR):
             rnn_input_dim += 36
         if self.use_generative_features:
             rnn_input_dim += self.gen_down_dimension
+        if self.input_transitions:
+            rnn_input_dim += 1
 
         encoder_hidden_size = self.hidden_size // 2 if self.cr2 else self.hidden_size
 
@@ -172,6 +176,11 @@ class CRNN(BaseACR):
             torch.Tensor: Output of shape (B, frames, num_classes).
         """
 
+        if self.input_transitions:
+            # The last channel of cqt_features is the transitions
+            transitions = cqt_features[:, :, -1]  # (B, frames)
+            cqt_features = cqt_features[:, :, :-1]
+
         # Collect the features to feed into the RNN
         feature_list = []
 
@@ -209,6 +218,11 @@ class CRNN(BaseACR):
             x = torch.cat(feature_list, dim=2)  # (B, frames, 36 + gen_down_dimension)
         else:
             x = feature_list[0]  # Either cqt alone or generative alone
+
+        if self.input_transitions:
+            # Add the transitions to the input
+            x = torch.cat((x, transitions.unsqueeze(2)), dim=2)
+            # (B, frames, 36 + gen_down_dimension + 1)
 
         x, _ = self.bi_gru_encoder(x)  # (B, frames, 2E)
 

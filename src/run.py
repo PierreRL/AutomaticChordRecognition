@@ -154,7 +154,7 @@ def main():
     parser.add_argument(
         "--hop_length",
         type=int,
-        default=4096,
+        default=None,
         help="Hop length used to compute the log CQT.",
     )
     parser.add_argument(
@@ -192,6 +192,11 @@ def main():
         help="Alpha smoothing parameter for the weighted loss.",
     )
     parser.add_argument(
+        "--input_transitions",
+        action="store_true",
+        help="Whether to pass transitions to the model. Should not be used with beat-wise resampling.",
+    )
+    parser.add_argument(
         "--structured_loss",
         action="store_true",
         help="Use structured loss.",
@@ -220,18 +225,11 @@ def main():
         default="60",
         help="Train split percentage. Must be 60, 80, or 100.",
     )
-
-    parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
-    parser.add_argument(
-        "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
-        action="store_true",
-        help="Run a single batch of training and validation and small evaluation set.",
-    )
     parser.add_argument(
         "--generative_features_dim",
         type=int,
         default=2048,
-        help="Dimensionality of each generative feature vector per frame.",
+        help="Dimensionality of the generative feature codebooks. If gen_reduction is concat, this is multiplied by 4. assuming 4 codebooks.",
     )
     parser.add_argument(
         "--gen_down_dimension",
@@ -273,8 +271,24 @@ def main():
         default=None,
         help="Job ID for the experiment. Used for tracking in the cluster.",
     )
+    parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
+    parser.add_argument(
+        "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
+        action="store_true",
+        help="Run a single batch of training and validation and small evaluation set.",
+    )
 
     args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
+
+    if (
+        args.hop_length is None
+    ):  # Default hop length is 4096, but if beat-wise resampling is used, it is set to 512.
+        if args.beat_wise_resample:
+            args.hop_length = 512
+        else:
+            args.hop_length = 4096
 
     assert args.train_split in [
         "60",
@@ -318,8 +332,6 @@ def main():
     if not args.exp_name:
         args.exp_name = generate_experiment_name()
 
-    torch.manual_seed(args.seed)
-
     print("=" * 50)
     print(f"Running experiment: {args.exp_name}")
     print("=" * 50)
@@ -343,6 +355,7 @@ def main():
         audio_pitch_shift=args.audio_pitch_shift,
         aug_shift_prob=args.aug_shift_prob,
         hop_length=args.hop_length,
+        input_transitions=args.input_transitions,
         mask_X=args.mask_X,
         gen_reduction=args.gen_reduction if args.use_generative_features else None,
         gen_model_name=args.gen_model_name if args.use_generative_features else None,
@@ -381,6 +394,7 @@ def main():
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
             use_cqt=args.use_cqt,
+            input_transitions=args.input_transitions,
             use_generative_features=args.use_generative_features,
             gen_down_dimension=args.gen_down_dimension,
             gen_dimension=(

@@ -783,6 +783,7 @@ def get_chord_annotation(
 
     Returns:
         chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
+        transitions (torch.Tensor): A tensor of shape (num_frames,) where each element is True if the chord changes in that frame.
     """
 
     chord_ann = get_raw_chord_annotation(filename, override_dir=override_dir)
