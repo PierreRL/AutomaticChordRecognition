@@ -26,7 +26,6 @@ def print_to_file(expt):
 output_dir = "logistic_lr_search"
 lrs = [0.0001, 0.001, 0.01, 0.1]
 schedulers = ["cosine", "plateau", "none"]
-
 for lr, scheduler in product(lrs, schedulers):
     exp_name = f"lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
