@@ -118,9 +118,9 @@ def get_raw_chord_annotation(filename, override_dir=None):
     return chord_ann.data
 
 
-def get_chord_seq(filename):
+def get_chord_seq(filename, use_small_vocab: bool = SMALL_VOCABULARY):
     """
-    Retrieves the chord sequence from a JAMS file.
+    Retrieves the chord sequence from a JAMS file and the associated 'beats'.
 
     Args:
         filename (str): The filename of the JAMS file to load.
@@ -129,7 +129,16 @@ def get_chord_seq(filename):
         chord_seq (list[str]): A list of chord annotations.
     """
     chord_ann = get_raw_chord_annotation(filename)
-    return [chord.value for chord in chord_ann]
+    seq = [chord.value for chord in chord_ann]
+
+    if use_small_vocab:
+        print("Using small vocabulary")
+        seq = [chord_to_id(chord, use_small_vocab=True) for chord in seq]
+        seq = [id_to_chord(chord, use_small_vocab=True) for chord in seq]
+
+    beats = [obs.time for obs in chord_ann]
+    beats = beats + [chord_ann[-1].time + chord_ann[-1].duration]  # Add the last 'beat'
+    return seq, beats
 
 
 @lru_cache(maxsize=None)

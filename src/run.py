@@ -9,6 +9,7 @@ from src.data.dataset import generate_datasets
 from src.models.crnn import CRNN
 from src.models.cnn import CNN
 from src.models.logistic_acr import LogisticACR
+import src.utils as utils
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
@@ -266,6 +267,11 @@ def main():
         help="Whether to use perfect beat resampling (uses labels).",
     )
     parser.add_argument(
+        "--small_vocab",
+        action="store_true",
+        help="Whether to use a small vocabulary for the model.",
+    )
+    parser.add_argument(
         "--job_id",
         type=str,
         default=None,
@@ -281,6 +287,9 @@ def main():
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
+
+    if args.small_vocab:
+        utils.SMALL_VOCABULARY = True
 
     if (
         args.hop_length is None

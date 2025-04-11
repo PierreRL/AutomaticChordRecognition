@@ -2,8 +2,8 @@
 """Script for generating ALL experiments into experiments.txt"""
 import os
 from itertools import product
+import numpy as np
 
-# The home dir on the node's scratch disk
 USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
 
@@ -57,8 +57,59 @@ schedulers = ["cosine", "plateau", "none"]
 for lr, scheduler in product(lrs, schedulers):
     exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --model=crnn --lr={lr} --scheduler={scheduler}"
+    call = f"{base_call} --lr={lr} --scheduler={scheduler}"
     print_to_file(call)
 
-# CRNN Hparams
+# CRNN Hparams random search
 output_dir = "crnn_hparams"
+kernel_sizes = [5, 9]
+layers = [1, 3]
+channels = [1, 5]
+hidden_sizes = [32, 256]
+segment_length = [5, 30]
+gru_layers = [1, 3]
+num_expts = 30
+for _ in range(num_expts):
+    # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
+    k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
+    l = np.random.choice(layers)
+    c = np.random.randint(channels[0], channels[1])
+    h = np.random.randint(hidden_sizes[0], hidden_sizes[1])
+    s = np.random.randint(segment_length[0], segment_length[1])
+    r = np.random.choice(gru_layers)
+
+    exp_name = f"crnn_k{k}_l{l}_c{c}_h{h}_s{s}_r{r}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = (
+        f"{base_call} "
+        f"--kernel_size={k} "
+        f"--cnn_layers={l} "
+        f"--cnn_channels={c} "
+        f"--hidden_size={h} "
+        f"--segment_length={s} "
+        f"--gru_layers={r} "
+    )
+    print_to_file(call)
+
+# Long SGD
+# exp_name = "long_sgd"
+# base_call = get_base_call("", exp_name=exp_name)
+# call = f"{base_call} --optimiser=sgd epochs=2000"
+
+# # Hop lengths
+# output_dir = "hop_lengths"
+# hop_lengths = [512, 1024, 2048, 4096, 8192, 16384]
+# for hop_length in hop_lengths:
+#     exp_name = f"hop_length_{hop_length}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --hop_length={hop_length}"
+#     print_to_file(call)
+
+# Small vs Large vocab
+# output_dir = "small_vs_large_vocab"
+# base_call = get_base_call(output_dir, exp_name="small")
+# call = f"{base_call} --small_vocab=True"
+# print_to_file(call)
+# base_call = get_base_call(output_dir, exp_name="large")
+# call = f"{base_call}"
+# print_to_file(call)

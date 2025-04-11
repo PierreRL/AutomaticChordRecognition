@@ -218,10 +218,9 @@ def evaluate_model(
 
         # Get estimated beat boundaries (from the features) and reference beat boundaries.
         est_beats = dataset.get_beats(song["idx"])
-        ref_beats = get_resampled_full_beats(filename, perfect_beat_resample=True)
 
         # Get ground-truth chord sequence (one label per reference beat interval).
-        ref_labels = get_chord_seq(filename)
+        ref_labels, ref_beats = get_chord_seq(filename)
 
         # Convert beat boundaries into intervals.
         est_intervals = np.column_stack((est_beats[:-1], est_beats[1:]))
