@@ -44,7 +44,7 @@ def main():
         "--model",
         type=str,
         default="crnn",
-        help="Model to train. Values: crnn, logistic, transformer.",
+        help="Model to train. Values: crnn, logistic.",
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate.")
     parser.add_argument(
@@ -136,14 +136,20 @@ def main():
     parser.add_argument(
         "--hidden_size",
         type=int,
-        default=201,
+        default=25,
         help="Hidden size of the GRU layers.",
     )
     parser.add_argument(
-        "--num_layers",
+        "--cnn_layers",
         type=int,
         default=1,
-        help="Number of layers in the GRU.",
+        help="Number of layers in the CNN model.",
+    )
+    parser.add_argument(
+        "--gru_layers",
+        type=int,
+        default=1,
+        help="Number of layers in the GRU for the CRNN model.",
     )
     parser.add_argument(
         "--hop_length",
@@ -160,13 +166,13 @@ def main():
     parser.add_argument(
         "--cnn_channels",
         type=int,
-        default=10,
+        default=1,
         help="Number of channels in the CNN model.",
     )
     parser.add_argument(
         "--cnn_kernel_size",
         type=int,
-        default=15,
+        default=5,
         help="Kernel size for the CNN model.",
     )
     parser.add_argument(
@@ -174,22 +180,16 @@ def main():
         action="store_true",
         help="Whether to ignore class label X for training.",
     )
-    # parser.add_argument(
-    #     "--weight_loss",
-    #     action="store_true",
-    #     help="Whether to use weighted loss.",
-    # )
+    parser.add_argument(
+        "--weight_loss",
+        action="store_true",
+        help="Whether to use weighted loss.",
+    )
     parser.add_argument(
         "--weight_alpha",
         type=float,
         default=0.55,
         help="Alpha smoothing parameter for the weighted loss.",
-    )
-    parser.add_argument(
-        "--no_weight_loss",
-        dest="weight_loss",
-        action="store_false",
-        help="Disable weighted loss.",
     )
     parser.add_argument(
         "--structured_loss",
@@ -204,10 +204,9 @@ def main():
     )
     parser.add_argument("--crf", action="store_true", help="Use CRF module.")
     parser.add_argument(
-        "--no_hmm_smoothing",
-        dest="hmm_smoothing",
-        action="store_false",
-        help="Disable HMM smoothing.",
+        "--hmm_smoothing",
+        action="store_true",
+        help="Use HMM smoothing.",
     )
     parser.add_argument(
         "--hmm_alpha",
@@ -381,7 +380,10 @@ def main():
             num_classes=NUM_CHORDS,
             cr2=args.cr2,
             hidden_size=args.hidden_size,
-            num_layers=args.num_layers,
+            num_layers=args.gru_layers,
+            cnn_layers=args.cnn_layers,
+            cnn_channels=args.cnn_channels,
+            kernel_size=args.cnn_kernel_size,
             hmm_smoothing=args.hmm_smoothing,
             hmm_alpha=args.hmm_alpha,
             use_cqt=args.use_cqt,
@@ -411,7 +413,7 @@ def main():
             use_cqt=args.use_cqt,
             use_generative_features=args.use_generative_features,
             gen_dimension=args.generative_features_dim,
-            num_layers=args.num_layers,
+            num_layers=args.cnn_layers,
             kernel_size=args.cnn_kernel_size,
             channels=args.cnn_channels,
             activation="relu",

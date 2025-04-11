@@ -10,7 +10,6 @@ import autorootcwd
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchcrf import CRF
 
 from src.models.base_model import BaseACR
@@ -29,15 +28,18 @@ class CRNN(BaseACR):
         num_classes: int = NUM_CHORDS,
         hidden_size: int = 201,
         num_layers: int = 1,
+        cnn_layers: int = 1,
+        kernel_size: int = 5,
+        cnn_channels: int = 1,
         cr2: bool = False,
-        activation: str = "relu",
-        hmm_smoothing: bool = True,
-        hmm_alpha: float = 0.2,
+        activation: str = "prelu",
         structured_loss: bool = False,
         use_cqt: bool = True,
         use_generative_features: bool = False,
         gen_down_dimension: int = 128,
         gen_dimension: int = 2048,
+        hmm_smoothing: bool = False,
+        hmm_alpha: float = 0.2,
         crf: bool = False,
     ):
         """
@@ -63,12 +65,15 @@ class CRNN(BaseACR):
         # Must use at least one of the two feature types
         if not (use_cqt or use_generative_features):
             raise ValueError("Must use at least one of cqt or generative features.")
-    
+
         self.cr2 = cr2
         self.input_features = input_features
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_layers = num_layers
+        self.cnn_layers = cnn_layers
+        self.kernel_size = kernel_size
+        self.cnn_channels = cnn_channels
         self.activation = activation
         self.use_cqt = use_cqt
         self.use_generative_features = use_generative_features
@@ -80,30 +85,33 @@ class CRNN(BaseACR):
 
         if self.activation not in ["relu", "prelu"]:
             raise ValueError(f"Invalid activation function: {self.activation}")
-
+        act_layer = nn.ReLU if activation == "relu" else nn.PReLU
         #
         # ----- Convolutional pipeline (used only if use_cqt=True) -----
         #
         if self.use_cqt:
-            self.batch_norm = nn.BatchNorm2d(1)  # Normalize input along the channel dimension
+            self.batch_norm = nn.BatchNorm2d(1)
+            layers = []
+            in_channels = 1
+            for _ in range(cnn_layers):
+                layers.append(
+                    nn.Conv2d(
+                        in_channels=in_channels,
+                        out_channels=cnn_channels,
+                        kernel_size=(kernel_size, kernel_size),
+                        padding="same",
+                    )
+                )
+                layers.append(act_layer())
+                in_channels = cnn_channels
+            self.temporal_cnn = nn.Sequential(*layers)
 
-            # 5x5 convolution layer
-            self.conv1 = nn.Conv2d(
-                in_channels=1,
-                out_channels=1,
-                kernel_size=(5, 5),
-                padding="same",  # Keep output size the same as input
-            )
-            self.activation1 = nn.ReLU() if activation == "relu" else nn.PReLU()
-
-            # 1xF convolution (full-height filter bank with 36 filters)
-            self.conv2 = nn.Conv2d(
-                in_channels=1,
+            self.freq_collapse = nn.Conv2d(
+                in_channels=cnn_channels,
                 out_channels=36,
-                kernel_size=(1, self.input_features),  # Full-height filter
-                padding=(0, 0),  # Valid padding to reduce frequency dimension to 1
+                kernel_size=(1, input_features),
+                padding=(0, 0),
             )
-            self.activation2 = nn.ReLU() if activation == "relu" else nn.PReLU()
 
         if self.use_generative_features:
             self.gen_projector = nn.Linear(self.gen_dimension, self.gen_down_dimension)
@@ -130,7 +138,7 @@ class CRNN(BaseACR):
             # Optional second GRU "decoder"
             self.bi_gru_decoder = nn.GRU(
                 input_size=2 * encoder_hidden_size,  # 2E from encoder
-                hidden_size=encoder_hidden_size,     # E per direction
+                hidden_size=encoder_hidden_size,  # E per direction
                 num_layers=self.num_layers,
                 batch_first=True,
                 bidirectional=True,
@@ -140,9 +148,11 @@ class CRNN(BaseACR):
         out_dim = encoder_hidden_size if cr2 else 2 * encoder_hidden_size
 
         if self.structured_loss:
-            self.root_dense = nn.Linear(out_dim, 14) # 12 for root, 2 for "X" and "N"
+            self.root_dense = nn.Linear(out_dim, 14)  # 12 for root, 2 for "X" and "N"
             self.pitch_class_dense = nn.Linear(out_dim, 12)
-            out_dim += 14 + 12 # We concat the root and pitch class outputs to the final output
+            out_dim += (
+                14 + 12
+            )  # We concat the root and pitch class outputs to the final output
 
         self.dense = nn.Linear(out_dim, num_classes)
 
@@ -173,13 +183,9 @@ class CRNN(BaseACR):
             # (B, frames, freq) -> (B, 1, frames, freq)
             x_cqt = cqt_features.unsqueeze(1)
             x_cqt = self.batch_norm(x_cqt)
-            x_cqt = self.activation1(self.conv1(x_cqt))
-            x_cqt = self.activation2(self.conv2(x_cqt))  # (B, 36, frames, 1)
-
-            # Remove the frequency dimension
-            x_cqt = x_cqt.squeeze(-1)       # (B, 36, frames)
-            x_cqt = x_cqt.permute(0, 2, 1)  # (B, frames, 36)
-
+            x_cqt = self.temporal_cnn(x_cqt)
+            x_cqt = self.freq_collapse(x_cqt)
+            x_cqt = x_cqt.squeeze(-1).permute(0, 2, 1)  # (B, frames, 36)
             feature_list.append(x_cqt)
 
         # Generative features
@@ -190,8 +196,12 @@ class CRNN(BaseACR):
                 )
             # Suppose gen_features is shape (B, frames, gen_dimension)
             # We skip convolution entirely. Just add it.
-            gen_features = self.gen_projector(gen_features)  # (B, frames, gen_down_dimension)
-            gen_features = self.gen_norm(gen_features)       # (B, frames, gen_down_dimension)
+            gen_features = self.gen_projector(
+                gen_features
+            )  # (B, frames, gen_down_dimension)
+            gen_features = self.gen_norm(
+                gen_features
+            )  # (B, frames, gen_down_dimension)
             feature_list.append(gen_features)
 
         # Combine features if we have both
@@ -210,14 +220,16 @@ class CRNN(BaseACR):
             root_out = self.root_dense(x)
             pitch_class_out = self.pitch_class_dense(x)
             # Concatenate root and pitch class outputs to the final output
-            x = torch.cat((x, root_out, pitch_class_out), dim=2) # (B, frames, 2E + NUM_CHORDS + 12)
-        
+            x = torch.cat(
+                (x, root_out, pitch_class_out), dim=2
+            )  # (B, frames, 2E + NUM_CHORDS + 12)
+
         x = self.dense(x)  # (B, frames, num_classes)
 
         if self.structured_loss:
             # Return the root and pitch class outputs separately
             return x, root_out, pitch_class_out
-        
+
         return x
 
     def __str__(self):
@@ -230,6 +242,15 @@ class CRNN(BaseACR):
             "num_classes": self.num_classes,
             "hidden_size": self.hidden_size,
             "num_layers": self.num_layers,
+            "cnn_layers": self.cnn_layers,
+            "kernel_size": self.kernel_size,
+            "cnn_channels": self.cnn_channels,
+            "crf": hasattr(self, "crf"),
+            "hmm_smoothing": hasattr(self, "hmm_smoother"),
+            "hmm_alpha": (
+                self.hmm_smoother.hmm_alpha if hasattr(self, "hmm_smoother") else None
+            ),
+            "structured_loss": self.structured_loss,
             "cr2": self.cr2,
             "activation": self.activation,
             "use_cqt": self.use_cqt,

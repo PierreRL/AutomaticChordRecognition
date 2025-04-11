@@ -2,7 +2,7 @@ import autorootcwd
 from tqdm import tqdm
 from enum import Enum
 import os
-from typing import List, Dict
+from typing import List
 
 import torch
 import numpy as np

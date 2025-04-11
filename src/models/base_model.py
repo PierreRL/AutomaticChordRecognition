@@ -25,7 +25,7 @@ class BaseACR(torch.nn.Module):
         features: torch.Tensor = None,
         gens: torch.Tensor = None,
         mask: torch.Tensor = None,
-        device=None
+        device=None,
     ) -> torch.Tensor:
         """
         Predict chord class indices from input features.
@@ -40,9 +40,14 @@ class BaseACR(torch.nn.Module):
             torch.Tensor: Predictions of shape (B, frames), padded with -1 if CRF is used.
         """
         with torch.no_grad():
-            if hasattr(self, "use_generative_features") and self.use_generative_features:
+            if (
+                hasattr(self, "use_generative_features")
+                and self.use_generative_features
+            ):
                 if gens is None:
-                    raise ValueError("Generative features must be provided for this model.")
+                    raise ValueError(
+                        "Generative features must be provided for this model."
+                    )
                 output = self(features, gens)
             else:
                 output = self(features)
@@ -57,9 +62,11 @@ class BaseACR(torch.nn.Module):
 
                 # Pad to rectangular tensor (with -1s)
                 max_len = output.size(1)
-                pred_tensor = torch.full((len(predictions), max_len), fill_value=-1, device=output.device)
+                pred_tensor = torch.full(
+                    (len(predictions), max_len), fill_value=-1, device=output.device
+                )
                 for i, seq in enumerate(predictions):
-                    pred_tensor[i, :len(seq)] = torch.tensor(seq, device=output.device)
+                    pred_tensor[i, : len(seq)] = torch.tensor(seq, device=output.device)
                 return pred_tensor
 
             if hasattr(self, "hmm_smoother"):

@@ -66,7 +66,7 @@ class CNN(BaseACR):
                 in_channels=channels,
                 out_channels=36,
                 kernel_size=(1, input_features),
-                padding=(0, 0)
+                padding=(0, 0),
             )
 
             # Final dense layer per frame
@@ -96,14 +96,16 @@ class CNN(BaseACR):
                 raise ValueError("CQT is enabled but no cqt_features were provided.")
 
             x = cqt_features.unsqueeze(1)  # (B, 1, T, F)
-            x = self.temporal_cnn(x)       # (B, C, T, F)
-            x = self.freq_collapse(x)      # (B, 36, T, 1)
+            x = self.temporal_cnn(x)  # (B, C, T, F)
+            x = self.freq_collapse(x)  # (B, 36, T, 1)
             x = x.squeeze(-1).permute(0, 2, 1)  # (B, T, 36)
             feature_list.append(x)
 
         if self.use_generative_features:
             if gen_features is None:
-                raise ValueError("Generative features are enabled but no gen_features were provided.")
+                raise ValueError(
+                    "Generative features are enabled but no gen_features were provided."
+                )
 
             x_gen = self.gen_projector(gen_features)  # (B, T, gen_down_dimension)
             feature_list.append(x_gen)
@@ -111,8 +113,7 @@ class CNN(BaseACR):
         if len(feature_list) == 2:
             x = torch.cat(feature_list, dim=2)
         else:
-            x = feature_list[0] 
-        
+            x = feature_list[0]
 
         x = self.classifier(x)  # (B, T, num_classes)
         return x
