@@ -4,9 +4,10 @@ import os
 
 # The home dir on the node's scratch disk
 USER = os.getenv("USER")
+EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"{REPO_HOME}/data/processed"
+DATA_HOME = f"{EDDIE}/data/processed"
 
 base_call = f"python {REPO_HOME}/src/data/create_cached_datasets.py --input_dir={DATA_HOME}/audio"
 
