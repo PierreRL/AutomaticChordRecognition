@@ -11,17 +11,20 @@ from tqdm import tqdm
 
 from src.data.dataset import FullChordDataset
 from src.utils import get_filenames, get_torch_device, SR
-from src.data.generative_features.musicgen import get_musicgen_model, extract_song_hidden_representation
+from src.data.generative_features.musicgen import (
+    get_musicgen_model,
+    extract_song_hidden_representation,
+)
 
 
 def main(
     hop_length=4096,
-    dir = "./data/processed",
+    dir="./data/processed",
     output_dir=None,
     model_size="large",
     start_idx=0,
     end_idx=None,
-    max_chunk_length=5
+    max_chunk_length=5,
 ):
     if output_dir is None:
         output_dir = f"{dir}/cache/{hop_length}/gen-{model_size}"
@@ -31,7 +34,7 @@ def main(
     os.makedirs(output_dir, exist_ok=True)
 
     filenames = get_filenames(dir=f"{dir}/audio")
-    print('Loading model...')
+    print("Loading model...")
     model = get_musicgen_model(model_size=model_size, device=device)
     frame_length = hop_length / SR
 
@@ -41,10 +44,10 @@ def main(
         raise ValueError("start_idx must be less than or equal to end_idx")
     if start_idx is None:
         start_idx = 0
-    
+
     filenames = filenames[start_idx:end_idx]
 
-    print('Extracting features...')
+    print("Extracting features...")
     for filename in tqdm(filenames):
         # Skip if the file already exists
         if os.path.exists(f"{output_dir}/concat/{filename}.pt"):
@@ -56,11 +59,16 @@ def main(
             filename=filename,
             max_chunk_length=max_chunk_length,
             model=model,
-            frame_length=frame_length
+            frame_length=frame_length,
         )
         for reduction, song_repr in song_repr_dict.items():
             os.makedirs(f"{output_dir}/{reduction}", exist_ok=True)
             torch.save(song_repr, f"{output_dir}/{reduction}/{filename}.pt")
+            # Free up memory
+            del song_repr
+        del song_repr_dict
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
 
 if __name__ == "__main__":
@@ -94,21 +102,21 @@ if __name__ == "__main__":
         "--max_chunk_length",
         type=float,
         default=10,
-        help="The length of context in seconds to pass through the model at once. Absolute maximum 30s."
+        help="The length of context in seconds to pass through the model at once. Absolute maximum 30s.",
     )
     parser.add_argument(
         "--start_idx",
         type=int,
         required=False,
         default=0,
-        help="Start index for the filenames. Useful for parallel processing."
+        help="Start index for the filenames. Useful for parallel processing.",
     )
     parser.add_argument(
         "--end_idx",
         type=int,
         required=False,
         default=None,
-        help="End index for the filenames. Useful for parallel processing."
+        help="End index for the filenames. Useful for parallel processing.",
     )
     args = parser.parse_args()
 
