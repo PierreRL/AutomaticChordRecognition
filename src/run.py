@@ -4,12 +4,12 @@ import argparse
 from datetime import datetime
 import torch
 
-from src.train import train_model, TrainingArgs
+from src.train import TrainingArgs, train_model
+from src.eval import evaluate_model
 from src.data.dataset import generate_datasets
 from src.models.crnn import CRNN
 from src.models.cnn import CNN
 from src.models.logistic_acr import LogisticACR
-import src.utils as utils
 from src.utils import (
     NUM_CHORDS,
     N_BINS,
@@ -18,7 +18,6 @@ from src.utils import (
     write_json,
     generate_experiment_name,
 )
-from src.eval import evaluate_model
 
 
 def main():
@@ -140,7 +139,7 @@ def main():
     parser.add_argument(
         "--hidden_size",
         type=int,
-        default=64,
+        default=256,
         help="Hidden size of the GRU layers.",
     )
     parser.add_argument(
@@ -397,7 +396,7 @@ def main():
             num_classes=NUM_CHORDS,
             cr2=args.cr2,
             hidden_size=args.hidden_size,
-            num_layers=args.gru_layers,
+            gru_layers=args.gru_layers,
             cnn_layers=args.cnn_layers,
             cnn_channels=args.cnn_channels,
             kernel_size=args.cnn_kernel_size,
