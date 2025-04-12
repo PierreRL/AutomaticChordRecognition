@@ -23,59 +23,59 @@ def print_to_file(expt):
 
 
 # Logistic LR Search
-output_dir = "logistic_lr_search"
-lrs = [0.0001, 0.001, 0.01, 0.1]
-schedulers = ["cosine", "plateau", "none"]
-for lr, scheduler in product(lrs, schedulers):
-    exp_name = f"lr_{lr}_scheduler_{scheduler}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --model=logistic --lr={lr} --lr_scheduler={scheduler}"
-    print_to_file(call)
+# output_dir = "logistic_lr_search"
+# lrs = [0.0001, 0.001, 0.01, 0.1]
+# schedulers = ["cosine", "plateau", "none"]
+# for lr, scheduler in product(lrs, schedulers):
+#     exp_name = f"lr_{lr}_scheduler_{scheduler}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --model=logistic --lr={lr} --lr_scheduler={scheduler}"
+#     print_to_file(call)
 
-# CNNs
-output_dir = "cnns"
-kernel_sizes = [5, 5, 9]
-layers = [1, 3, 5]
-channels = [1, 5, 10]
-for k, l, c in zip(kernel_sizes, layers, channels):
-    exp_name = f"cnn_k{k}_l{l}_c{c}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = (
-        f"{base_call} "
-        f"--model=cnn "
-        f"--cnn_kernel_size={k} "
-        f"--cnn_layers={l} "
-        f"--cnn_channels={c} "
-    )
-    print_to_file(call)
+# # CNNs
+# output_dir = "cnns"
+# kernel_sizes = [5, 5, 9]
+# layers = [1, 3, 5]
+# channels = [1, 5, 10]
+# for k, l, c in zip(kernel_sizes, layers, channels):
+#     exp_name = f"cnn_k{k}_l{l}_c{c}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = (
+#         f"{base_call} "
+#         f"--model=cnn "
+#         f"--cnn_kernel_size={k} "
+#         f"--cnn_layers={l} "
+#         f"--cnn_channels={c} "
+#     )
+#     print_to_file(call)
 
-# LR search on CRNN
-output_dir = "crnn_lr_search"
-lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-schedulers = ["cosine", "plateau", "none"]
-for lr, scheduler in product(lrs, schedulers):
-    exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --lr={lr} --lr_scheduler={scheduler} --hidden_size=256 --segment_length=8"
-    print_to_file(call)
+# # LR search on CRNN
+# output_dir = "crnn_lr_search"
+# lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+# schedulers = ["cosine", "plateau", "none"]
+# for lr, scheduler in product(lrs, schedulers):
+#     exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --lr={lr} --lr_scheduler={scheduler} --hidden_size=256 --segment_length=8"
+#     print_to_file(call)
 
 # CRNN Hparams random search
 output_dir = "crnn_hparams"
-kernel_sizes = [5, 9]
-layers = [1, 3]
+kernel_sizes = [5, 15]
+cnn_layers = [1, 5]
 channels = [1, 5]
-hidden_sizes = [32, 256]
-segment_length = [5, 30]
+hidden_sizes = [32, 512]
+segment_length = [5, 45]
 gru_layers = [1, 3]
 num_expts = 30
 for _ in range(num_expts):
     # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
     k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
-    l = np.random.choice(layers)
+    l = np.random.choice(cnn_layers[0], cnn_layers[1])
     c = np.random.randint(channels[0], channels[1])
     h = np.random.randint(hidden_sizes[0], hidden_sizes[1])
     s = np.random.randint(segment_length[0], segment_length[1])
-    r = np.random.choice(gru_layers)
+    r = np.random.choice(gru_layers[0], gru_layers[1])
 
     exp_name = f"crnn_k{k}_l{l}_c{c}_h{h}_s{s}_r{r}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
