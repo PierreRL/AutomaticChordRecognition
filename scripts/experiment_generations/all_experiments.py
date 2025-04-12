@@ -60,58 +60,77 @@ def print_to_file(expt):
 #     print_to_file(call)
 
 # CRNN Hparams random search
-output_dir = "crnn_hparams"
-kernel_sizes = [5, 15]
-cnn_layers = [1, 5]
-channels = [1, 5]
-hidden_sizes = [32, 512]
-segment_length = [5, 45]
-gru_layers = [1, 3]
-num_expts = 50
-for _ in range(num_expts):
-    # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
-    k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
-    l = np.random.randint(cnn_layers[0], cnn_layers[1])
-    c = np.random.randint(channels[0], channels[1])
-    h = np.random.randint(hidden_sizes[0], hidden_sizes[1])
-    s = np.random.randint(segment_length[0], segment_length[1])
-    r = np.random.randint(gru_layers[0], gru_layers[1])
+# output_dir = "crnn_hparams"
+# kernel_sizes = [5, 15]
+# cnn_layers = [1, 5]
+# channels = [1, 5]
+# hidden_sizes = [32, 512]
+# segment_length = [5, 45]
+# gru_layers = [1, 3]
+# num_expts = 50
+# for _ in range(num_expts):
+#     # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
+#     k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
+#     l = np.random.randint(cnn_layers[0], cnn_layers[1])
+#     c = np.random.randint(channels[0], channels[1])
+#     h = np.random.randint(hidden_sizes[0], hidden_sizes[1])
+#     s = np.random.randint(segment_length[0], segment_length[1])
+#     r = np.random.randint(gru_layers[0], gru_layers[1])
 
-    exp_name = f"crnn_k{k}_l{l}_c{c}_h{h}_s{s}_r{r}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = (
-        f"{base_call} "
-        f"--cnn_kernel_size={k} "
-        f"--cnn_layers={l} "
-        f"--cnn_channels={c} "
-        f"--hidden_size={h} "
-        f"--segment_length={s} "
-        f"--gru_layers={r} "
-    )
-    print_to_file(call)
-
-# Long SGD
-# exp_name = "long_sgd"
-# base_call = get_base_call("", exp_name=exp_name)
-# call = f"{base_call} --optimiser=sgd epochs=2000"
-
-# # Hop lengths
-# output_dir = "hop_lengths"
-# hop_lengths = [512, 1024, 2048, 4096, 8192, 16384]
-# for hop_length in hop_lengths:
-#     exp_name = f"hop_length_{hop_length}"
+#     exp_name = f"crnn_k{k}_l{l}_c{c}_h{h}_s{s}_r{r}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --hop_length={hop_length}"
+#     call = (
+#         f"{base_call} "
+#         f"--cnn_kernel_size={k} "
+#         f"--cnn_layers={l} "
+#         f"--cnn_channels={c} "
+#         f"--hidden_size={h} "
+#         f"--segment_length={s} "
+#         f"--gru_layers={r} "
+#     )
 #     print_to_file(call)
 
+# Long SGD
+exp_name = "long_sgd"
+base_call = get_base_call("", exp_name=exp_name)
+call = f"{base_call} --optimiser=sgd epochs=2000"
+
+# Hop lengths
+output_dir = "hop_lengths"
+hop_lengths = [512, 1024, 2048, 4096, 8192, 16384]
+for hop_length in hop_lengths:
+    exp_name = f"hop_length_{hop_length}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --hop_length={hop_length}"
+    print_to_file(call)
+
 # Small vs Large vocab
-# output_dir = "small_vs_large_vocab"
-# base_call = get_base_call(output_dir, exp_name="small")
+output_dir = "small_vs_large_vocab"
+# base_call = get_base_call(output_dir, exp_name="small") Doesn't work on cluster
 # call = f"{base_call} --small_vocab=True"
 # print_to_file(call)
-# base_call = get_base_call(output_dir, exp_name="large")
-# call = f"{base_call}"
-# print_to_file(call)
+base_call = get_base_call(output_dir, exp_name="large")
+call = f"{base_call}"
+print_to_file(call)
+
+# CR2
+output_dir = "cr2"
+base_call = get_base_call(output_dir, exp_name="cr2_on")
+call = f"{base_call} --cr2"
+print_to_file(call)
+base_call = get_base_call(output_dir, exp_name="cr2_off")
+call = f"{base_call}"
+print_to_file(call)
+
+# Weighted alpha search
+output_dir = "weighted_alpha_search"
+alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+for alpha in alphas:
+    exp_name = f"weighted_alpha_{alpha}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --weighted_alpha={alpha}"
+    print_to_file(call)
+
 
 # Print number of experiments in the file
 output_file.close()
