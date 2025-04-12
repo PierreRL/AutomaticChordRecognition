@@ -67,7 +67,7 @@ channels = [1, 5]
 hidden_sizes = [32, 512]
 segment_length = [5, 45]
 gru_layers = [1, 3]
-num_expts = 30
+num_expts = 50
 for _ in range(num_expts):
     # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
     k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
