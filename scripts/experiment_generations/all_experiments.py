@@ -56,7 +56,7 @@ schedulers = ["cosine", "plateau", "none"]
 for lr, scheduler in product(lrs, schedulers):
     exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --lr={lr} --lr_scheduler={scheduler}"
+    call = f"{base_call} --lr={lr} --lr_scheduler={scheduler} --hidden_size=256 --segment_length=8"
     print_to_file(call)
 
 # CRNN Hparams random search
