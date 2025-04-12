@@ -71,11 +71,11 @@ num_expts = 50
 for _ in range(num_expts):
     # Choose int within range of each hyperparameter e.g. 5-9 for kernel size
     k = np.random.randint(kernel_sizes[0], kernel_sizes[1])
-    l = np.random.choice(cnn_layers[0], cnn_layers[1])
+    l = np.random.randint(cnn_layers[0], cnn_layers[1])
     c = np.random.randint(channels[0], channels[1])
     h = np.random.randint(hidden_sizes[0], hidden_sizes[1])
     s = np.random.randint(segment_length[0], segment_length[1])
-    r = np.random.choice(gru_layers[0], gru_layers[1])
+    r = np.random.randint(gru_layers[0], gru_layers[1])
 
     exp_name = f"crnn_k{k}_l{l}_c{c}_h{h}_s{s}_r{r}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
