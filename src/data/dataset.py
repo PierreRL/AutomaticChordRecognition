@@ -631,6 +631,7 @@ def generate_datasets(
     beat_wise_resample: bool = False,
     beat_resample_interval: float = 1,
     perfect_beat_resample: bool = False,
+    perfect_beat_resample_eval: bool = False,
     subset_size=None,
 ):
     """
@@ -696,7 +697,7 @@ def generate_datasets(
         input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
-        perfect_beat_resample=perfect_beat_resample,
+        perfect_beat_resample=perfect_beat_resample_eval,
     )
     test_dataset = FullChordDataset(
         filenames=test_filenames,
@@ -709,7 +710,7 @@ def generate_datasets(
         input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
-        perfect_beat_resample=perfect_beat_resample,
+        perfect_beat_resample=perfect_beat_resample_eval,
     )
     train_final_test_dataset = FullChordDataset(
         filenames=train_filenames,
@@ -735,7 +736,7 @@ def generate_datasets(
         input_transitions=input_transitions,
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
-        perfect_beat_resample=perfect_beat_resample,
+        perfect_beat_resample=perfect_beat_resample_eval,
     )
     return (
         train_dataset,

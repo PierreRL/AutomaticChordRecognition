@@ -44,7 +44,7 @@ class EvalMetric(Enum):
     MIREX = "mirex"
     THIRD = "third"
     SEVENTH = "seventh"
-    SONG_WISE_ACC = "song_wise_acc"
+    ACC = "acc"
     TRIADS = "triads"
     TETRADS = "tetrads"
 
@@ -66,24 +66,14 @@ class EvalMetric(Enum):
             return mir_eval.chord.triads
         elif self == EvalMetric.TETRADS:
             return mir_eval.chord.tetrads
-        elif self == EvalMetric.SONG_WISE_ACC:
+        elif self == EvalMetric.ACC:
 
-            def song_wise_acc(hypotheses: torch.Tensor, references: torch.Tensor):
+            def acc(hypotheses: torch.Tensor, references: torch.Tensor):
                 return np.array([h == r for h, r in zip(hypotheses, references)])
 
-            return song_wise_acc
+            return acc
         else:
             raise ValueError(f"Invalid evaluation metric: {self}")
-
-    def get_eval_input_type(self) -> str:
-        """
-        Returns the evaluation type for this evaluation metric.
-        """
-        # Only SONG_WISE_ACC uses integer inputs
-        if self in [EvalMetric.SONG_WISE_ACC]:
-            return "int"
-        else:
-            return "str"
 
     def evaluate(self, hypotheses: torch.Tensor, references: torch.Tensor):
         """
@@ -117,8 +107,7 @@ def evaluate_model(
         EvalMetric.SEVENTH,
         EvalMetric.MAJMIN,
         EvalMetric.TRIADS,
-        EvalMetric.TETRADS,
-        EvalMetric.SONG_WISE_ACC,
+        EvalMetric.ACC,
     ],
     batch_size: int = 32,
     device: torch.device = None,
@@ -203,7 +192,7 @@ def evaluate_model(
         for i in range(predictions.shape[0]):
             song_predictions.append(
                 {
-                    "pred_ids": predictions[i][ignore_mask[i]].tolist(),
+                    "pred_ids": predictions[i][ignore_mask[i].cpu().numpy()].tolist(),
                     "idx": indices[i],
                 }
             )
@@ -298,7 +287,7 @@ def evaluate_model(
         aggregated_class_median = compute_aggregated_class_metric(
             song_agg_data, e, np.median
         )
-        class_agg_results[m.value] = {
+        class_agg_results[e.value] = {
             "mean": aggregated_class_mean,
             "median": aggregated_class_median,
         }
@@ -380,7 +369,7 @@ Legacy code for evaluating the model using discrete metrics. Now updated to use 
 #         EvalMetric.MIREX,
 #         EvalMetric.THIRD,
 #         EvalMetric.SEVENTH,
-#         EvalMetric.SONG_WISE_ACC,
+#         EvalMetric.ACC,
 #     ],
 #     batch_size: int = 64,
 #     device: torch.device = None,

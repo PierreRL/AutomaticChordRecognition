@@ -133,9 +133,9 @@ def get_chord_seq(
     chord_ann = get_raw_chord_annotation(filename, override_dir=override_dir)
     seq = [chord.value for chord in chord_ann]
 
-    if use_small_vocab:
-        seq = [chord_to_id(chord, use_small_vocab=True) for chord in seq]
-        seq = [id_to_chord(chord, use_small_vocab=True) for chord in seq]
+    # Convert to local vocabulary
+    seq = [chord_to_id(chord, use_small_vocab) for chord in seq]
+    seq = [id_to_chord(chord, use_small_vocab) for chord in seq]
 
     beats = [obs.time for obs in chord_ann]
     beats = beats + [chord_ann[-1].time + chord_ann[-1].duration]  # Add the last 'beat'

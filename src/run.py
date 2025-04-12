@@ -55,6 +55,9 @@ def main():
         "--batch_size", type=int, default=64, help="Batch size for training."
     )
     parser.add_argument(
+        "--eval_batch_size", type=int, default=64, help="Batch size for evaluation."
+    )
+    parser.add_argument(
         "--early_stopping", type=int, default=25, help="Early stopping patience."
     )
     parser.add_argument(
@@ -137,7 +140,7 @@ def main():
     parser.add_argument(
         "--hidden_size",
         type=int,
-        default=25,
+        default=64,
         help="Hidden size of the GRU layers.",
     )
     parser.add_argument(
@@ -267,6 +270,11 @@ def main():
         help="Whether to use perfect beat resampling (uses labels).",
     )
     parser.add_argument(
+        "--perfect_beat_resample_eval",
+        action="store_true",
+        help="Whether to use perfect beat resampling for evaluation. This is an unfair metric since it uses the labels.",
+    )
+    parser.add_argument(
         "--job_id",
         type=str,
         default=None,
@@ -364,6 +372,7 @@ def main():
         beat_wise_resample=args.beat_wise_resample,
         beat_resample_interval=args.beat_resample_interval,
         perfect_beat_resample=args.perfect_beat_resample,
+        perfect_beat_resample_eval=args.perfect_beat_resample_eval,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
     )
 
