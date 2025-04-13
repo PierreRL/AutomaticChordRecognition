@@ -262,7 +262,7 @@ class CRNN(BaseACR):
             "crf": hasattr(self, "crf"),
             "hmm_smoothing": hasattr(self, "hmm_smoother"),
             "hmm_alpha": (
-                self.hmm_smoother.hmm_alpha if hasattr(self, "hmm_smoother") else None
+                self.hmm_smoother.alpha if hasattr(self, "hmm_smoother") else None
             ),
             "structured_loss": self.structured_loss,
             "cr2": self.cr2,

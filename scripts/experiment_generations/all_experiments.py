@@ -126,44 +126,34 @@ print_to_file(call)
 base_call = get_base_call(output_dir, exp_name="cr2_off")
 call = f"{base_call}"
 print_to_file(call)
-
-# Weighted alpha search
-output_dir = "weight_alpha_search"
-alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-for alpha in alphas:
-    exp_name = f"alpha_{alpha}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --weight_alpha={alpha}"
-    print_to_file(call)
 """
 
-# Pitch Shifts
-# output_dir = "pitch_shifts"
-# probabilities = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-# for p in probabilities:
-#     exp_name = f"audio_{p}"
+# Spectrograms
+output_dir = "spectrograms"
+spectrograms = ["cqt", "mel", "linear", "chroma"]
+for spectrogram in spectrograms:
+    exp_name = f"spectrogram_{spectrogram}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --spectrogram_type={spectrogram}"
+    print_to_file(call)
+
+# Weighted alpha search
+# output_dir = "weight_alpha_search"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p}"
-#     print_to_file(call)
-# for p in probabilities:
-#     exp_name = f"cqt_{p}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p}"
-#     print_to_file(call)
-# for p in probabilities:
-#     exp_name = f"audio_cqt_{p}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p}"
+#     call = f"{base_call} --weight_loss --weight_alpha={alpha}"
 #     print_to_file(call)
 
 # Structured Loss
-output_dir = "structured_loss"
-alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-for alpha in alphas:
-    exp_name = f"alpha_{alpha}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha}"
-    print_to_file(call)
+# output_dir = "structured_loss"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha}"
+#     print_to_file(call)
 
 # Hmm alphas
 output_dir = "hmm_alphas"
@@ -171,7 +161,7 @@ alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 for alpha in alphas:
     exp_name = f"alpha_{alpha}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss"
+    call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss --structured_loss"
     print_to_file(call)
 
 # Smoothers
@@ -191,14 +181,23 @@ for alpha in alphas:
 # call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --crf"
 # print_to_file(call)
 
-
-# Spectrograms
-# output_dir = "spectrograms"
-# spectrograms = ["cqt", "mel", "linear", "chroma"]
-# for spectrogram in spectrograms:
-#     exp_name = f"spectrogram_{spectrogram}"
+# Pitch Shifts
+# output_dir = "pitch_shifts"
+# probabilities = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# for p in probabilities:
+#     exp_name = f"audio_{p}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --spectrogram_type={spectrogram} --hmm_smoothing"
+#     call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p}"
+#     print_to_file(call)
+# for p in probabilities:
+#     exp_name = f"cqt_{p}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p}"
+#     print_to_file(call)
+# for p in probabilities:
+#     exp_name = f"audio_cqt_{p}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p}"
 #     print_to_file(call)
 
 # # Generative features

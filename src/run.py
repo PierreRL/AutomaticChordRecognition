@@ -207,7 +207,7 @@ def main():
     parser.add_argument(
         "--structured_loss_alpha",
         type=float,
-        default=0.2,
+        default=0.7,
         help="Alpha parameter for the structured loss.",
     )
     parser.add_argument("--crf", action="store_true", help="Use CRF module.")
