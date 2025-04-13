@@ -5,7 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import torch
 
-from src.utils import audio_write
+from src.utils import audio_write, write_json
 from src.data.generative_features.musicgen import get_musicgen_model
 from src.data.synthetic_data.descriptions import sample_description
 from src.data.synthetic_data.chord_sequence import sample_chord_sequence
@@ -42,6 +42,13 @@ def generate_song(
         duration=song_length, extend_stride=extend_stride, top_k=250
     )
 
+    metadata = {
+        "description": description,
+        "bpm": bpm,
+        "meter": meter,
+        "chord_sequence": chord_seq,
+    }
+
     # Generate the audio conditioned on description, chord sequence, BPM, and meter.
     audio_out = model.generate_with_chords_and_beats(
         [description],  # list of descriptions (one per sample)
@@ -49,7 +56,7 @@ def generate_song(
         [bpm],  # list of BPM values
         [meter],  # list of meter values (e.g., 4 for 4/4)
     )
-    return audio_out.cpu(), model.sample_rate
+    return audio_out.cpu(), model.sample_rate, metadata
 
 
 def main(args):
@@ -71,22 +78,20 @@ def main(args):
 
     for song_idx in tqdm(range(args.num_songs), desc="Generating songs"):
         # Generate the song audio and sample rate.
-        audio_tensor, sample_rate = generate_song(
+        audio_tensor, sample_rate, metadata = generate_song(
             model, args.song_length, args.bpm_mean, args.bpm_std
         )
 
         # Define the output file name.
-        output_file = os.path.join(args.output_dir, f"syntheticsong_{song_idx+1}.wav")
+        output_file = os.path.join(args.output_dir, 'audio', f"synthetic_{song_idx+1}.wav")
 
         # Write the audio to a WAV file with loudness normalization.
-        audio_write(
-            output_file,
-            audio_tensor,
-            sample_rate,
-            strategy="loudness",
-            loudness_compressor=True,
-        )
+        audio_write(output_file, audio_tensor, sample_rate)
         print(f"Saved generated song to: {output_file}")
+
+        # Write metdata
+        write_json(metadata, os.path.join(args.output_dir, 'metadata', f"metadata_{song_idx+1}.json"))
+
 
 
 if __name__ == "__main__":
