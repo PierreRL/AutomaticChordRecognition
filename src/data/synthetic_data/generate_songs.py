@@ -60,9 +60,10 @@ def generate_song(
 
 
 def main(args):
-    # Create the output directory if it doesn't exist.
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'audio'), exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'metadata'), exist_ok=True)
 
     print(f"Generating {args.num_songs} songs...")
     # Ensure the output directory exists.
