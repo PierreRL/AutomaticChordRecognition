@@ -1,6 +1,7 @@
 import autorootcwd
 import argparse
 import os
+from tqdm import tqdm
 import numpy as np
 import torch
 
@@ -57,10 +58,19 @@ def main(args):
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
+    print(f"Generating {args.num_songs} songs...")
+    # Ensure the output directory exists.
+    os.makedirs(args.output_dir, exist_ok=True)
+    # Set the random seed for reproducibility.
+    torch.manual_seed(42)
+    np.random.seed(42)
+
+    print("Loading the MusiConGen model...")
+
     # Load the pretrained MusiConGen model.
     model = get_musicgen_model(model_name="chord", device="cuda")
 
-    for song_idx in range(args.num_songs):
+    for song_idx in tqdm(range(args.num_songs), desc="Generating songs"):
         # Generate the song audio and sample rate.
         audio_tensor, sample_rate = generate_song(
             model, args.song_length, args.bpm_mean, args.bpm_std
