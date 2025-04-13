@@ -8,7 +8,10 @@ USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
 
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-DATA_HOME = f"{EDDIE}/data/processed"
+if EDDIE is not None:
+    DATA_HOME = f"{EDDIE}/data/processed"
+else:
+    DATA_HOME = f"{REPO_HOME}/data/processed"
 
 output_file = open("./scripts/experiments.txt", "w")
 
@@ -105,31 +108,31 @@ for hop_length in hop_lengths:
     print_to_file(call)
 
 # Small vs Large vocab
-output_dir = "small_vs_large_vocab"
-# base_call = get_base_call(output_dir, exp_name="small") Doesn't work on cluster
-# call = f"{base_call} --small_vocab=True"
+# output_dir = "small_vs_large_vocab"
+# # base_call = get_base_call(output_dir, exp_name="small") Doesn't work on cluster
+# # call = f"{base_call} --small_vocab=True"
+# # print_to_file(call)
+# base_call = get_base_call(output_dir, exp_name="large")
+# call = f"{base_call}"
 # print_to_file(call)
-base_call = get_base_call(output_dir, exp_name="large")
-call = f"{base_call}"
-print_to_file(call)
 
-# CR2
-output_dir = "cr2"
-base_call = get_base_call(output_dir, exp_name="cr2_on")
-call = f"{base_call} --cr2"
-print_to_file(call)
-base_call = get_base_call(output_dir, exp_name="cr2_off")
-call = f"{base_call}"
-print_to_file(call)
+# # CR2
+# output_dir = "cr2"
+# base_call = get_base_call(output_dir, exp_name="cr2_on")
+# call = f"{base_call} --cr2"
+# print_to_file(call)
+# base_call = get_base_call(output_dir, exp_name="cr2_off")
+# call = f"{base_call}"
+# print_to_file(call)
 
-# Weighted alpha search
-output_dir = "weight_alpha_search"
-alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-for alpha in alphas:
-    exp_name = f"alpha_{alpha}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --weight_alpha={alpha}"
-    print_to_file(call)
+# # Weighted alpha search
+# output_dir = "weight_alpha_search"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --weight_alpha={alpha}"
+#     print_to_file(call)
 
 
 # Print number of experiments in the file

@@ -372,6 +372,7 @@ def get_and_save_history(
         "learning_rates": learning_rates,
     }
     write_json(training_history, f"{save_dir}/{save_filename}")
+    return training_history
 
 
 def main():

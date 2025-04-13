@@ -149,7 +149,7 @@ class CRNN(BaseACR):
             )
 
         # Final dense layer
-        out_dim = encoder_hidden_size if cr2 else 2 * encoder_hidden_size
+        out_dim = 2 * encoder_hidden_size
 
         if self.structured_loss:
             self.root_dense = nn.Linear(out_dim, 14)  # 12 for root, 2 for "X" and "N"
