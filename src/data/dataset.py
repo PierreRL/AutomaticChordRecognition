@@ -178,7 +178,7 @@ class FullChordDataset(Dataset):
         min_length = min(t.shape[0] for t in valid_tensors)
         return tuple(t[:min_length] if t is not None else EMPTY_TENSOR for t in tensors)
 
-    def get_class_weights(self, epsilon=1e1, alpha=0.65) -> torch.Tensor:
+    def get_class_weights(self, epsilon=1e1, alpha=0.3) -> torch.Tensor:
         """
         Calculate the chord loss weights for the dataset.
 
