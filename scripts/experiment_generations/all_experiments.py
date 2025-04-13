@@ -6,12 +6,12 @@ import numpy as np
 
 USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
-
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
-if EDDIE is not None:
-    DATA_HOME = f"{EDDIE}/data/processed"
-else:
-    DATA_HOME = f"{REPO_HOME}/data/processed"
+
+if EDDIE is None:
+    EDDIE = REPO_HOME  # Compatibility with eddie and mlt clusters
+
+DATA_HOME = f"{EDDIE}/data/processed"
 
 output_file = open("./scripts/experiments.txt", "w")
 
@@ -97,7 +97,8 @@ for _ in range(num_expts):
 # Long SGD
 exp_name = "long_sgd"
 base_call = get_base_call("", exp_name=exp_name)
-call = f"{base_call} --optimiser=sgd epochs=2000"
+call = f"{base_call} --optimiser=sgd --epochs=2000"
+print_to_file(call)
 
 # Hop lengths
 output_dir = "hop_lengths"
