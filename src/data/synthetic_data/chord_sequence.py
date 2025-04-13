@@ -1,5 +1,5 @@
 import random
-
+from src.utils import id_to_chord, NUM_CHORDS
 
 def sample_chord_sequence(seq_length: int) -> str:
     """
