@@ -6,13 +6,16 @@ import autorootcwd
 import os
 import math
 import random
-import json
-import numpy as np
-import torch
 import re
 import unicodedata
+import json
 from functools import lru_cache
 from typing import List, Tuple, Union
+
+
+import numpy as np
+import torch
+import torchaudio
 
 # Music processing libraries
 import librosa
@@ -946,6 +949,20 @@ def write_text(file: str, text: str):
     os.makedirs(os.path.dirname(file), exist_ok=True)  # Ensure directory exists
     with open(file, "w") as f:
         f.write(text)
+
+def audio_write(filename, audio_tensor, sample_rate):
+    """
+    Save the audio tensor to a WAV file using torchaudio.
+    
+    Parameters:
+        filename (str): Output file path.
+        audio_tensor (torch.Tensor): Audio waveform with shape [channels, samples].
+        sample_rate (int): Sample rate for the audio file.
+    """
+    # Ensure the tensor is on CPU.
+    audio_tensor = audio_tensor.detach().cpu()
+    # torchaudio expects audio to be [channels, samples]; save directly.
+    torchaudio.save(filename, audio_tensor, sample_rate)
 
 
 def generate_experiment_name():

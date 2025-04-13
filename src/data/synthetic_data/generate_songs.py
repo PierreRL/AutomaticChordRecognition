@@ -5,14 +5,13 @@ from tqdm import tqdm
 import numpy as np
 import torch
 
-from src.utils import id_to_chord, NUM_CHORDS
+from src.utils import audio_write
 from src.data.generative_features.musicgen import get_musicgen_model
 from src.data.synthetic_data.descriptions import sample_description
 from src.data.synthetic_data.chord_sequence import sample_chord_sequence
 
 # Import the MusiConGen model and utility for writing audio.
 from MusiConGen.audiocraft.audiocraft.models import MusicGen as MusiConGen
-from audiocraft.utils import audio_write
 
 
 def generate_song(
