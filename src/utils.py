@@ -956,12 +956,17 @@ def audio_write(filename, audio_tensor, sample_rate):
     
     Parameters:
         filename (str): Output file path.
-        audio_tensor (torch.Tensor): Audio waveform with shape [channels, samples].
+        audio_tensor (torch.Tensor): Audio waveform, expected shape [channels, samples] or [samples] for mono.
         sample_rate (int): Sample rate for the audio file.
     """
     # Ensure the tensor is on CPU.
     audio_tensor = audio_tensor.detach().cpu()
-    # torchaudio expects audio to be [channels, samples]; save directly.
+    
+    # If the tensor is 1D (mono audio), unsqueeze to add a channel dimension.
+    if audio_tensor.ndim == 1:
+        audio_tensor = audio_tensor.unsqueeze(0)
+    
+    # Save directly since torchaudio expects [channels, samples].
     torchaudio.save(filename, audio_tensor, sample_rate)
 
 
