@@ -138,7 +138,7 @@ class FullChordDataset(Dataset):
         """
         filename = self.filenames[idx]
         _, transitions = get_chord_annotation(
-            filename, frame_length=self.hop_length / SR, return_transitions=True
+            filename, frame_length=self.hop_length / SR, return_transitions=True, override_dir=self.chord_cache_dir
         )
         return transitions.long()
 
