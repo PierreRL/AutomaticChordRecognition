@@ -379,6 +379,8 @@ class FullChordDataset(Dataset):
                 filename=filename,
                 beat_interval=self.beat_resample_interval,
                 perfect_beat_resample=self.perfect_beat_resample,
+                override_dir_beat=f"{self.input_dir}/beats",
+                override_dir_chord=f"{self.input_dir}/chords",
             )
         else:
             # Otherwise, 'beats' are the CQT frames.
