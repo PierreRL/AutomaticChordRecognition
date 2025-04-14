@@ -11,12 +11,13 @@ from src.models.crnn import CRNN
 from src.models.cnn import CNN
 from src.models.logistic_acr import LogisticACR
 from src.utils import (
+    write_json,
+    generate_experiment_name,
+    get_torch_device,
     NUM_CHORDS,
     N_BINS,
     N_MELS,
     N_FFT,
-    write_json,
-    generate_experiment_name,
 )
 
 
@@ -219,7 +220,7 @@ def main():
     parser.add_argument(
         "--hmm_alpha",
         type=float,
-        default=0.2,
+        default=0.25,
         help="Alpha parameter for the HMM smoothing. The probability of staying in the same chord.",
     )
     parser.add_argument(
@@ -493,21 +494,21 @@ def main():
 
     # Train the model
     print(f"Number of training samples: {len(train_dataset)}")
-    print("Training model...")
-    training_history = train_model(
-        model,
-        train_dataset,
-        val_dataset,
-        args=training_args,
-    )
+    # print("Training model...")
+    # training_history = train_model(
+    #     model,
+    #     train_dataset,
+    #     val_dataset,
+    #     args=training_args,
+    # )
 
     # Save the training history dictionary
-    write_json(training_history, f"{DIR}/training_history.json")
+    # write_json(training_history, f"{DIR}/training_history.json")
 
     # Validate and test the model
 
     # Load the best model
-    model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True))
+    model.load_state_dict(torch.load(f"{DIR}/best_model.pth", weights_only=True, map_location=get_torch_device()))
     model.eval()
 
     torch.set_grad_enabled(False)
