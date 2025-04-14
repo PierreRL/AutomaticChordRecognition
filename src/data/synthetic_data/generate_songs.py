@@ -26,8 +26,9 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
 
         description = generate_description()
         meter = 4
-        num_beats = int(bpm * song_length / 60)
-        chord_seq = generate_jazz_progression(seq_length=num_beats)
+        # num_beats = int(bpm * song_length / 60)
+        # chord_seq = generate_jazz_progression(seq_length=10)
+        chord_seq = "C:maj7 D:min7 G:7 C:maj7"
 
         bpm_list.append(bpm)
         description_list.append(description)
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     parser.add_argument("--song_length", type=int, default=220, help="Length for each song in seconds.")
     parser.add_argument("--bpm_mean", type=float, default=117.0, help="Mean BPM for sampling.")
     parser.add_argument("--bpm_std", type=float, default=28.0, help="Standard deviation for BPM sampling.")
-    parser.add_argument("--output_dir", type=str, default="./data/generated_songs", help="Directory to save generated WAV files.")
+    parser.add_argument("--output_dir", type=str, default="./data/synthetic_songs", help="Directory to save generated WAV files.")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of songs to generate per batch.")
     args = parser.parse_args()
     main(args)
