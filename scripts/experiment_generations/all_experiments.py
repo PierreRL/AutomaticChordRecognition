@@ -137,7 +137,6 @@ base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --crf "
 print_to_file(call)
 
-"""
 
 # Hmm alphas
 output_dir = "hmm_alphas"
@@ -148,8 +147,6 @@ for alpha in alphas:
     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha}"
     print_to_file(call)
 
-
-"""
 
 # Spectrograms
 output_dir = "spectrograms"
@@ -177,16 +174,16 @@ for hop_length in hop_lengths:
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
 #     call = f"{base_call} --weight_loss --weight_alpha={alpha}"
 #     print_to_file(call)
-    
-# Structured Loss
-# output_dir = "structured_loss"
-# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-# for alpha in alphas:
-#     exp_name = f"alpha_{alpha}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha}"
-#     print_to_file(call)
 """
+
+# Structured Loss
+output_dir = "structured_loss"
+alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+for alpha in alphas:
+    exp_name = f"alpha_{alpha}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha} --hmm_smoothing"
+    print_to_file(call)
 
 # Pitch Shifts
 # output_dir = "pitch_shifts"
@@ -194,17 +191,17 @@ for hop_length in hop_lengths:
 # for p in probabilities:
 #     exp_name = f"audio_{p}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p}"
+#     call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
 #     print_to_file(call)
 # for p in probabilities:
 #     exp_name = f"cqt_{p}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p}"
+#     call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
 #     print_to_file(call)
 # for p in probabilities:
 #     exp_name = f"audio_cqt_{p}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p}"
+#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
 #     print_to_file(call)
 
 # # Generative features
@@ -214,35 +211,35 @@ for hop_length in hop_lengths:
 # for model_name, reduction in product(model_names, reductions):
 #     exp_name = f"model_{model_name}_reduction_{reduction}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing"
+#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
 #     print_to_file(call)
 
 # # Beatwise sampling
 # output_dir = "beatwise_sampling"
 # exp_name = "none"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift"
+# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --structured_loss"
 # print_to_file(call)
 # exp_name = "feed_transitions"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --input_transitions"
+# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --input_transitions --structured_loss"
 # print_to_file(call)
 
 # beat_intervals = [0.25, 0.5, 1, 2, 4]
 # for beat_interval in beat_intervals:
 #     exp_name = f"beat_interval_{beat_interval}"
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --beat_interval={beat_interval}"
+#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --beat_interval={beat_interval} --structured_loss"
 #     print_to_file(call)
 
 # exp_name = "perfect_beats_train_only"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample"
+# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --structured_loss"
 # print_to_file(call)
 
 # exp_name = "perfect_beats_train_and_test"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval"
+# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
 # print_to_file(call)
 
 
