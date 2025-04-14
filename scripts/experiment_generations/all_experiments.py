@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Script for generating ALL experiments into experiments.txt"""
 import os
-import numpy as np
 
 USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
