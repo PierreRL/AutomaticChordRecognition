@@ -167,17 +167,17 @@ for spectrogram in spectrograms:
 output_dir = "smoothers"
 exp_name = "none"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --cqt_pitch_shift --structured_loss"
+call = f"{base_call}"
 print_to_file(call)
 exp_name = "hmm"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = (
-    f"{base_call} --hmm_smoothing --structured_loss"
+    f"{base_call} --hmm_smoothing"
 )
 print_to_file(call)
 exp_name = "crf"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --crf --structured_loss"
+call = f"{base_call} --crf "
 print_to_file(call)
 
 # Pitch Shifts
