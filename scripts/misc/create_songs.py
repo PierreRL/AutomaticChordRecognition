@@ -13,7 +13,7 @@ output_file = open("./scripts/experiments.txt", "w")
 
 num_songs = 1
 max_group_size = 200
-base_call = f"python {REPO_HOME}/src/data/synthetic_data/generate_songs.py --output_dir={DATA_HOME}"
+base_call = f"python {REPO_HOME}/src/data/synthetic_data/generate_songs.py --output_dir={DATA_HOME}/synthetic_songs"
 
 output_file = open("./scripts/experiments.txt", "w")
 

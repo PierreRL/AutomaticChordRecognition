@@ -961,11 +961,15 @@ def audio_write(filename, audio_tensor, sample_rate):
     """
     # Ensure the tensor is on CPU.
     audio_tensor = audio_tensor.detach().cpu()
-    
-    # If the tensor is 1D (mono audio), unsqueeze to add a channel dimension.
+
+    # If the tensor is 3D, remove the batch dimension.
+    if audio_tensor.ndim == 3:
+        audio_tensor = audio_tensor[0]  # shape [channels, samples]
+
+    # If the tensor is 1D, add a channel dimension.
     if audio_tensor.ndim == 1:
-        audio_tensor = audio_tensor.unsqueeze(0)
-    
+        audio_tensor = audio_tensor.unsqueeze(0)  # shape[1, samples]
+
     # Save directly since torchaudio expects [channels, samples].
     torchaudio.save(filename, audio_tensor, sample_rate)
 
