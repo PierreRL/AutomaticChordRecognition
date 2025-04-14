@@ -126,7 +126,6 @@ print_to_file(call)
 base_call = get_base_call(output_dir, exp_name="cr2_off")
 call = f"{base_call}"
 print_to_file(call)
-"""
 
 # Spectrograms
 output_dir = "spectrograms"
@@ -163,7 +162,7 @@ for spectrogram in spectrograms:
 #     base_call = get_base_call(output_dir, exp_name=exp_name)
 #     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss --structured_loss"
 #     print_to_file(call)
-
+"""
 # Smoothers
 output_dir = "smoothers"
 exp_name = "none"
@@ -173,12 +172,12 @@ print_to_file(call)
 exp_name = "hmm"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = (
-    f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+    f"{base_call} --hmm_smoothing --structured_loss"
 )
 print_to_file(call)
 exp_name = "crf"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --crf --structured_loss"
+call = f"{base_call} --crf --structured_loss"
 print_to_file(call)
 
 # Pitch Shifts
