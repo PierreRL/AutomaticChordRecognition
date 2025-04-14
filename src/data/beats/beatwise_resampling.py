@@ -60,10 +60,10 @@ def get_resampled_full_beats(
     # Remove duplicates and sort the list.
     beat_times = sorted(set(beat_times))
 
-    # Remove first and last beat time if within 0.1 seconds of song start or end.
-    if beat_times[0] < song_start + 0.1:
+    # Remove first and last beat time if within 0.25 seconds of song start or end.
+    if beat_times[0] < song_start + 0.25:
         beat_times = beat_times[1:]
-    if beat_times[-1] > song_end - 0.1:
+    if beat_times[-1] > song_end - 0.25:
         beat_times = beat_times[:-1]
 
     # Create a full list of interval boundaries: from song_start, through the provided beat_times, to song_end.
