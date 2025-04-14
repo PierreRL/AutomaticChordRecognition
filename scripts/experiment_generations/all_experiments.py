@@ -156,30 +156,30 @@ for spectrogram in spectrograms:
 #     print_to_file(call)
 
 # Hmm alphas
-output_dir = "hmm_alphas"
-alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-for alpha in alphas:
-    exp_name = f"alpha_{alpha}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss --structured_loss"
-    print_to_file(call)
+# output_dir = "hmm_alphas"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss --structured_loss"
+#     print_to_file(call)
 
 # Smoothers
-# output_dir = "smoothers"
-# exp_name = "none"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift"
-# print_to_file(call)
-# exp_name = "hmm"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = (
-#     f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --hmm_smoothing"
-# )
-# print_to_file(call)
-# exp_name = "crf"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --crf"
-# print_to_file(call)
+output_dir = "smoothers"
+exp_name = "none"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --cqt_pitch_shift --structured_loss"
+print_to_file(call)
+exp_name = "hmm"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = (
+    f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+)
+print_to_file(call)
+exp_name = "crf"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --crf --structured_loss"
+print_to_file(call)
 
 # Pitch Shifts
 # output_dir = "pitch_shifts"
