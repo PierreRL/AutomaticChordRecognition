@@ -220,7 +220,7 @@ def main():
     parser.add_argument(
         "--hmm_alpha",
         type=float,
-        default=0.25,
+        default=0.2,
         help="Alpha parameter for the HMM smoothing. The probability of staying in the same chord.",
     )
     parser.add_argument(

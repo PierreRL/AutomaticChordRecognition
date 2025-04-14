@@ -12,7 +12,6 @@ import mir_eval
 from src.models.crnn import CRNN
 from src.models.base_model import BaseACR
 from src.data.dataset import FullChordDataset, IndexedDataset
-from src.data.beats.beatwise_resampling import get_resampled_full_beats
 from src.utils import (
     get_torch_device,
     collate_fn_indexed,
@@ -185,7 +184,9 @@ def evaluate_model(
                 batch_cqts, batch_gens, mask=valid_mask, device=device
             )
         else:
-            predictions = model.predict(batch_cqts, mask=valid_mask)
+            crf_mask = valid_mask.clone()
+            crf_mask[:, 0] = True  # Ensure the first frame is always valid
+            predictions = model.predict(batch_cqts, mask=crf_mask)
 
         predictions = predictions.cpu().numpy()
 
