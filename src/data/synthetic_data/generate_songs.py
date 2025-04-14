@@ -83,7 +83,7 @@ def main(args):
             audio_write(output_file, audio_batch[i], sample_rate)
             write_json(metadata_batch[i], os.path.join(args.output_dir, 'metadata', f"metadata_{song_idx+1}.json"))
             chord_seq = reformat_chord_sequence(metadata_batch[i], args.song_length)
-            write_json(chord_seq, reformatted_file = os.path.join(args.output_dir, 'chords', f"chords_{song_idx+1}.json"))
+            write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"chords_{song_idx+1}.json"))
             print(f"Saved song {song_idx+1} to {output_file}")
             song_idx += 1
 
