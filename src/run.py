@@ -494,16 +494,16 @@ def main():
 
     # Train the model
     print(f"Number of training samples: {len(train_dataset)}")
-    # print("Training model...")
-    # training_history = train_model(
-    #     model,
-    #     train_dataset,
-    #     val_dataset,
-    #     args=training_args,
-    # )
+    print("Training model...")
+    training_history = train_model(
+        model,
+        train_dataset,
+        val_dataset,
+        args=training_args,
+    )
 
     # Save the training history dictionary
-    # write_json(training_history, f"{DIR}/training_history.json")
+    write_json(training_history, f"{DIR}/training_history.json")
 
     # Validate and test the model
 
