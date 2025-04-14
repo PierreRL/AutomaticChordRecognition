@@ -41,9 +41,11 @@ class FullChordDataset(Dataset):
         use_augs: bool = False,
         dev_mode: bool = False,
         input_transitions: bool = False,
-        beat_wise_resample: bool = False,  # <-- new flag
+        beat_wise_resample: bool = False, 
         beat_resample_interval: float = 1,
         perfect_beat_resample: bool = False,
+        synthetic_filenames: List[str] = None,
+        synthetic_input_dir: str = "./data/synthetic_data",
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.

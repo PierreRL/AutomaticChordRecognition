@@ -2,13 +2,16 @@
 """Script for generating experiments.txt"""
 import os
 
-# The home dir on the node's scratch disk
 USER = os.getenv("USER")
-# This may need changing to e.g. /disk/scratch_fast depending on the cluster
 EDDIE = os.getenv("EDDIE")
-
 REPO_HOME = f"/home/{USER}/LeadSheetTranscription"
+
+if EDDIE is None:
+    EDDIE = REPO_HOME  # Compatibility with eddie and mlt clusters
+
 DATA_HOME = f"{EDDIE}/data/processed"
+
+output_file = open("./scripts/experiments.txt", "w")
 
 base_call = f"python {REPO_HOME}/src/run.py --input_dir={DATA_HOME} --output_dir={EDDIE}/experiments/cnn --model=cnn"
 

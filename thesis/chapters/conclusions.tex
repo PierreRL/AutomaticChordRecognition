@@ -3,24 +3,22 @@
 
 \section{Conclusions}
 
-- What do the results say?
+- What do the results say? What did we find?
 
 \section{Limitations}
 Limitations:
 - Genre
 - Standard tuning, Western
 - No lyrics
-- No beat/segmentation detection
-- No chord inversion
-- Size of vocabulary lacking leading to tricky X chord
+- Size of vocabulary: inversion etc
+- Some labels don't have a clear meaning
 
 \section{Further Work}
 Further work:
+- More detailed expts:
+    - more models for gen features, more varied, with vocals etc
+    - better future chord conditioned models for synthetic data
 - More data e.g. HookTheory
-- Larger vocabulary? Inversion as in? Why didn't I do this?
-- Make into a useful tool by outputting chords in a more useful format
-- Investigate other methods of synthetic data generation?
-- Stuff I didn't have time to incorporate e.g. beat/segmentation detection, structured loss, curriculum learning
-
-- Focus on incorporating more musical knowledge into the problem. Criticism of the field for simply trying to push up these metric, when its not really a useful problem to be solving.
-- Especially since making the model more complex doesn't help, it's difficult to get more data, and things like weighting the loss does help, but not nearly enough.
+- Better beat tracking?
+- Incorporate functional harmony or chord vectors as targets
+- Better understanding of the glass ceiling, human inter-annotator scores.

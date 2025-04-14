@@ -26,7 +26,7 @@ class CRNN(BaseACR):
         self,
         input_features: int = 216,
         num_classes: int = NUM_CHORDS,
-        hidden_size: int = 201,
+        hidden_size: int = 256,
         gru_layers: int = 1,
         cnn_layers: int = 1,
         kernel_size: int = 5,
