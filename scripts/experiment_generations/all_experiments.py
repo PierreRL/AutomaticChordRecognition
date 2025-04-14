@@ -231,7 +231,7 @@ beat_intervals = [1/4, 1/2, 1, 2, 4]
 for beat_interval in beat_intervals:
     exp_name = f"beat_interval_{beat_interval}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_interval={beat_interval} --structured_loss"
+    call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
     print_to_file(call)
 
 exp_name = "perfect_beats_train_only"

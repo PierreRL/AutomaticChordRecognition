@@ -332,6 +332,7 @@ class FullChordDataset(Dataset):
                 beat_interval=self.beat_resample_interval,
                 perfect_beat_resample=self.perfect_beat_resample,
                 frame_rate=SR / self.hop_length,
+                override_dir=f"{self.input_dir}/chords",
             )
             # Do the same for generative features if available:
             if gen is not None and gen.shape[0] > 0:
