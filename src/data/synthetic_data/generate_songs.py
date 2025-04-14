@@ -26,9 +26,8 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
 
         description = generate_description()
         meter = 4
-        # num_beats = int(bpm * song_length / 60)
-        # chord_seq = generate_jazz_progression(seq_length=10)
-        chord_seq = "C:maj7 D:min7 G:7 C:maj7"
+        num_bars = int(song_length * bpm / 60 / meter)
+        chord_seq = generate_jazz_progression(seq_length=num_bars)
 
         bpm_list.append(bpm)
         description_list.append(description)
@@ -42,10 +41,8 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
             "chord_sequence": chord_seq,
         }
         metadata_list.append(metadata)
-
-    extend_stride = 10 if song_length > 30 else 0
     model.set_generation_params(
-        duration=song_length, extend_stride=extend_stride, top_k=250
+        duration=30, extend_stride=30//2, top_k=250
     )
 
     audio_out_batch = model.generate_with_chords_and_beats(
@@ -91,7 +88,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate songs with MusiConGen in batches.")
     parser.add_argument("--num_songs", type=int, default=1, help="Number of songs to generate.")
-    parser.add_argument("--song_length", type=int, default=220, help="Length for each song in seconds.")
+    parser.add_argument("--song_length", type=int, default=30, help="Length for each song in seconds.")
     parser.add_argument("--bpm_mean", type=float, default=117.0, help="Mean BPM for sampling.")
     parser.add_argument("--bpm_std", type=float, default=28.0, help="Standard deviation for BPM sampling.")
     parser.add_argument("--output_dir", type=str, default="./data/synthetic_songs", help="Directory to save generated WAV files.")

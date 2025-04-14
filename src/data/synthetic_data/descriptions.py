@@ -62,8 +62,3 @@ def generate_description():
     instruments_str = "Instruments: " + ", ".join(instruments) + "."
 
     return f"A {genre_adj} {genre} track {description_body}. {instruments_str}"
-
-# Example: Generate 5 sample descriptions
-for _ in range(5):
-    print(generate_description())
-    print()

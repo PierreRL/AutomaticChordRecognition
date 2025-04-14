@@ -252,7 +252,8 @@ def reformat_chord_sequence(metadata: dict, song_length: float) -> list:
     bar_duration = (60 / bpm) * meter
 
     new_chord_seq = []
-    for i, chord in enumerate(chord_sequence):
+    chord_seq = chord_sequence.split(" ")
+    for i, chord in enumerate(chord_seq):
         start_time = i * bar_duration
         if start_time >= song_length:
             # If the chord would start after the song ends, stop processing
