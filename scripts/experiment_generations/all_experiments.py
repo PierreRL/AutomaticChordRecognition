@@ -174,7 +174,7 @@ for alpha in alphas:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --weight_loss --weight_alpha={alpha} --hmm_smoothing"
     print_to_file(call)
-"""
+
 
 
 # Structured Loss
@@ -185,25 +185,26 @@ for alpha in alphas:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha} "
     print_to_file(call)
+"""
 
 # Pitch Shifts
-# output_dir = "pitch_shifts"
-# probabilities = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-# for p in probabilities:
-#     exp_name = f"audio_{p}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
-#     print_to_file(call)
-# for p in probabilities:
-#     exp_name = f"cqt_{p}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
-#     print_to_file(call)
-# for p in probabilities:
-#     exp_name = f"audio_cqt_{p}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
-#     print_to_file(call)
+output_dir = "pitch_shifts"
+probabilities = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+for p in probabilities:
+    exp_name = f"audio_{p}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --audio_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
+    print_to_file(call)
+for p in probabilities:
+    exp_name = f"cqt_{p}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
+    print_to_file(call)
+for p in probabilities:
+    exp_name = f"audio_cqt_{p}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
+    print_to_file(call)
 
 # # Generative features
 # output_dir = "generative_features"
