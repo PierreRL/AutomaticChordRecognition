@@ -332,7 +332,8 @@ class FullChordDataset(Dataset):
                 beat_interval=self.beat_resample_interval,
                 perfect_beat_resample=self.perfect_beat_resample,
                 frame_rate=SR / self.hop_length,
-                override_dir=f"{self.input_dir}/chords",
+                override_dir_chord=f"{self.input_dir}/chords",
+                override_dir_beat=f"{self.input_dir}/beats",
             )
             # Do the same for generative features if available:
             if gen is not None and gen.shape[0] > 0:
@@ -342,12 +343,16 @@ class FullChordDataset(Dataset):
                     beat_interval=self.beat_resample_interval,
                     perfect_beat_resample=self.perfect_beat_resample,
                     frame_rate=SR / self.hop_length,
+                    override_dir_chord=f"{self.input_dir}/chords",
+                    override_dir_beat=f"{self.input_dir}/beats",
                 )
             # Resample chords:
             chord_ids = get_beatwise_chord_annotation(
                 filename,
                 beat_interval=self.beat_resample_interval,
                 perfect_beat_resample=self.perfect_beat_resample,
+                override_dir_chord=f"{self.input_dir}/chords",
+                override_dir_beat=f"{self.input_dir}/beats",
             )
 
         if self.input_transitions:

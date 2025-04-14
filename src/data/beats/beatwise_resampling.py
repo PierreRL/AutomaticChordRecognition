@@ -15,7 +15,11 @@ from src.utils import (
 
 
 def get_resampled_full_beats(
-    filename: str, beat_interval: int = 1, perfect_beat_resample: bool = False, override_dir: str = None
+    filename: str, 
+    beat_interval: int = 1, 
+    perfect_beat_resample: bool = False, 
+    override_dir_chord: str = None, 
+    override_dir_beat: str = None
 ) -> list:
     """
     Compute beat-wise chord annotations by aligning raw chord annotations with provided beat times.
@@ -41,12 +45,12 @@ def get_resampled_full_beats(
         List of chord labels (as strings), one per beat interval.
     """
     # Load chord annotations. Expected to be a sorted iterable of Observation objects.
-    ann = get_raw_chord_annotation(filename, override_dir)
+    ann = get_raw_chord_annotation(filename, override_dir_chord)
 
     if perfect_beat_resample:
         beat_times = get_perfect_beats_from_ann(ann)
     else:
-        beat_times = get_raw_beats(filename)
+        beat_times = get_raw_beats(filename, override_dir_beat)
 
     # Filter out any beat times that occur after the song end.
     song_start = 0.0
@@ -152,7 +156,11 @@ def get_perfect_beats_from_ann(ann):
 
 
 def get_beatwise_chord_annotation(
-    filename, beat_interval=1, perfect_beat_resample=False, return_as_string=False
+    filename, beat_interval=1, 
+    perfect_beat_resample=False, 
+    return_as_string=False, 
+    override_dir_chord=None, 
+    override_dir_beat=None
 ):
     """
     Compute beat-wise discrete chord annotations by aligning raw chord annotations
@@ -181,9 +189,13 @@ def get_beatwise_chord_annotation(
     """
     # Load chord annotations. Expected to be a sorted iterable of Observation objects.
     beat_times = get_resampled_full_beats(
-        filename, beat_interval, perfect_beat_resample
+        filename, 
+        beat_interval, 
+        perfect_beat_resample, 
+        override_dir_chord=override_dir_chord, 
+        override_dir_beat=override_dir_beat
     )
-    ann = get_raw_chord_annotation(filename)
+    ann = get_raw_chord_annotation(filename, override_dir_chord)
 
     beat_chords = []
 
@@ -217,7 +229,8 @@ def resample_features_by_beat(
     beat_interval=1,
     frame_rate=SR / HOP_LENGTH,
     perfect_beat_resample=False,
-    override_dir=None,
+    override_dir_chord=None,
+    override_dir_beat=None,
 ):
     """
     Resample a feature matrix to beat-synchronous representation by aggregating (averaging)
@@ -242,7 +255,7 @@ def resample_features_by_beat(
     """
 
     beat_times = get_resampled_full_beats(
-        filename, beat_interval, perfect_beat_resample, override_dir=override_dir
+        filename, beat_interval, perfect_beat_resample, override_dir_chord=override_dir_chord, override_dir_beat=override_dir_beat
     )
 
     # Calculate frame times using the frame rate
