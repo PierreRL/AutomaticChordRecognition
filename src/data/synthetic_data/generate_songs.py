@@ -7,8 +7,8 @@ import torch
 
 from src.utils import audio_write, write_json
 from src.data.generative_features.musicgen import get_musicgen_model
-from src.data.synthetic_data.descriptions import sample_description
-from src.data.synthetic_data.chord_sequence import sample_chord_sequence, reformat_chord_sequence
+from src.data.synthetic_data.descriptions import generate_description
+from src.data.synthetic_data.chord_sequence import generate_jazz_progression, reformat_chord_sequence
 
 from MusiConGen.audiocraft.audiocraft.models import MusicGen as MusiConGen
 
@@ -24,10 +24,10 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
         while bpm < 60 or bpm > 200:
             bpm = int(np.random.normal(bpm_mean, bpm_std))
 
-        description = sample_description()
+        description = generate_description()
         meter = 4
         num_beats = int(bpm * song_length / 60)
-        chord_seq = sample_chord_sequence(seq_length=num_beats)
+        chord_seq = generate_jazz_progression(seq_length=num_beats)
 
         bpm_list.append(bpm)
         description_list.append(description)
