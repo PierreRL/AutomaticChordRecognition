@@ -4,17 +4,15 @@ Script to create generative features for the dataset using MusicGen.
 
 import autorootcwd
 
-import torch
 import os
 import argparse
 from tqdm import tqdm
 
-from src.data.dataset import FullChordDataset
+import torch
+
 from src.utils import get_filenames, get_torch_device, SR
-from src.data.generative_features.musicgen import (
-    get_musicgen_model,
-    extract_song_hidden_representation,
-)
+from src.data.generative_features.musicgen import get_musicgen_model, extract_song_hidden_representation
+from src.data.generative_features.jukebox import get_jukebox_model, extract_song_hidden_representation_jukebox
 
 
 def main(
@@ -36,7 +34,11 @@ def main(
 
     filenames = get_filenames(dir=f"{dir}/audio")
     print("Loading model...")
-    model = get_musicgen_model(model_name=model_name, device=device)
+    if model_name == "jukebox":
+        bundle = get_jukebox_model()
+    else:
+        model = get_musicgen_model(model_name=model_name, device=device)
+
     frame_length = hop_length / SR
 
     if end_idx is None:
@@ -54,15 +56,25 @@ def main(
         if os.path.exists(f"{output_dir}/concat/{filename}.pt"):
             print(f"Skipping {filename} as it already exists.")
             continue
-
-        song_repr_dict = extract_song_hidden_representation(
-            dir=dir,
-            filename=filename,
-            max_chunk_length=max_chunk_length,
-            model=model,
-            frame_length=frame_length,
-            max_batch_size=batch_size,
-        )
+        
+        if model_name == "jukebox":
+            song_repr_dict = extract_song_hidden_representation_jukebox(
+                dir=dir,
+                filename=filename,
+                max_chunk_length=max_chunk_length,
+                jukebox_bundle=bundle,
+                frame_length=frame_length,
+                max_batch_size=batch_size,
+            )
+        else:
+            song_repr_dict = extract_song_hidden_representation(
+                dir=dir,
+                filename=filename,
+                max_chunk_length=max_chunk_length,
+                model=model,
+                frame_length=frame_length,
+                max_batch_size=batch_size,
+            )
         for reduction, song_repr in song_repr_dict.items():
             os.makedirs(f"{output_dir}/{reduction}", exist_ok=True)
             torch.save(song_repr, f"{output_dir}/{reduction}/{filename}.pt")
