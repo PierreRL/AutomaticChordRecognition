@@ -43,7 +43,7 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
         }
         metadata_list.append(metadata)
 
-    extend_stride = 15 if song_length > 30 else 0
+    extend_stride = 10 if song_length > 30 else 0
     model.set_generation_params(
         duration=song_length, extend_stride=extend_stride, top_k=250
     )
