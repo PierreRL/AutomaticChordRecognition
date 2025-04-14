@@ -165,7 +165,6 @@ for hop_length in hop_lengths:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --hop_length={hop_length}"
     print_to_file(call)
-"""
 
 # Weighted alpha search
 output_dir = "weight_alpha_search"
@@ -175,16 +174,17 @@ for alpha in alphas:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --weight_loss --weight_alpha={alpha} --hmm_smoothing"
     print_to_file(call)
+"""
 
 
 # Structured Loss
-# output_dir = "structured_loss"
-# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-# for alpha in alphas:
-#     exp_name = f"alpha_{alpha}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha} "
-#     print_to_file(call)
+output_dir = "structured_loss"
+alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+for alpha in alphas:
+    exp_name = f"alpha_{alpha}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha} "
+    print_to_file(call)
 
 # Pitch Shifts
 # output_dir = "pitch_shifts"
