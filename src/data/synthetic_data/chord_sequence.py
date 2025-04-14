@@ -157,7 +157,7 @@ def pick_chord_quality(chord_pool):
 # 5) Main generator
 ################################################################################
 
-def generate_jazz_progression(length=8, allow_minor=True):
+def generate_jazz_progression(seq_length, allow_minor=True):
     """
     Generate a jazz chord progression in Harte notation with chord pools
     that have assigned probabilities.
@@ -182,12 +182,12 @@ def generate_jazz_progression(length=8, allow_minor=True):
     progression = [chord_of_degree(1)]
 
     # 2. Build middle chords
-    for pos in range(1, length - 1):
+    for pos in range(1, seq_length - 1):
         prev_chord = progression[-1]
         prev_degree = get_scale_degree(prev_chord, scale)
 
         # second-to-last => pick V for a strong cadence
-        if pos == length - 2:
+        if pos == seq_length - 2:
             progression.append(chord_of_degree(5))
             continue
 
@@ -274,4 +274,4 @@ def reformat_chord_sequence(metadata: dict, song_length: float) -> list:
 
 if __name__ == "__main__":
     for _ in range(5):
-        print(generate_jazz_progression(length=40, allow_minor=True))
+        print(generate_jazz_progression(seq_length=40, allow_minor=True))

@@ -10,8 +10,7 @@ genres = {
     "pop": ["catchy", "radiant", "polished", "upbeat", "danceable"],
     "reggae": ["chilled", "rootsy", "sun-soaked", "dub-infused", "laid-back"],
     "hiphop": ["hard-hitting", "jazzy", "minimal", "old-school", "trap-style"],
-    "electronic": ["ambient", "pulsating", "glitchy", "cinematic", "futuristic"],
-    "classical": ["elegant", "stirring", "lyrical", "majestic", "intimate"]
+    "electronic": ["ambient", "pulsating", "glitchy", "cinematic", "futuristic"]
 }
 
 # Template pools
