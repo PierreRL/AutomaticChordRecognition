@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Script for generating ALL experiments into experiments.txt"""
 import os
-# from itertools import product
-# import numpy as np
+import numpy as np
 
 USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
@@ -30,7 +29,7 @@ def print_to_file(expt):
 output_dir = "logistic_lr_search"
 lrs = [0.0001, 0.001, 0.01, 0.1]
 schedulers = ["cosine", "plateau", "none"]
-for lr, scheduler in product(lrs, schedulers):
+for lr, scheduler in [l, s for l in lrs for s in schedulers]:
     exp_name = f"lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --model=logistic --lr={lr} --lr_scheduler={scheduler}"
@@ -186,8 +185,6 @@ for alpha in alphas:
     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha} --hmm_smoothing"
     print_to_file(call)
 
-"""
-
 
 # Pitch Shifts
 output_dir = "pitch_shifts"
@@ -207,44 +204,45 @@ for p in probabilities:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
     print_to_file(call)
+"""
 
-# # Generative features
-# output_dir = "generative_features"
-# model_names = ["large", "small", "chord", "melody", "large-conditioned"]
-# reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
-# for model_name, reduction in product(model_names, reductions):
-#     exp_name = f"model_{model_name}_reduction_{reduction}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
-#     print_to_file(call)
+# Generative features
+output_dir = "generative_features"
+model_names = ["large", "small", "chord", "melody", "large-conditioned"]
+reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
+for model_name, reduction in [m, r for m in model_names for r in reductions]:
+    exp_name = f"model_{model_name}_reduction_{reduction}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
+    print_to_file(call)
 
-# # Beatwise sampling
-# output_dir = "beatwise_sampling"
-# exp_name = "none"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --structured_loss"
-# print_to_file(call)
-# exp_name = "feed_transitions"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --input_transitions --structured_loss"
-# print_to_file(call)
+# Beatwise sampling
+output_dir = "beatwise_sampling"
+exp_name = "none"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --cqt_pitch_shift --structured_loss"
+print_to_file(call)
+exp_name = "feed_transitions"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --cqt_pitch_shift --input_transitions --structured_loss"
+print_to_file(call)
 
-# beat_intervals = [0.25, 0.5, 1, 2, 4]
-# for beat_interval in beat_intervals:
-#     exp_name = f"beat_interval_{beat_interval}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --beat_interval={beat_interval} --structured_loss"
-#     print_to_file(call)
+beat_intervals = [1/4, 1/2, 1, 2, 4]
+for beat_interval in beat_intervals:
+    exp_name = f"beat_interval_{beat_interval}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_interval={beat_interval} --structured_loss"
+    print_to_file(call)
 
-# exp_name = "perfect_beats_train_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --structured_loss"
-# print_to_file(call)
+exp_name = "perfect_beats_train_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --audio_pitch_shift --beat_wise_resample --perfect_beat_resample --structured_loss"
+print_to_file(call)
 
-# exp_name = "perfect_beats_train_and_test"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
-# print_to_file(call)
+exp_name = "perfect_beats_train_and_test"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
+print_to_file(call)
 
 
 # Print number of experiments in the file

@@ -118,7 +118,7 @@ def main():
     parser.add_argument(
         "--aug_shift_prob",
         type=float,
-        default=0.5,
+        default=0.9,
         help="Probability of applying pitch shift augmentation.",
     )
     parser.add_argument(
@@ -293,9 +293,9 @@ def main():
 
     if (
         args.hop_length is None
-    ):  # Default hop length is 4096, but if beat-wise resampling is used, it is set to 512.
+    ):  # Default hop length is 4096, but if beat-wise resampling is used, it is set to 1024.
         if args.beat_wise_resample:
-            args.hop_length = 512
+            args.hop_length = 1024
         else:
             args.hop_length = 4096
 
