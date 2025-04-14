@@ -464,6 +464,7 @@ def main():
     }
     write_json(run_metadata, f"{DIR}/metadata.json")
 
+    use_augs = args.audio_pitch_shift or args.cqt_pitch_shift
     training_args = TrainingArgs(
         epochs=args.epochs,
         lr=args.lr,
@@ -479,6 +480,8 @@ def main():
         use_weighted_loss=args.weight_loss,
         weight_alpha=args.weight_alpha,
         weight_decay=args.weight_decay,
+        aug_shift_prob=args.aug_shift_prob if use_augs else 0,
+        use_augs=use_augs,
         lr_scheduler=args.lr_scheduler,
         optimiser=args.optimiser,
         momentum=args.momentum,

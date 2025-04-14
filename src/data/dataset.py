@@ -179,8 +179,8 @@ class FullChordDataset(Dataset):
 
         min_length = min(t.shape[0] for t in valid_tensors)
         return tuple(t[:min_length] if t is not None else EMPTY_TENSOR for t in tensors)
-
-    def get_class_weights(self, epsilon=1e1, alpha=0.3) -> torch.Tensor:
+    
+    def get_class_weights_old(self, epsilon=10, alpha=0.3) -> torch.Tensor:
         """
         Calculate the chord loss weights for the dataset.
 
@@ -214,6 +214,75 @@ class FullChordDataset(Dataset):
 
         if self.mask_X:
             weights[1] = 0  # Ensure class '1' has zero weight if it is masked
+
+        return weights
+    
+    def get_class_weights(
+        self,
+        epsilon: float = 10,
+        alpha: float = 0.3,
+        aug_shift_prob=None
+    ) -> torch.Tensor:
+        """
+        Calculate chord loss weights while accounting for pitch shifting augmentation.
+        For each sample, the method computes:
+          - (1 - aug_shift_prob) * counts(original chord vector) +
+          - aug_shift_prob * (1 / N_shifts) * sum(counts(transposed chord vector) for each allowed shift)
+        The inverse frequency weights are computed from these aggregated counts.
+        
+        Args:
+            aug_shift_prob (float): Probability of applying a pitch shift.
+            pitch_range (tuple): Inclusive bounds for allowed semitone shifts (zero is excluded),
+                                 e.g. (-5, 6) corresponds to shifts in {-5, -4, ..., -1, 1, ..., 6}.
+            epsilon (float): Small value to avoid division by zero.
+            alpha (float): Exponent for inverse frequency weighting.
+            
+        Returns:
+            weights (torch.Tensor): Normalized inverse frequency weights for each chord class.
+        """
+        if aug_shift_prob is None or not self.use_augs:
+            aug_shift_prob = 0
+        # Allowed nonzero pitch shifts.
+        low, high = -5, 6
+        allowed_shifts = [s for s in range(low, high + 1) if s != 0]
+
+        total_counts = torch.zeros(NUM_CHORDS, dtype=torch.float)
+
+        for i in range(len(self)):
+            # Extract chord IDs and remove masked values.
+            chord_ids = self[i][2].flatten()
+            chord_ids = chord_ids[chord_ids != -1]
+            if chord_ids.numel() == 0:
+                continue
+
+            # Count chords in the original (unshifted) annotation.
+            orig_count = torch.bincount(chord_ids, minlength=NUM_CHORDS).float()
+            expected_count = (1 - aug_shift_prob) * orig_count
+
+            # For each allowed pitch shift, transpose the chord IDs and add the weighted counts.
+            for s in allowed_shifts:
+                transposed = transpose_chord_id_vector(chord_ids, s)
+                transposed = torch.tensor(transposed, dtype=torch.long, device=chord_ids.device)
+                transposed = transposed.flatten()
+                transposed = transposed[transposed != -1]
+                if transposed.numel() == 0:
+                    continue
+                trans_count = torch.bincount(transposed, minlength=NUM_CHORDS).float()
+                expected_count += (aug_shift_prob / len(allowed_shifts)) * trans_count
+
+            total_counts += expected_count
+
+        # Compute inverse frequency weights.
+        weights = 1.0 / (total_counts + epsilon) ** alpha
+        nonzero_mask = total_counts > 0
+        # Zero out weights for classes that never appear.
+        weights[~nonzero_mask] = 0
+        if nonzero_mask.any():
+            scaling_factor = (total_counts[nonzero_mask] * weights[nonzero_mask]).sum() / total_counts[nonzero_mask].sum()
+            weights /= scaling_factor
+
+        if self.mask_X:
+            weights[1] = 0
 
         return weights
 

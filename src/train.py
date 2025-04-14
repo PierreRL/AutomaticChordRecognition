@@ -38,10 +38,12 @@ class TrainingArgs:
         validate_every: int = 5,
         mask_X: bool = True,
         structured_loss: bool = False,
-        structured_loss_alpha: float = 0.5,
+        structured_loss_alpha: float = 0.7,
         use_weighted_loss: bool = False,
-        weight_alpha: float = 0.65,
+        weight_alpha: float = 0.3,
         weight_decay: float = 0.0,
+        aug_shift_prob: float = 0.9,
+        use_augs: bool = True,
         optimiser: str = "adam",
         momentum: float = 0.9,
         use_crf: bool = False,
@@ -66,6 +68,8 @@ class TrainingArgs:
         self.use_weighted_loss = use_weighted_loss
         self.weight_alpha = weight_alpha
         self.weight_decay = weight_decay
+        self.aug_shift_prob = aug_shift_prob
+        self.use_augs = use_augs
         self.optimiser = optimiser
         self.momentum = momentum
         self.use_crf = use_crf
@@ -93,6 +97,8 @@ class TrainingArgs:
             "weight_loss": self.use_weighted_loss,
             "weight_alpha": self.weight_alpha,
             "weight_decay": self.weight_decay,
+            "aug_shift_prob": self.aug_shift_prob,
+            "use_augs": self.use_augs,
             "optimiser": self.optimiser,
             **({"momentum": self.momentum} if self.optimiser == "sgd" else {}),
             "crf": self.use_crf,
@@ -139,7 +145,7 @@ def train_model(
 
     # Loss function
     if args.use_weighted_loss:
-        weights = train_dataset.full_dataset.get_class_weights(alpha=args.weight_alpha)
+        weights = train_dataset.full_dataset.get_class_weights(alpha=args.weight_alpha, aug_shift_prob=args.aug_shift_prob if args.use_augs else 0)
         weights = weights.to(device)
     else:
         weights = None
