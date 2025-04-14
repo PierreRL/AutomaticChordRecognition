@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Script for generating ALL experiments into experiments.txt"""
 import os
-from itertools import product
-import numpy as np
+# from itertools import product
+# import numpy as np
 
 USER = os.getenv("USER")
 EDDIE = os.getenv("EDDIE")
@@ -100,14 +100,6 @@ base_call = get_base_call("", exp_name=exp_name)
 call = f"{base_call} --optimiser=sgd --epochs=2000"
 print_to_file(call)
 
-# Hop lengths
-output_dir = "hop_lengths"
-hop_lengths = [512, 1024, 2048, 4096, 8192, 16384]
-for hop_length in hop_lengths:
-    exp_name = f"hop_length_{hop_length}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --hop_length={hop_length}"
-    print_to_file(call)
 
 # Small vs Large vocab
 output_dir = "small_vs_large_vocab"
@@ -118,6 +110,7 @@ base_call = get_base_call(output_dir, exp_name="large")
 call = f"{base_call}"
 print_to_file(call)
 
+
 # CR2
 output_dir = "cr2"
 base_call = get_base_call(output_dir, exp_name="cr2_on")
@@ -127,42 +120,6 @@ base_call = get_base_call(output_dir, exp_name="cr2_off")
 call = f"{base_call}"
 print_to_file(call)
 
-# Spectrograms
-output_dir = "spectrograms"
-spectrograms = ["cqt", "mel", "linear", "chroma"]
-for spectrogram in spectrograms:
-    exp_name = f"spectrogram_{spectrogram}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --spectrogram_type={spectrogram}"
-    print_to_file(call)
-
-# Weighted alpha search
-# output_dir = "weight_alpha_search"
-# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-# for alpha in alphas:
-#     exp_name = f"alpha_{alpha}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --weight_alpha={alpha}"
-#     print_to_file(call)
-
-# Structured Loss
-# output_dir = "structured_loss"
-# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-# for alpha in alphas:
-#     exp_name = f"alpha_{alpha}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha}"
-#     print_to_file(call)
-
-# Hmm alphas
-# output_dir = "hmm_alphas"
-# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-# for alpha in alphas:
-#     exp_name = f"alpha_{alpha}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha} --weight_loss --structured_loss"
-#     print_to_file(call)
-"""
 # Smoothers
 output_dir = "smoothers"
 exp_name = "none"
@@ -179,6 +136,57 @@ exp_name = "crf"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --crf "
 print_to_file(call)
+
+"""
+
+# Hmm alphas
+output_dir = "hmm_alphas"
+alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+for alpha in alphas:
+    exp_name = f"alpha_{alpha}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha}"
+    print_to_file(call)
+
+
+"""
+
+# Spectrograms
+output_dir = "spectrograms"
+spectrograms = ["cqt", "mel", "linear", "chroma"]
+for spectrogram in spectrograms:
+    exp_name = f"spectrogram_{spectrogram}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --spectrogram_type={spectrogram}"
+    print_to_file(call)
+
+# Hop lengths
+output_dir = "hop_lengths"
+hop_lengths = [512, 1024, 2048, 4096, 8192, 16384]
+for hop_length in hop_lengths:
+    exp_name = f"hop_length_{hop_length}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --hop_length={hop_length}"
+    print_to_file(call)
+
+# Weighted alpha search
+# output_dir = "weight_alpha_search"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --weight_alpha={alpha}"
+#     print_to_file(call)
+    
+# Structured Loss
+# output_dir = "structured_loss"
+# alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+# for alpha in alphas:
+#     exp_name = f"alpha_{alpha}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --structured_loss --weight_loss --structured_loss_alpha={alpha}"
+#     print_to_file(call)
+"""
 
 # Pitch Shifts
 # output_dir = "pitch_shifts"
