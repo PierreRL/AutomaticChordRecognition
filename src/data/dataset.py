@@ -326,6 +326,7 @@ class FullChordDataset(Dataset):
         # If beat-wise resampling is enabled, resample all modalities:
         if self.beat_wise_resample:
             # Resample features using your previously defined torch-compatible function:
+            song_end = (cqt.shape[0]+1) * self.hop_length / SR
             cqt = resample_features_by_beat(
                 features=cqt,
                 filename=filename,
@@ -334,6 +335,7 @@ class FullChordDataset(Dataset):
                 frame_rate=SR / self.hop_length,
                 override_dir_chord=f"{self.input_dir}/chords",
                 override_dir_beat=f"{self.input_dir}/beats",
+                song_end=song_end,
             )
             # Do the same for generative features if available:
             if gen is not None and gen.shape[0] > 0:
@@ -345,6 +347,7 @@ class FullChordDataset(Dataset):
                     frame_rate=SR / self.hop_length,
                     override_dir_chord=f"{self.input_dir}/chords",
                     override_dir_beat=f"{self.input_dir}/beats",
+                    song_end=song_end,
                 )
             # Resample chords:
             chord_ids = get_beatwise_chord_annotation(
@@ -353,6 +356,7 @@ class FullChordDataset(Dataset):
                 perfect_beat_resample=self.perfect_beat_resample,
                 override_dir_chord=f"{self.input_dir}/chords",
                 override_dir_beat=f"{self.input_dir}/beats",
+                song_end=song_end,
             )
 
         if self.input_transitions:

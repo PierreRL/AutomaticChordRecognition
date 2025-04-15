@@ -19,7 +19,8 @@ def get_resampled_full_beats(
     beat_interval: int = 1, 
     perfect_beat_resample: bool = False, 
     override_dir_chord: str = None, 
-    override_dir_beat: str = None
+    override_dir_beat: str = None,
+    song_end:float = None
 ) -> list:
     """
     Compute beat-wise chord annotations by aligning raw chord annotations with provided beat times.
@@ -38,6 +39,14 @@ def get_resampled_full_beats(
         The desired beat interval rate. For example, 1 means one annotation per beat,
         0.5 inserts an annotation halfway through each beat (i.e. twice per beat),
         and 2 groups beats by 2.
+    perfect_beat_resample : bool
+        If True, use perfect beat times from the chord annotations instead of the raw beat times.
+    override_dir_chord : str
+        Directory to override the default chord annotation directory.
+    override_dir_beat : str
+        Directory to override the default beat annotation directory.
+    song_end : float
+        The end time of the song. If None, it will be computed from the chord annotations.
 
     Returns
     -------
@@ -54,7 +63,8 @@ def get_resampled_full_beats(
 
     # Filter out any beat times that occur after the song end.
     song_start = 0.0
-    song_end = max(obs.time + obs.duration for obs in ann)
+    if song_end is None:
+        song_end = max(obs.time + obs.duration for obs in ann)
     beat_times = [bt for bt in beat_times if bt <= song_end]
 
     # Remove duplicates and sort the list.
@@ -160,7 +170,8 @@ def get_beatwise_chord_annotation(
     perfect_beat_resample=False, 
     return_as_string=False, 
     override_dir_chord=None, 
-    override_dir_beat=None
+    override_dir_beat=None,
+    song_end=None
 ):
     """
     Compute beat-wise discrete chord annotations by aligning raw chord annotations
@@ -182,7 +193,12 @@ def get_beatwise_chord_annotation(
         If True, use perfect beat times from the chord annotations instead of the raw beat times.
     return_as_string : bool
         If True, return the chord annotations as a list of strings instead of a tensor of chord ids.
-
+    override_dir_chord : str
+        Directory to override the default chord annotation directory.
+    override_dir_beat : str
+        Directory to override the default beat annotation directory.
+    song_end : float
+        The end time of the song. If None, it will be computed from the chord annotations.
     Returns
     -------
     beat_chords : list of str or torch.Tensor
@@ -193,7 +209,8 @@ def get_beatwise_chord_annotation(
         beat_interval, 
         perfect_beat_resample, 
         override_dir_chord=override_dir_chord, 
-        override_dir_beat=override_dir_beat
+        override_dir_beat=override_dir_beat,
+        song_end=song_end
     )
     ann = get_raw_chord_annotation(filename, override_dir_chord)
 
@@ -202,6 +219,11 @@ def get_beatwise_chord_annotation(
     for i in range(len(beat_times) - 1):
         beat_start = beat_times[i]
         beat_end = beat_times[i + 1]
+
+        if beat_start >= song_end:
+            break
+        if beat_start >= ann[-1].time + ann[-1].duration:
+            break
         chord_overlaps = {}
 
         # For each chord observation, compute the overlap with the current beat interval.
@@ -231,6 +253,7 @@ def resample_features_by_beat(
     perfect_beat_resample=False,
     override_dir_chord=None,
     override_dir_beat=None,
+    song_end=None,
 ):
     """
     Resample a feature matrix to beat-synchronous representation by aggregating (averaging)
@@ -247,6 +270,14 @@ def resample_features_by_beat(
                     0.5 inserts an annotation halfway through each beat.
       frame_rate  : float, optional (default=100.0)
                     The frame rate (in Hz), i.e., number of frames per second.
+        perfect_beat_resample : bool, optional (default=False)  
+                    If True, use perfect beat times from the chord annotations instead of the raw beat times.
+        override_dir_chord : str, optional
+                    Directory to override the default chord annotation directory.
+        override_dir_beat : str, optional
+                    Directory to override the default beat annotation directory.
+        song_end : float, optional
+                    The end time of the song. If None, it will be computed from the chord annotations.
 
     Returns:
       beat_features : torch.Tensor of shape (n_beats, feature_dim)
@@ -255,7 +286,7 @@ def resample_features_by_beat(
     """
 
     beat_times = get_resampled_full_beats(
-        filename, beat_interval, perfect_beat_resample, override_dir_chord=override_dir_chord, override_dir_beat=override_dir_beat
+        filename, beat_interval, perfect_beat_resample, override_dir_chord=override_dir_chord, override_dir_beat=override_dir_beat, song_end=song_end
     )
 
     # Calculate frame times using the frame rate
