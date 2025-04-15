@@ -125,8 +125,14 @@ class FullChordDataset(Dataset):
         self.beat_resample_interval = beat_resample_interval
         self.perfect_beat_resample = perfect_beat_resample
 
+        self.synthetic_filenames = synthetic_filenames
+        self.synthetic_input_dir = synthetic_input_dir
+
     def __len__(self):
-        return len(self.filenames)
+        length = len(self.filenames) 
+        if self.synthetic_filenames:
+            length += len(self.synthetic_filenames)
+        return length
 
     def get_transitions(self, idx):
         """
@@ -248,12 +254,17 @@ class FullChordDataset(Dataset):
 
         total_counts = torch.zeros(NUM_CHORDS, dtype=torch.float)
 
-        for i in range(len(self)):
-            # Extract chord IDs and remove masked values.
-            chord_ids = self[i][2].flatten()
+        for i in range(len(self.filenames)):
+            
+            # Load the chord IDs for the current sample. Frame-based are good enough estimates based on duration.
+            chord_ids = torch.load(
+                f"{self.chord_cache_dir}/{self.filenames[i]}.pt",
+                weights_only=True,
+            ).flatten() # Always use the unaugmented chord IDs as we compensate for the shifts later
+
             chord_ids = chord_ids[chord_ids != -1]
             if chord_ids.numel() == 0:
-                continue
+                continue # Skip empty samples
 
             # Count chords in the original (unshifted) annotation.
             orig_count = torch.bincount(chord_ids, minlength=NUM_CHORDS).float()
@@ -377,7 +388,16 @@ class FullChordDataset(Dataset):
             A list of beat times.
         """
         filename = self.filenames[idx]
+
         if self.beat_wise_resample:
+
+            # Get raw cqt to find song length for beat-wise cutoff
+            aug = self.use_augs and self.aug_cqt_cache_dir is not None
+            cqt_dir = self.feature_cache_dir if not aug else self.aug_cqt_cache_dir
+            song_end = (
+                torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True).shape[0] + 1
+            ) * self.hop_length / SR
+
             # If beat-wise resampling is enabled, use the resampled beat times.
             return get_resampled_full_beats(
                 filename=filename,
@@ -385,6 +405,7 @@ class FullChordDataset(Dataset):
                 perfect_beat_resample=self.perfect_beat_resample,
                 override_dir_beat=f"{self.input_dir}/beats",
                 override_dir_chord=f"{self.input_dir}/chords",
+                song_end=song_end
             )
         else:
             # Otherwise, 'beats' are the CQT frames.

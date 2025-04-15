@@ -55,7 +55,6 @@ def get_resampled_full_beats(
     """
     # Load chord annotations. Expected to be a sorted iterable of Observation objects.
     ann = get_raw_chord_annotation(filename, override_dir_chord)
-
     if perfect_beat_resample:
         beat_times = get_perfect_beats_from_ann(ann)
     else:
@@ -63,8 +62,7 @@ def get_resampled_full_beats(
 
     # Filter out any beat times that occur after the song end.
     song_start = 0.0
-    if song_end is None:
-        song_end = max(obs.time + obs.duration for obs in ann)
+    song_end = min(max(obs.time + obs.duration for obs in ann), song_end)
     beat_times = [bt for bt in beat_times if bt <= song_end]
 
     # Remove duplicates and sort the list.
@@ -213,6 +211,9 @@ def get_beatwise_chord_annotation(
         song_end=song_end
     )
     ann = get_raw_chord_annotation(filename, override_dir_chord)
+
+    # Adjust the song end time if provided.
+    song_end = min(max(obs.time + obs.duration for obs in ann), song_end)
 
     beat_chords = []
 
