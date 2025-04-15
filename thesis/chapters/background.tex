@@ -65,7 +65,7 @@ Recorded music can be represented in a variety of ways as input to a machine lea
 
 The field of ACR has seen considerable research since the seminal work of \citet{FujishimaACR} in 1999. Below, I provide a brief overview of the field over the last 15 years including the datasets, metrics and models and representations of time that are commonly used. I conclude by discussing some of the common challenges faced and motivating the research carried out in this project. 
 
-\subsection{Data}
+\subsection{Data}\label{sec:background-data}
 
 Sources of data that have seen common use in ACR relevant to this work include:
 
@@ -78,7 +78,7 @@ Sources of data that have seen common use in ACR relevant to this work include:
     \item \emph{HookTheory}: 50 hours of labelled audio in the form of short musical segments, crowdsourced from an online forum called HookTheory\footnote{https://www.hooktheory.com/}.~\citep{MelodyTranscriptionViaGenerativePreTraining}
 \end{itemize}
 
-Other small datasets also exist. Many of these have been compiled together into the \emph{Chord Corpus} by \citet{Choco} with standardised annotation formats. However, audio is scarce, in part due to copyright issues. This has lead to discrepancies between evaluation sets used across works, making direct comparison challenging. The most common dataset is comprised of 1217 songs compiled from the first four of the above collections. This dataset is dominated by pop songs. Little work has been done on evaluation across genres.
+Other datasets also have been used but are less relevant to this work. Many of these have been compiled together into the \emph{Chord Corpus} by \citet{Choco} with standardised annotation formats. However, audio is scarce, in part due to copyright issues. This has lead to discrepancies between evaluation sets used across works, making direct comparison challenging. The most common dataset is comprised of 1217 songs compiled from the first four of the above collections. This dataset is dominated by pop songs. Little work has been done on evaluation across genres.
 
 Another problem is that the existing data is imbalanced, with a large number of common chords present like major and minor chords and fewer instances of chords with more obscure qualities like diminished and augmented chords. This can lead to models that are biased towards predicting major and minor chords. Attempts to address such a long-tailed distribution have been made by weighting the loss function~\citep{ACRLargeVocab1}, adding a term in the loss function rewarding the identification of individual notes~\citep{StructuredTraining,ACRLargeVocab1}, re-sampling training examples to balance chord classes~\citep{BalanceRandomForestACR} and curriculum learning~\citep{CurriculumLearning}.
 

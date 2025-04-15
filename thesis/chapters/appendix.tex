@@ -4,6 +4,12 @@
 
 \chapter{Appendix}
 
+\section{Small vs Large Vocabulary}\label{app:small_vs_large_vocabulary}
+
+\section{Chord Mapping}\label{app:chord_mapping}
+
+Chords in Harte notation were mapped to the vocabulary with $C=170$ by first converting them to a tuple of integers using the Harte library. These integers represent pitch classes and are in the range 0 to 11 inclusive. They are transposed such that 0 is the root pitch. These pitch classes were then matched to the pitch classes of a quality in the vocabulary, similar to the work by \citet{StructuredTraining}. However, for some chords, this was not sufficient. For example, a \texttt{C:maj6(9)} chord would not fit perfectly with any of these templates due to the added 9th. Therefore, the chord was also passed through Music21's~\citep{music21} chord quality function which matches chords such as the one above to major. This function would not work alone as its list of qualities is not as rich as the one defined above. If the chord was still not matched, it was mapped to \texttt{X}. This additional step is not done by \citet{StructuredTraining} but gives more meaningful labels to roughly one third of the chords previously mapped to \texttt{X}.
+
 \section{Accuracy vs Context Length of Evaluation}\label{app:accuracy_vs_context_length}
 
 \begin{figure}[H]
