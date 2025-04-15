@@ -217,30 +217,30 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     print_to_file(call)
 
 # Gen down dimension
-# output_dir = "gen_down_dim"
-# model_name = "large"
-# dims = [1024, 512, 256, 128, 64]
-# for dim in dims:
-#     exp_name = f"model_{model_name}_dim_{dim}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss"
-#     print_to_file(call)
+output_dir = "gen_down_dim"
+model_name = "large"
+dims = [1024, 512, 256, 128, 64]
+for dim in dims:
+    exp_name = f"model_{model_name}_dim_{dim}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+    print_to_file(call)
 
 # Gen feature comparison
-# output_dir = "gen_feature_comparison"
-# model_name = "large"
-# exp_name = "gen_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
-# print_to_file(call)
-# exp_name = "cqt_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-# print_to_file(call)
-# exp_name = "gen_and_cqt"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-# print_to_file(call)
+output_dir = "gen_feature_comparison"
+model_name = "large"
+exp_name = "gen_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
+print_to_file(call)
+exp_name = "cqt_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+print_to_file(call)
+exp_name = "gen_and_cqt"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+print_to_file(call)
 
 
 
