@@ -310,6 +310,6 @@ def extract_song_hidden_representation_jukebox(
 
     # 10) Return a dictionary similar to your MusicGen approach
     result = {
-        "top_codebook": final_rep.cpu(),  # or keep on GPU if you want
+        "codebook_0": final_rep.cpu(),  # or keep on GPU if you want
     }
     return result
