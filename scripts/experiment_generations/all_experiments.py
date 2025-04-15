@@ -219,31 +219,31 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
 
 # Beatwise sampling
 output_dir = "beatwise_sampling"
-exp_name = "none"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --cqt_pitch_shift --structured_loss"
-print_to_file(call)
-exp_name = "feed_transitions"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --cqt_pitch_shift --input_transitions --structured_loss"
-print_to_file(call)
+# exp_name = "none"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --cqt_pitch_shift --structured_loss"
+# print_to_file(call)
+# exp_name = "feed_transitions"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --cqt_pitch_shift --input_transitions --structured_loss"
+# print_to_file(call)
 
-beat_intervals = [0.25, 0.5, 1, 2, 4]
+beat_intervals = [0.25, 0.5]
 for beat_interval in beat_intervals:
     exp_name = f"beat_interval_{beat_interval}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
     print_to_file(call)
 
-exp_name = "perfect_beats_train_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --structured_loss"
-print_to_file(call)
+# exp_name = "perfect_beats_train_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --structured_loss"
+# print_to_file(call)
 
-exp_name = "perfect_beats_train_and_test"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --cqt_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
-print_to_file(call)
+# exp_name = "perfect_beats_train_and_test"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --cqt_pitch_shift --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
+# print_to_file(call)
 
 
 # Print number of experiments in the file
