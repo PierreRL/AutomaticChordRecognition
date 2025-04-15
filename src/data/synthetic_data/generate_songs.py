@@ -26,8 +26,7 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
 
         description = generate_description()
         meter = 4
-        num_bars = int(song_length * bpm / 60 / meter)
-        chord_seq = generate_jazz_progression(seq_length=num_bars)
+        chord_seq = generate_jazz_progression()
 
         bpm_list.append(bpm)
         description_list.append(description)
@@ -42,7 +41,7 @@ def generate_batch(model: MusiConGen, batch_size: int, song_length: int, bpm_mea
         }
         metadata_list.append(metadata)
     model.set_generation_params(
-        duration=30, extend_stride=30//2, top_k=250
+        duration=song_length, extend_stride=15, top_k=250
     )
 
     audio_out_batch = model.generate_with_chords_and_beats(
@@ -68,30 +67,32 @@ def main(args):
     model = get_musicgen_model(model_name="chord", device="cuda")
 
     total_batches = (args.num_songs + args.batch_size - 1) // args.batch_size
-    song_idx = 0
+    song_idx = args.start_idx
+    song_length = 30  # seconds
 
     for _ in tqdm(range(total_batches), desc="Generating batches"):
         batch_size = min(args.batch_size, args.num_songs - song_idx)
         audio_batch, sample_rate, metadata_batch = generate_batch(
-            model, batch_size, args.song_length, args.bpm_mean, args.bpm_std
+            model, batch_size, args.bpm_mean, args.bpm_std, song_length=song_length
         )
 
         for i in range(batch_size):
-            output_file = os.path.join(args.output_dir, 'audio', f"synthetic_{song_idx+1}.wav")
+            output_file = os.path.join(args.output_dir, 'audio', f"synthetic_{song_idx}.wav")
             audio_write(output_file, audio_batch[i], sample_rate)
-            write_json(metadata_batch[i], os.path.join(args.output_dir, 'metadata', f"metadata_{song_idx+1}.json"))
-            chord_seq = reformat_chord_sequence(metadata_batch[i], args.song_length)
-            write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"chords_{song_idx+1}.json"))
-            print(f"Saved song {song_idx+1} to {output_file}")
+            write_json(metadata_batch[i], os.path.join(args.output_dir, 'metadata', f"metadata_{song_idx}.json"))
+            chord_seq = reformat_chord_sequence(metadata_batch[i], song_length=song_length)
+            write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"chords_{song_idx}.json"))
+            print(f"Saved song {song_idx} to {output_file}")
             song_idx += 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate songs with MusiConGen in batches.")
     parser.add_argument("--num_songs", type=int, default=1, help="Number of songs to generate.")
-    parser.add_argument("--song_length", type=int, default=30, help="Length for each song in seconds.")
+    # parser.add_argument("--song_length", type=int, default=30, help="Length for each song in seconds.")
     parser.add_argument("--bpm_mean", type=float, default=117.0, help="Mean BPM for sampling.")
     parser.add_argument("--bpm_std", type=float, default=28.0, help="Standard deviation for BPM sampling.")
     parser.add_argument("--output_dir", type=str, default="./data/synthetic_songs", help="Directory to save generated WAV files.")
+    parser.add_argument("--start_idx", type=int, default=0, help="Starting index for song naming.")
     parser.add_argument("--batch_size", type=int, default=4, help="Number of songs to generate per batch.")
     args = parser.parse_args()
     main(args)

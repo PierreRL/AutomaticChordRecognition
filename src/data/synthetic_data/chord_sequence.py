@@ -12,18 +12,18 @@ ROOTS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 MAJOR_CHORD_POOLS = {
     # I
     1: [
-        ("maj", 0.2),
+        ("maj", 0.3),
         ("maj7", 0.4),
         ("maj6", 0.2),
-        ("sus4", 0.2)
+        ("sus4", 0.1)
     ],
     # ii
     2: [
-        ("min", 0.2),
+        ("min", 0.3),
         ("min7", 0.4),
         ("dim", 0.1),
         ("hdim7", 0.1),
-        ("sus2", 0.2)
+        ("sus2", 0.1)
     ],
     # iii
     3: [
@@ -72,8 +72,8 @@ MINOR_CHORD_POOLS = {
     # ii° (or half-diminished)
     2: [
         ("dim", 0.3),
-        ("hdim7", 0.4),
-        ("sus2", 0.3)
+        ("hdim7", 0.3),
+        ("sus2", 0.4)
     ],
     # III
     3: [
@@ -84,8 +84,8 @@ MINOR_CHORD_POOLS = {
     # iv
     4: [
         ("min", 0.4),
-        ("min7", 0.3),
-        ("dim", 0.3)
+        ("min7", 0.4),
+        ("dim", 0.2)
     ],
     # V (harmonic minor's V is often a dominant 7 or aug)
     5: [
@@ -157,7 +157,7 @@ def pick_chord_quality(chord_pool):
 # 5) Main generator
 ################################################################################
 
-def generate_jazz_progression(seq_length, allow_minor=True):
+def generate_jazz_progression(seq_length=8, allow_minor=True):
     """
     Generate a jazz chord progression in Harte notation with chord pools
     that have assigned probabilities.
@@ -172,29 +172,34 @@ def generate_jazz_progression(seq_length, allow_minor=True):
     chord_pools = MINOR_CHORD_POOLS if is_minor else MAJOR_CHORD_POOLS
 
     # Helper to pick a chord by scale degree
-    def chord_of_degree(deg):
+    # Pre-select chords for each scale degree
+    degree_to_chord = {}
+
+    for deg in range(1, 8):
         chord_pool = chord_pools[deg]
         chosen_quality = pick_chord_quality(chord_pool)
-        # Construct Harte notation, e.g. "C:maj7"
-        return f"{scale[deg - 1]}:{chosen_quality}"
+        degree_to_chord[deg] = f"{scale[deg - 1]}:{chosen_quality}"
+
+    def chord_of_degree(deg):
+        return degree_to_chord[deg]
 
     # 1. Start on I
     progression = [chord_of_degree(1)]
 
     # 2. Build middle chords
-    for pos in range(1, seq_length - 1):
+    for pos in range(1, seq_length-1):
         prev_chord = progression[-1]
         prev_degree = get_scale_degree(prev_chord, scale)
 
         # second-to-last => pick V for a strong cadence
-        if pos == seq_length - 2:
-            progression.append(chord_of_degree(5))
-            continue
+        # if pos == seq_length - 2:
+        #     progression.append(chord_of_degree(5))
+        #     continue
 
         # functional rules
         if prev_degree == 1:
-            # I -> random subdominant area
-            next_deg = random.choice([2, 4, 6])
+            next_deg = random.choices([2, 4, 6, 3], weights=[0.3, 0.3, 0.3, 0.1])[0]
+            # I -> ii, IV, vi, or iii with smaller chance
             progression.append(chord_of_degree(next_deg))
 
         elif prev_degree in (2, 4):
@@ -209,15 +214,19 @@ def generate_jazz_progression(seq_length, allow_minor=True):
                 progression.append(chord_of_degree(6))
 
         elif prev_degree == 6:
-            # vi -> ii
-            progression.append(chord_of_degree(2))
+            # vi -> ii or iii
+            next_deg = random.choices([2, 3], weights=[0.8, 0.2])[0]
+            progression.append(chord_of_degree(next_deg))
+
+        elif prev_degree == 3:
+            progression.append(chord_of_degree(6))  # iii → vi
 
         else:
             # fallback
             progression.append(chord_of_degree(2))
 
     # 3. End on I
-    progression.append(chord_of_degree(1))
+    progression.append(chord_of_degree(5))
 
     return " ".join(progression)
 
@@ -274,5 +283,5 @@ def reformat_chord_sequence(metadata: dict, song_length: float) -> list:
     return new_chord_seq
 
 if __name__ == "__main__":
-    for _ in range(5):
-        print(generate_jazz_progression(seq_length=40, allow_minor=True))
+    for _ in range(20):
+        print(generate_jazz_progression(seq_length=8, allow_minor=True))

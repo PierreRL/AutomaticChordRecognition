@@ -1,5 +1,37 @@
 import random
 
+def generate_description():
+    """
+    Generate a random description for a music track.
+    The description includes genre, adjectives, textures, rhythms, and instruments.
+    """
+    descriptions = [
+        "A laid-back blues shuffle with a relaxed tempo, warm guitar tones, and a comfortable groove, perfect for a slow dance or a night in. Instruments: electric guitar, bass, drums.",
+        "A smooth acid jazz track with a laid-back groove, silky electric piano, and a cool bass, providing a modern take on jazz. Instruments: electric piano, bass, drums.",
+        "A classic rock n' roll tune with catchy guitar riffs, driving drums, and a pulsating bass line, reminiscent of the golden era of rock. Instruments: electric guitar, bass, drums.",
+        "A heavy metal onslaught with double kick drum madness, aggressive guitar riffs, and an unrelenting bass, embodying the spirit of metal. Instruments: electric guitar, bass guitar, drums.",
+        "A moody blues number with soulful guitar licks, mellow rhythms, and a walking bass line that sets a contemplative mood. Instruments: electric guitar, upright bass, drums.",
+        "A funky acid jazz jam with syncopated rhythms, bright keyboard stabs, and a groove-heavy bassline. Instruments: electric piano, bass, congas, drums.",
+        "A high-energy rock anthem with overdriven guitars, punchy snare hits, and a thunderous bass. Instruments: electric guitar, rhythm guitar, bass, drums.",
+        "An explosive metal track featuring tremolo-picked riffs, machine-gun drums, and a snarling bass. Instruments: electric guitar, bass guitar, double bass drum kit.",
+        "A vintage blues piece with expressive bends on the guitar, a slow swinging beat, and a deep bass foundation. Instruments: electric guitar, bass, drums, harmonica.",
+        "A jazzy acid jazz groove with lush chord progressions, smooth keyboard lines, and laid-back percussion. Instruments: electric piano, bass, hand percussion, drums.",
+        "A garage rock throwback with raw guitar tones, clattering drums, and a driving bass line. Instruments: electric guitar, bass, drums, organ.",
+        "A progressive metal track with complex rhythms, chugging guitar riffs, and a tight rhythm section. Instruments: electric guitar, rhythm guitar, bass guitar, drums.",
+        "A heartfelt blues ballad with clean guitar picking, gentle drum brushes, and a round, soft bass. Instruments: electric guitar, bass, brushed drums, organ.",
+        "A chill acid jazz vibe with mellow keyboard harmonies, minimalistic beats, and a flowing bassline. Instruments: electric piano, synth bass, drums.",
+        "A fiery rock track with soaring guitar solos, hard-hitting drums, and a relentless groove. Instruments: electric guitar, bass, drums, tambourine.",
+        "A brutal metal blast with rapid-fire kick drums, downtuned guitars, and a growling low end. Instruments: electric guitar, bass guitar, drums, cymbals.",
+        "A traditional blues jam with call-and-response guitar phrases, steady backbeat, and a soulful low-end. Instruments: electric guitar, bass, drums, rhythm guitar.",
+        "A stylish acid jazz instrumental with shimmering electric piano, tight bass lines, and crisp drumming. Instruments: electric piano, synth pads, bass, drums.",
+        "A riff-heavy rock tune with crunchy guitars, steady bass, and energetic rhythms driving it forward. Instruments: electric guitar, bass, drums, organ.",
+        "A chaotic metal banger with blast beats, guttural guitar tones, and a pounding bass that shakes the mix. Instruments: electric guitar, rhythm guitar, bass guitar, drums.",
+    ]
+
+    return random.choice(descriptions)
+
+
+"""
 # Musical elements to mix and match
 genres = {
     "blues": ["laid-back", "gritty", "soulful", "mournful", "uplifting"],
@@ -62,3 +94,4 @@ def generate_description():
     instruments_str = "Instruments: " + ", ".join(instruments) + "."
 
     return f"A {genre_adj} {genre} track {description_body}. {instruments_str}"
+"""
