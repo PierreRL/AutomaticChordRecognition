@@ -157,11 +157,13 @@ def pick_chord_quality(chord_pool):
 # 5) Main generator
 ################################################################################
 
-def generate_jazz_progression(seq_length=8, allow_minor=True):
+def generate_jazz_progression(seq_length=None, allow_minor=True):
     """
     Generate a jazz chord progression in Harte notation with chord pools
     that have assigned probabilities.
     """
+    if seq_length is None:
+        seq_length = random.randint(4, 10)
     # Decide if it's a minor key
     is_minor = (random.random() < 0.5) if allow_minor else False
     
@@ -225,7 +227,7 @@ def generate_jazz_progression(seq_length=8, allow_minor=True):
             # fallback
             progression.append(chord_of_degree(2))
 
-    # 3. End on I
+    # 3. End on V
     progression.append(chord_of_degree(5))
 
     return " ".join(progression)
