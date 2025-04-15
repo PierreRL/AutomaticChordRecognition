@@ -17,7 +17,7 @@ files = [f for f in files if f.endswith(".mp3")]
 max_group_size = 1300
 base_call = f"python {REPO_HOME}/src/data/generative_features/create_generative_features_jukebox.py --dir={DATA_HOME}"
 
-output_file = open("./scripts/experiments.txt", "w")
+output_file = open("./scripts/experiments_jukebox_gens.txt", "w")
 
 
 for i in range(0, len(files), max_group_size):
