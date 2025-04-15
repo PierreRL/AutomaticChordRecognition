@@ -23,8 +23,6 @@ def main(
 ):
     if output_dir is None:
         output_dir = f"{dir}/cache/{hop_length}/gen-jukebox"
-    device = get_torch_device(allow_mps=False)
-    print(f"Using device: {device}")
 
     os.makedirs(output_dir, exist_ok=True)
 
