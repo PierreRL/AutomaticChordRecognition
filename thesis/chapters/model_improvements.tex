@@ -63,9 +63,7 @@ Where $\mathcal{C}$ is the set of all chords in the vocabulary. This keeps the e
 
 - As in [MelodyTranscriptionViaGenerativePreTraining], use Jukebox (?) to generate features at frames (? is it possible to do it on the same frames?). Train on these features and evaluate.
 
-\section{More Data}
-
-\subsection{Pitch Augmentation}
+\section{Pitch Augmentation}
 - Two methods:
 - On CQT \citet{ACRLargeVocab1}, not good.
 - Using \texttt{pyrubberband}\footnote{\url{https://github.com/bmcfee/pyrubberband}} on the audio [everyone else], works?
@@ -73,7 +71,7 @@ Where $\mathcal{C}$ is the set of all chords in the vocabulary. This keeps the e
 Pitch augmentation has been done in other works on chord recognition. This has been done on the CQT~\citep{ACRLargeVocab1} by shifting the CQT bins and directly on the audio~\citep{BTC,StructuredTraining}. These are not the same process. Shifting the CQT is a simple matrix operation, whereas pitch shifting introduces other artefacts due to 
 
 
-\subsection{Synthetic Data Generation}\label{chap:synthetic_data}
+\section{Synthetic Data Generation}\label{chap:synthetic_data}
 
 Motivation
 
