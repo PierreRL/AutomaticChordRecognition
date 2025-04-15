@@ -9,7 +9,7 @@ import argparse
 from tqdm import tqdm
 
 import torch
-from src.data.generative_features.jukebox import get_jukebox_model, extract_song_hidden_representation_jukebox
+from data.generative_features.jukebox_features import get_jukebox_model, extract_song_hidden_representation_jukebox
 SR = 44100
 
 def main(
