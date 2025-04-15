@@ -1,3 +1,14 @@
+"""
+Code adapted from:
+
+https://github.com/chrisdonahue/sheetsage/blob/main/sheetsage/representations/jukebox.py
+
+as it appears in 
+
+Melody Transcription via Generative Pre-Training, Donahue et al. (2022)
+doi: https://arxiv.org/pdf/2212.01884
+"""
+
 import autorootcwd
 import os
 import io
@@ -15,13 +26,14 @@ import jukebox.utils.dist_utils
 from jukebox.make_models import MODELS
 from jukebox.utils.dist_utils import setup_dist_from_mpi
 
+
 # -------------------------------------------------------------------
 # 1. Model Initialization
 # -------------------------------------------------------------------
 
 _SINGLETON = None  # Will store (model_name, num_layers, hps, vqvae, lm, device)
 
-def init_jukebox_singleton(model="5b", num_layers=53, log=True):
+def init_jukebox_singleton(model="5b", num_layers=72, log=True):
     """
     Initializes the Jukebox model as a singleton to avoid reloading.
     Returns: (model_name, num_layers, hps, vqvae, lm, device).
@@ -80,7 +92,7 @@ def init_jukebox_singleton(model="5b", num_layers=53, log=True):
 
 def get_jukebox_model(
     model_name: str = "5b",
-    num_layers: int = 53,
+    num_layers: int = 72,
     device: str = "cuda",
     log: bool = True
 ):
@@ -218,52 +230,43 @@ def extract_song_hidden_representation_jukebox(
         # Ensure shape [1, samples]
         if audio_chunk_np.ndim == 1:
             audio_chunk_np = audio_chunk_np[None, :]
-        # Convert to torch
         audio_t = torch.tensor(audio_chunk_np, device=device, dtype=torch.float32)
         # VQVAE encode returns codes at 3 levels, we need the top-level codes => index -1
         with torch.no_grad():
             codes = vqvae.encode(audio_t)[-1]  # shape [1, T_codes]
         # Now feed codes into the top prior
-        # The “forward” method if `only_encode=True` will produce embeddings from the final layer
         with torch.no_grad():
-            # x_cond, y_cond = None, None => or we can pass metadata if we want
+            # x_cond, y_cond = None, None or we can pass metadata if we want
             # Jukebox 5B top prior expects shape [B, T], so codes is [1, T_codes].
             if fp16:
                 codes = codes.half()
-            # The forward pass below typically yields shape [1, T_codes, D]
-            # in `only_encode` mode
+            # [1, T_codes, D]
             activations = lm.prior.forward(codes, x_cond=None, y_cond=None, fp16=fp16)
-            # Convert to float32 if needed
             if fp16:
                 activations = activations.float()
-        # Remove batch dim => [T_codes, D]
+        # => [T_codes, D]
         activations = activations.squeeze(0)
         return activations
 
-    # 6) Process chunks in a loop, accumulate results
-    # We first do one chunk to figure out dimension D
+    # Process chunks in a loop, accumulate results
     test_chunk = audio_np[:chunk_samples]
     if test_chunk.shape[0] < chunk_samples:
         test_chunk = np.pad(test_chunk, (0, chunk_samples - test_chunk.shape[0]))
     test_acts = jukebox_forward_chunk(test_chunk)
     D = test_acts.shape[-1]
 
-    # Initialize an accumulation buffer
-    # shape => [total_frames, D]
-    # We also keep a weight buffer to handle overlaps
+    # [total_frames, D]
     accum = torch.zeros(total_frames, D, device=device)
     weight = torch.zeros(total_frames, 1, device=device)
 
-    # 7) We do chunking in a simple for-loop. For large audio, you might want to
-    #    do it in mini-batches, but we’ll keep it simpler for demonstration:
     for start in start_indices:
         end = min(start + chunk_samples, audio_len)
         chunk = audio_np[start:end]
-        # Pad if needed
+
         if chunk.shape[0] < chunk_samples:
             chunk = np.pad(chunk, (0, chunk_samples - chunk.shape[0]))
 
-        # Forward pass => [T_chunk, D]
+        # [T_chunk, D]
         acts_chunk = jukebox_forward_chunk(chunk)
         T_chunk = acts_chunk.shape[0]
 
@@ -281,15 +284,10 @@ def extract_song_hidden_representation_jukebox(
         accum[global_start : global_start + T_chunk] += acts_chunk
         weight[global_start : global_start + T_chunk] += 1.0
 
-    # 8) Divide by weight to get average in overlapped regions
+    # Divide by weight to get average in overlapped regions
     nonzero_mask = weight.squeeze(-1) > 0
     accum[nonzero_mask] = accum[nonzero_mask] / weight[nonzero_mask]
 
-    # 9) If you’d like to resample the timeline to a different frame length in seconds,
-    #    do an interpolation step. For example, if resample_frame_length=0.1, that means
-    #    10 frames/sec. Jukebox top-level is typically (sr / 128) ~ 344.53 frames/sec,
-    #    so you might want to downsample drastically to reduce dimension.
-    #    This is optional. Here’s a minimal approach:
 
     if frame_length is not None:
         # frames/sec for top-level prior
@@ -297,21 +295,19 @@ def extract_song_hidden_representation_jukebox(
         # We have shape [total_frames, D] => interpret it as [1, T, D] for interpolation
         accum_3d = accum.unsqueeze(0).permute(0, 2, 1)  # => [1, D, T]
         input_duration_sec = total_frames / fps
-        # desired number of frames
+
         new_T = int(round(input_duration_sec / frame_length))
 
-        # "area" or "linear" mode
         resampled_3d = torch.nn.functional.interpolate(
             accum_3d, size=new_T, mode="area"  # area= mean pooling
         )
         # => [1, D, new_T]
-        resampled_3d = resampled_3d.permute(0, 2, 1)  # => [1, new_T, D]
-        final_rep = resampled_3d.squeeze(0)  # => [new_T, D]
+        resampled_3d = resampled_3d.permute(0, 2, 1)  # [1, new_T, D]
+        final_rep = resampled_3d.squeeze(0)  # [new_T, D]
     else:
-        final_rep = accum  # => [total_frames, D]
+        final_rep = accum  # [total_frames, D]
 
-    # 10) Return a dictionary similar to your MusicGen approach
     result = {
-        "codebook_0": final_rep.cpu(),  # or keep on GPU if you want
+        "codebook_0": final_rep.cpu(),
     }
     return result
