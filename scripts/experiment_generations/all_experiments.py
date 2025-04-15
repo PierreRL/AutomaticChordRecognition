@@ -204,10 +204,10 @@ for p in probabilities:
     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
     print_to_file(call)
 
-
+"""
 # Generative features
 output_dir = "generative_features"
-model_names = ["large", "small", "chord", "melody", "large-conditioned"]
+model_names = ["large-lerp"]
 reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
 for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     exp_name = f"model_{model_name}_reduction_{reduction}"
@@ -215,10 +215,10 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
     print_to_file(call)
 
-"""
+
 
 # Beatwise sampling
-output_dir = "beatwise_sampling"
+# output_dir = "beatwise_sampling"
 # exp_name = "none"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --cqt_pitch_shift --structured_loss"
@@ -228,12 +228,12 @@ output_dir = "beatwise_sampling"
 # call = f"{base_call} --weight_loss --cqt_pitch_shift --input_transitions --structured_loss"
 # print_to_file(call)
 
-beat_intervals = [0.25, 0.5]
-for beat_interval in beat_intervals:
-    exp_name = f"beat_interval_{beat_interval}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
-    print_to_file(call)
+# beat_intervals = [0.25, 0.5]
+# for beat_interval in beat_intervals:
+#     exp_name = f"beat_interval_{beat_interval}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
+#     print_to_file(call)
 
 # exp_name = "perfect_beats_train_only"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
