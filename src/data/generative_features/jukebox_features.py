@@ -44,7 +44,7 @@ def init_jukebox_singleton(model="5b", num_layers=53, log=True):
         print(silent_buffer.getvalue())
 
     # Hyperparams
-    hps = jukebox_features.hparams.Hyperparams()
+    hps = jukebox.hparams.Hyperparams()
     hps.sr = 44100  # Jukebox default
     hps.n_samples = 3 if model == "5b_lyrics" else 8
     hps.name = "samples"
@@ -55,10 +55,10 @@ def init_jukebox_singleton(model="5b", num_layers=53, log=True):
 
     # Load VQVAE (encoder-decoder)
     vqvae_name, *prior_names = MODELS[model]
-    vqvae_hps = jukebox_features.hparams.setup_hparams(vqvae_name, dict(sample_length=0))
+    vqvae_hps = jukebox.hparams.setup_hparams(vqvae_name, dict(sample_length=0))
     silent_buffer = io.StringIO()
     with redirect_stdout(silent_buffer):
-        vqvae = jukebox_features.make_models.make_vqvae(vqvae_hps, device)
+        vqvae = jukebox.make_models.make_vqvae(vqvae_hps, device)
     if log:
         print(silent_buffer.getvalue())
 
@@ -66,10 +66,10 @@ def init_jukebox_singleton(model="5b", num_layers=53, log=True):
     # num_layers = number of transformer blocks in the top-level prior
     top_prior_name = prior_names[-1]  # top-level prior
     overrides = dict(prior_depth=num_layers) if num_layers else {}
-    top_prior_hps = jukebox_features.hparams.setup_hparams(top_prior_name, overrides)
+    top_prior_hps = jukebox.hparams.setup_hparams(top_prior_name, overrides)
     silent_buffer = io.StringIO()
     with redirect_stdout(silent_buffer):
-        lm = jukebox_features.make_models.make_prior(top_prior_hps, vqvae, device)
+        lm = jukebox.make_models.make_prior(top_prior_hps, vqvae, device)
     if log:
         print(silent_buffer.getvalue())
 
