@@ -73,7 +73,11 @@ def main(args):
     for _ in tqdm(range(total_batches), desc="Generating batches"):
         batch_size = min(args.batch_size, args.num_songs - song_idx)
         audio_batch, sample_rate, metadata_batch = generate_batch(
-            model, batch_size, args.bpm_mean, args.bpm_std, song_length=song_length
+            model=model, 
+            batch_size=batch_size,
+            song_length=song_length,
+            bpm_mean=args.bpm_mean,
+            bpm_std=args.bpm_std, 
         )
 
         for i in range(batch_size):
