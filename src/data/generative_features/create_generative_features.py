@@ -11,6 +11,7 @@ from tqdm import tqdm
 import torch
 
 from src.utils import get_filenames, get_torch_device, SR
+from src.data.beats.beatwise_resampling import resample_features_by_beat
 from src.data.generative_features.musicgen import get_musicgen_model, extract_song_hidden_representation
 
 

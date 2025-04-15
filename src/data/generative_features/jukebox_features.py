@@ -147,6 +147,7 @@ def extract_song_hidden_representation_jukebox(
     overlap_ratio: float = 0.5,
     fp16: bool = False,
     frame_length: float = None,
+    beatwise_intervals: List[float] = None,
 ):
     """
     Process an entire song in overlapping chunks using Jukebox’s VQVAE + top-level prior,
@@ -163,6 +164,7 @@ def extract_song_hidden_representation_jukebox(
                                        for final representation. (We can optionally
                                        implement an interpolate if needed, akin to
                                        MusicGen’s `resample_hidden_states`.)
+        beatwise_intervals (List[float]): If provided, return representation at these intervals.
 
     Returns:
         A dictionary of results. Example: { "concat": <torch.Tensor of shape [T, D]> }

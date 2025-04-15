@@ -89,12 +89,6 @@ if __name__ == "__main__":
         help="Optional different directory for output. If not provided, will use dir/gen.",
     )
     parser.add_argument(
-        "--model_name",
-        type=str,
-        default="large",
-        help="Size of the model to use. Can be 'small' or 'large'.",
-    )
-    parser.add_argument(
         "--max_chunk_length",
         type=float,
         default=10,
@@ -126,7 +120,6 @@ if __name__ == "__main__":
         hop_length=args.hop_length,
         dir=args.dir,
         output_dir=args.output_dir,
-        model_name=args.model_name,
         max_chunk_length=args.max_chunk_length,
         batch_size=args.batch_size,
         start_idx=args.start_idx,
