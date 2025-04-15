@@ -207,45 +207,44 @@ for p in probabilities:
 """
 
 # Generative features
-output_dir = "generative_features"
-model_names = ["large"]
-reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
-for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
-    exp_name = f"model_{model_name}_reduction_{reduction}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
-    print_to_file(call)
+# output_dir = "generative_features"
+# model_names = ["large"]
+# reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
+# for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
+#     exp_name = f"model_{model_name}_reduction_{reduction}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
+#     print_to_file(call)
 
 # Gen down dimension
-output_dir = "gen_down_dim"
-model_name = "large"
-dims = [1024, 512, 256, 128, 64]
-for dim in dims:
-    exp_name = f"model_{model_name}_dim_{dim}"
-    base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-    print_to_file(call)
+# output_dir = "gen_down_dim"
+# model_name = "large"
+# dims = [1024, 512, 256, 128, 64]
+# for dim in dims:
+#     exp_name = f"model_{model_name}_dim_{dim}"
+#     base_call = get_base_call(output_dir, exp_name=exp_name)
+#     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+#     print_to_file(call)
 
 # Gen feature comparison
-output_dir = "gen_feature_comparison"
-model_name = "large"
-exp_name = "gen_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
-print_to_file(call)
-exp_name = "cqt_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-print_to_file(call)
-exp_name = "gen_and_cqt"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-print_to_file(call)
-
+# output_dir = "gen_feature_comparison"
+# model_name = "large"
+# exp_name = "gen_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
+# print_to_file(call)
+# exp_name = "cqt_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+# print_to_file(call)
+# exp_name = "gen_and_cqt"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+# print_to_file(call)
 
 
 # Beatwise sampling
-# output_dir = "beatwise_sampling"
+output_dir = "beatwise_sampling"
 # exp_name = "none"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --cqt_pitch_shift --structured_loss"
@@ -255,12 +254,12 @@ print_to_file(call)
 # call = f"{base_call} --weight_loss --cqt_pitch_shift --input_transitions --structured_loss"
 # print_to_file(call)
 
-# beat_intervals = [0.25, 0.5]
-# for beat_interval in beat_intervals:
-#     exp_name = f"beat_interval_{beat_interval}"
-#     base_call = get_base_call(output_dir, exp_name=exp_name)
-#     call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
-#     print_to_file(call)
+beat_intervals = [0.25, 0.5]
+for beat_interval in beat_intervals:
+    exp_name = f"beat_interval_{beat_interval}"
+    base_call = get_base_call(output_dir, exp_name=exp_name)
+    call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --beat_resample_interval={beat_interval} --structured_loss"
+    print_to_file(call)
 
 # exp_name = "perfect_beats_train_only"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
@@ -271,6 +270,9 @@ print_to_file(call)
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --structured_loss"
 # print_to_file(call)
+
+# Final experiments
+# output_dir = "final_experiments"
 
 
 # Print number of experiments in the file
