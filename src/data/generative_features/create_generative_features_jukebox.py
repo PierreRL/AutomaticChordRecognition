@@ -26,7 +26,8 @@ def main(
 
     os.makedirs(output_dir, exist_ok=True)
 
-    filenames = get_filenames(dir=f"{dir}/audio")
+    filenames = os.listdir(dir=f"{dir}/audio")
+    filenames = [filename.split(".")[0] for filename in filenames if filename.endswith(".mp3")]
     print("Loading model...")
     bundle = get_jukebox_model()
 
