@@ -68,10 +68,11 @@ def main(args):
 
     total_batches = (args.num_songs + args.batch_size - 1) // args.batch_size
     song_idx = args.start_idx
+    local_idx = 0
     song_length = 30  # seconds
 
     for _ in tqdm(range(total_batches), desc="Generating batches"):
-        batch_size = min(args.batch_size, args.num_songs - song_idx)
+        batch_size = min(args.batch_size, args.num_songs - local_idx)
         audio_batch, sample_rate, metadata_batch = generate_batch(
             model=model, 
             batch_size=batch_size,
@@ -88,6 +89,7 @@ def main(args):
             write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"chords_{song_idx}.json"))
             print(f"Saved song {song_idx} to {output_file}")
             song_idx += 1
+            local_idx += 1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate songs with MusiConGen in batches.")

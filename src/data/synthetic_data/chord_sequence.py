@@ -232,16 +232,15 @@ def generate_jazz_progression(seq_length=8, allow_minor=True):
 
 def reformat_chord_sequence(metadata: dict, song_length: float) -> list:
     """
-    Convert the chord sequence in metadata to a new format.
+    Convert the chord sequence in metadata to a repeated time-aligned format.
 
     Each chord is assumed to take one bar. The bar duration is computed
     using the BPM and meter information in metadata:
         bar_duration = (60 / bpm) * meter
 
-    For each chord in the original sequence, the function computes the
-    start time and duration. If a chord's full duration would exceed the
-    end of the song, the duration is clipped to ensure it ends exactly at
-    song_length. Chords with a start time beyond the song_length are ignored.
+    The chord sequence is repeated as necessary to fill up to the song_length.
+    If the final chord would overrun the song, its duration is clipped.
+    Chords with a start time beyond the song_length are ignored.
 
     Args:
         metadata (dict): A dictionary with keys 'bpm', 'meter', and 'chord_sequence'.
@@ -255,31 +254,27 @@ def reformat_chord_sequence(metadata: dict, song_length: float) -> list:
     """
     bpm = metadata["bpm"]
     meter = metadata["meter"]
-    chord_sequence = metadata["chord_sequence"]
+    chord_sequence = metadata["chord_sequence"].split(" ")
 
-    # Calculate the duration of one bar (each chord occupies one bar)
     bar_duration = (60 / bpm) * meter
-
     new_chord_seq = []
-    chord_seq = chord_sequence.split(" ")
-    for i, chord in enumerate(chord_seq):
+
+    i = 0
+    while True:
         start_time = i * bar_duration
         if start_time >= song_length:
-            # If the chord would start after the song ends, stop processing
             break
-        # Compute the duration for the chord
-        duration = bar_duration
-        if start_time + duration > song_length:
-            # Clip the chord's duration at the end of the song.
-            duration = song_length - start_time
+
+        chord = chord_sequence[i % len(chord_sequence)]
+        duration = min(bar_duration, song_length - start_time)
+
         new_chord_seq.append({
             "value": str(chord),
             "time": start_time,
             "duration": duration
         })
+        i += 1
 
-    # Ensure the list is sorted by start time (this is typically already the case)
-    new_chord_seq.sort(key=lambda x: x["time"])
     return new_chord_seq
 
 if __name__ == "__main__":
