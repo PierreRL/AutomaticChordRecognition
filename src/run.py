@@ -238,13 +238,13 @@ def main():
     parser.add_argument(
         "--gen_down_dimension",
         type=int,
-        default=128,
+        default=64,
         help="Dimensionality of the generative feature vector after projection.",
     )
     parser.add_argument(
         "--gen_reduction",
         type=str,
-        default="avg",
+        default="codebook_3",
         help="Reduction method for generative features. Values: avg, concat, codebook_0, codebook_1, codebook_2, codebook_3.",
     )
     parser.add_argument(
