@@ -991,7 +991,8 @@ def get_calibrated_priors(
                               where ratio[y] = P_target(y) / P_train(y)
                               (possibly collapsed over roots if root_invariance=True).
     """
-    # 1) Compute distributions on train & target sets
+    # Compute distributions on train & target sets
+    device = get_torch_device()
     p_train = training_dataset.get_class_counts(aug_shift_prob=aug_shift_prob)
     p_target = target_dataset.get_class_counts(aug_shift_prob=aug_shift_prob)
 
@@ -1011,9 +1012,9 @@ def get_calibrated_priors(
     ratio = (p_target + smoothing) / (p_train + smoothing)
     if not root_invariance:
         if return_as_log:
-            return torch.log(torch.tensor(ratio))
+            return torch.log(torch.tensor(ratio)).to(device)
         else:
-            return torch.tensor(ratio)
+            return torch.tensor(ratio).to(device)
 
     # Root invariance, group chords by 'quality' & average over roots
     chord_ids_by_quality = defaultdict(list)
@@ -1050,9 +1051,9 @@ def get_calibrated_priors(
         ratio_root_inv[ids] = ratio_by_quality[quality]
 
     if return_as_log:
-        return torch.log(ratio_root_inv)
+        return torch.log(ratio_root_inv).to(device)
     else:
-        return ratio_root_inv
+        return ratio_root_inv.to(device)
 
 def main():
     import torch
