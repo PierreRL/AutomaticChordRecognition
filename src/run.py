@@ -390,6 +390,9 @@ def main():
     }
     input_features = input_features_mapping.get(args.spectrogram_type, N_BINS)
 
+    if args.eval_batch_size is None:
+        args.eval_batch_size = args.batch_size
+
     # Initialize the model
     if args.model == "crnn":
         model = CRNN(
@@ -519,18 +522,18 @@ def main():
     # Validation set
     if args.train_split == "60":
         print("Evaluating model on validation set...")
-        val_metrics = evaluate_model(model, val_final_test_dataset)
+        val_metrics = evaluate_model(model, val_final_test_dataset, batch_size=args.eval_batch_size)
         write_json(val_metrics, f"{DIR}/val_metrics.json")
 
     # Test set
     if args.train_split != "100":
         print("Evaluating model on test...")
-        test_metrics = evaluate_model(model, test_dataset)
+        test_metrics = evaluate_model(model, test_dataset, batch_size=args.eval_batch_size)
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
     print("Evaluating model on train...")
-    train_metrics = evaluate_model(model, train_final_test_dataset)
+    train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=args.eval_batch_size)
     write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     # Calculate elapsed time
