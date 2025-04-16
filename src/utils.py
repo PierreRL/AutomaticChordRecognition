@@ -850,6 +850,85 @@ def get_chord_annotation(
         return frames, transitions
     return frames
 
+def get_raw_synthetic_annotation(
+    filename: str, override_dir: str = None
+):
+    """
+    Retrieves the raw synthetic chord annotation data from a JAMS file.
+
+    Args:
+        filename (str): The filename of the JAMS file to load.
+
+    Returns:
+        chord_annotation (SortedKeyDict): An ordered dict of chord annotations.
+    """
+    if override_dir is not None:
+        f = os.path.join(f"{override_dir}/", f"{filename}.json")
+    else:
+        f = os.path.join("./data/synthetic/chords/", f"{filename}.json")
+    with open(f, "r") as f:
+        ann = json.load(f)
+    return ann
+    
+    
+
+def get_synthetic_annoation(
+    filename: str,
+    frame_length: float = HOP_LENGTH / SR,
+    return_transitions: bool = False,
+    override_dir: str = None,
+) -> torch.Tensor:
+    chord_ann = get_raw_synthetic_annotation(filename, override_dir=override_dir)
+    duration = chord_ann[-1]['time'] + chord_ann[-1]['duration']
+
+    # Loop over each frame and assign the chord
+    num_frames = math.ceil(duration / frame_length)
+    frames = torch.zeros(num_frames, dtype=torch.int64)
+    current_chord_idx = 0
+    previous_chord_id = None
+
+    # If we want transitions, create a boolean tensor (False by default)
+    if return_transitions:
+        transitions = torch.zeros(num_frames, dtype=torch.bool)
+    else:
+        transitions = None
+    for i in range(math.ceil(int(duration / frame_length))):
+        time = i * frame_length + frame_length / 2
+        while (
+            chord_ann[current_chord_idx]['time'] + chord_ann[current_chord_idx]['duration']
+            < time
+        ):
+            current_chord_idx += 1
+            # If we reach the end of the chord annotation, break
+            if current_chord_idx >= len(chord_ann):
+                current_chord_idx = len(chord_ann) - 1
+                break
+
+        chord_id = chord_to_id(chord_ann[current_chord_idx]['value'])
+        frames[i] = chord_id
+
+        if return_transitions:
+            # We mark the first frame as a transition
+            if i == 0:
+                transitions[i] = True
+
+            # If the chord changes, mark the frame as a transition
+            if i != 0 and chord_id != previous_chord_id:
+                boundary_time = chord_ann[current_chord_idx]['time']
+                frame_start = time - (frame_length / 2)
+
+                # Check if the chord boundary lies in this frame or the previous frame
+                if frame_start < boundary_time:
+                    transitions[i] = True
+                else:
+                    transitions[i - 1] = True
+
+        previous_chord_id = chord_id
+
+    if return_transitions:
+        return frames, transitions
+    return frames
+
 
 def get_torch_device(allow_mps=False):
     """

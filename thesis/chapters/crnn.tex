@@ -1,10 +1,12 @@
 \chapter{A Convolution Recurrent Neural Network}
 
-In this section, we compare various model on the \emph{Pop} dataset. We start by describing a baseline model. We then implement a model from the literature and investigate its behaviour. We look at weighting the loss function, training on a more structured loss function and a transformer model. Finally, we experiment with decoding method, investigate the use of generative features as input and compare the best models on the held-out test set.
+In this chapter, I implement a convolutional recurrent neural network (CRNN) from the literature~\citep{StructuredTraining}, train it on the \emph{Pop} dataset and compare it to two baselines. I then conduct a thorough analysis of the behaviour and failure modes of the model and provide motivation for further improvements. 
 
 \section{Baseline Models}
 
-As simple baselines, we consider a single layer neural network (NN) which treats each frame independently. The layer receives an input of size $216$ and outputs a $V$-dimensional vector, where $V$ is the cardinality of the chord vocabulary. For these experiments, $C=170$. The outputs are then passed through a softmax layer such that values can be interpreted as the probability of each chord and the cross-entropy loss with the true distribution is calculated. We call this model \emph{Logistic} as this can be seen as a logistic regression model trained using stochastic gradient descent (SGD). We could have used a logistic regression model implemented in \texttt{sklearn} which may have found better minima but implementation as a neural network was fast and easy and unlikely to yield significantly worse results.
+As simple baselines, we consider a single layer neural network (NN) which treats each frame independently. 
+
+The layer receives an input of size $216$ and outputs a $C$-dimensional vector, where $C$ is the cardinality of the chord vocabulary. For these experiments, $C=170$. The outputs are then passed through a softmax layer such that values can be interpreted as the probability of each chord and the cross-entropy loss with the true distribution is calculated. We call this model \emph{Logistic} as this can be seen as a logistic regression model trained using stochastic gradient descent (SGD). We could have used a logistic regression model implemented in \texttt{sklearn} which may have found better minima but implementation as a neural network was fast and easy and unlikely to yield significantly worse results.
 
 % TODO: Add CNN once I've done experiments with it.
 
