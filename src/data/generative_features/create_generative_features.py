@@ -32,7 +32,7 @@ def main(
 
     os.makedirs(output_dir, exist_ok=True)
 
-    filenames = get_filenames(dir=f"{dir}/audio")
+    filenames = get_filenames(dir)
     print("Loading model...")
     if model_name == "jukebox":
         raise ValueError("Use other script for jukebox.")
