@@ -341,11 +341,6 @@ def main():
         "Generative features are not supported with synthetic data."
     )
 
-    if args.test_on_synthetic:
-        assert args.use_synthetic, (
-            "test_on_synthetic is only valid when use_synthetic is set."
-        )
-
     assert args.train_split in [
         "60",
         "80",
@@ -384,6 +379,16 @@ def main():
     # Cannot have structured loss and CRF
     if args.structured_loss and args.crf:
         raise ValueError("Cannot use both structured loss and CRF.")
+    
+    if args.use_synthetic:
+        assert args.synthetic_input_dir is not None, (
+            "Synthetic input directory must be specified when using synthetic data."
+        )
+    
+    if args.test_on_synthetic:
+        assert args.synthetic_input_dir is not None, (
+            "Synthetic input directory must be specified when testing on synthetic data."
+        )
 
     if not args.exp_name:
         args.exp_name = generate_experiment_name()
@@ -425,9 +430,10 @@ def main():
         perfect_beat_resample_eval=args.perfect_beat_resample_eval,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
         synthetic_ratio=args.synthetic_ratio if args.use_synthetic else None,
-        synthetic_input_dir=args.synthetic_input_dir if args.use_synthetic else None,
+        synthetic_input_dir=args.synthetic_input_dir,
         use_synthetic=args.use_synthetic,
         synthetic_only=args.synthetic_only,
+        test_on_synthetic=args.test_on_synthetic
     )
 
     # Params for Fast Development Run (FDR)
@@ -587,36 +593,36 @@ def main():
 
 
     # Validation set
-    if args.train_split == "60":
-        print("Evaluating model on validation set...")
-        val_metrics = evaluate_model(
-            model, 
-            val_final_test_dataset, 
-            batch_size=args.eval_batch_size, 
-            log_calibration=log_calibration
-        )
-        write_json(val_metrics, f"{DIR}/val_metrics.json")
+    # if args.train_split == "60":
+    #     print("Evaluating model on validation set...")
+    #     val_metrics = evaluate_model(
+    #         model, 
+    #         val_final_test_dataset, 
+    #         batch_size=args.eval_batch_size, 
+    #         log_calibration=log_calibration
+    #     )
+    #     write_json(val_metrics, f"{DIR}/val_metrics.json")
 
-    # Test set
-    if args.train_split != "100":
-        print("Evaluating model on test...")
-        test_metrics = evaluate_model(
-            model, 
-            test_dataset, 
-            batch_size=args.eval_batch_size, 
-            log_calibration=log_calibration
-        )
-        write_json(test_metrics, f"{DIR}/test_metrics.json")
+    # # Test set
+    # if args.train_split != "100":
+    #     print("Evaluating model on test...")
+    #     test_metrics = evaluate_model(
+    #         model, 
+    #         test_dataset, 
+    #         batch_size=args.eval_batch_size, 
+    #         log_calibration=log_calibration
+    #     )
+    #     write_json(test_metrics, f"{DIR}/test_metrics.json")
 
-    # Train set
-    print("Evaluating model on train...")
-    train_metrics = evaluate_model(
-        model, 
-        train_final_test_dataset, 
-        batch_size=args.eval_batch_size, 
-        log_calibration=log_calibration
-    )
-    write_json(train_metrics, f"{DIR}/train_metrics.json")
+    # # Train set
+    # print("Evaluating model on train...")
+    # train_metrics = evaluate_model(
+    #     model, 
+    #     train_final_test_dataset, 
+    #     batch_size=args.eval_batch_size, 
+    #     log_calibration=log_calibration
+    # )
+    # write_json(train_metrics, f"{DIR}/train_metrics.json")
 
     # Test on synthetic train set
     if args.test_on_synthetic:

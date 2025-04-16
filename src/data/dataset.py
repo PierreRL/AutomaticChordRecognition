@@ -810,6 +810,7 @@ def generate_datasets(
     synthetic_ratio: float = 1,
     synthetic_input_dir:str=None,
     synthetic_only: bool = False,
+    test_on_synthetic: bool = False,
 ):
     """
     Generate the training, validation, and test datasets.
@@ -846,11 +847,14 @@ def generate_datasets(
         test_filenames = test_filenames[:subset_size]
 
     if use_synthetic:
-        synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
+        synthetic_filenames_train = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
         # Use the synthetic filenames for training and validation
-        synthetic_filenames = synthetic_filenames[:int(len(train_filenames) * synthetic_ratio)]
+        synthetic_filenames_train = synthetic_filenames_train[:int(len(train_filenames) * synthetic_ratio)]
     else:
-        synthetic_filenames = None
+        synthetic_filenames_train = None
+
+    if test_on_synthetic:
+        test_synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
 
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
@@ -868,7 +872,7 @@ def generate_datasets(
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
-        synthetic_filenames=synthetic_filenames,
+        synthetic_filenames=synthetic_filenames_train,
         synthetic_input_dir=synthetic_input_dir,
         synthetic_only=synthetic_only,
     )
@@ -937,7 +941,7 @@ def generate_datasets(
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample_eval,
-        synthetic_filenames=synthetic_filenames,
+        synthetic_filenames=test_synthetic_filenames,
         synthetic_input_dir=synthetic_input_dir,
         synthetic_only=True
     )
