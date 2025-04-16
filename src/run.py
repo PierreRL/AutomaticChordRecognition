@@ -286,6 +286,7 @@ def main():
         action="store_true",
         help="Run a single batch of training and validation and small evaluation set.",
     )
+    parser.add_argument("--no_train", action="store_true", help="Skip training.")
 
     args = parser.parse_args()
 
@@ -467,49 +468,51 @@ def main():
     }
     write_json(run_metadata, f"{DIR}/metadata.json")
 
-    use_augs = args.audio_pitch_shift or args.cqt_pitch_shift
-    training_args = TrainingArgs(
-        epochs=args.epochs,
-        lr=args.lr,
-        batch_size=args.batch_size,
-        hop_length=args.hop_length,
-        segment_length=args.segment_length,
-        validate_every=args.validate_every,
-        decrease_lr_epochs=args.decrease_lr_epochs,
-        decrease_lr_factor=args.decrease_lr_factor,
-        mask_X=args.mask_X,
-        structured_loss=args.structured_loss,
-        structured_loss_alpha=args.structured_loss_alpha,
-        use_weighted_loss=args.weight_loss,
-        weight_alpha=args.weight_alpha,
-        weight_decay=args.weight_decay,
-        aug_shift_prob=args.aug_shift_prob if use_augs else 0,
-        use_augs=use_augs,
-        lr_scheduler=args.lr_scheduler,
-        optimiser=args.optimiser,
-        momentum=args.momentum,
-        use_crf=args.crf,
-        early_stopping=args.early_stopping if args.enable_early_stopping else None,
-        do_validation=args.train_split == "60",
-        save_dir=f"{DIR}",
-        save_filename="best_model.pth",
-    )
 
-    # Save the training args
-    write_json(training_args._asdict(), f"{DIR}/training_args.json")
+    if not args.no_train:
+        use_augs = args.audio_pitch_shift or args.cqt_pitch_shift
+        training_args = TrainingArgs(
+            epochs=args.epochs,
+            lr=args.lr,
+            batch_size=args.batch_size,
+            hop_length=args.hop_length,
+            segment_length=args.segment_length,
+            validate_every=args.validate_every,
+            decrease_lr_epochs=args.decrease_lr_epochs,
+            decrease_lr_factor=args.decrease_lr_factor,
+            mask_X=args.mask_X,
+            structured_loss=args.structured_loss,
+            structured_loss_alpha=args.structured_loss_alpha,
+            use_weighted_loss=args.weight_loss,
+            weight_alpha=args.weight_alpha,
+            weight_decay=args.weight_decay,
+            aug_shift_prob=args.aug_shift_prob if use_augs else 0,
+            use_augs=use_augs,
+            lr_scheduler=args.lr_scheduler,
+            optimiser=args.optimiser,
+            momentum=args.momentum,
+            use_crf=args.crf,
+            early_stopping=args.early_stopping if args.enable_early_stopping else None,
+            do_validation=args.train_split == "60",
+            save_dir=f"{DIR}",
+            save_filename="best_model.pth",
+        )
 
-    # Train the model
-    print(f"Number of training samples: {len(train_dataset)}")
-    print("Training model...")
-    training_history = train_model(
-        model,
-        train_dataset,
-        val_dataset,
-        args=training_args,
-    )
+        # Save the training args
+        write_json(training_args._asdict(), f"{DIR}/training_args.json")
 
-    # Save the training history dictionary
-    write_json(training_history, f"{DIR}/training_history.json")
+        # Train the model
+        print(f"Number of training samples: {len(train_dataset)}")
+        print("Training model...")
+        training_history = train_model(
+            model,
+            train_dataset,
+            val_dataset,
+            args=training_args,
+        )
+
+        # Save the training history dictionary
+        write_json(training_history, f"{DIR}/training_history.json")
 
     # Validate and test the model
 
