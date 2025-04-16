@@ -59,7 +59,7 @@ def get_musicgen_model(model_name: str, device: str = "cuda"):
     return model
 
 
-def get_wav(filename: str, dir="./data/processed/", device="cuda", target_sr=32000):
+def get_wav(filename: str, dir="./data/processed/audio", device="cuda", target_sr=32000):
     """
     Loads a wav file from the given directory. Resamples the audio to 32kHz if the model is not None and converts to mono.
 
@@ -72,7 +72,7 @@ def get_wav(filename: str, dir="./data/processed/", device="cuda", target_sr=320
     - sr (int): The sample rate of the audio.
     """
     # Load the audio file.
-    wav, sr = torchaudio.load(f"{dir}/audio/{filename}.mp3")
+    wav, sr = torchaudio.load(f"{dir}/{filename}.mp3")
 
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)  # convert to mono
