@@ -807,7 +807,7 @@ def generate_datasets(
     perfect_beat_resample_eval: bool = False,
     subset_size: int =None,
     use_synthetic: bool =False,
-    synthetic_split: float = 1,
+    synthetic_ratio: float = 1,
     synthetic_input_dir:str=None,
     synthetic_only: bool = False,
 ):
@@ -848,7 +848,7 @@ def generate_datasets(
     if use_synthetic:
         synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
         # Use the synthetic filenames for training and validation
-        synthetic_filenames = synthetic_filenames[:int(len(synthetic_filenames) * synthetic_split)]
+        synthetic_filenames = synthetic_filenames[:int(len(train_filenames) * synthetic_ratio)]
     else:
         synthetic_filenames = None
 

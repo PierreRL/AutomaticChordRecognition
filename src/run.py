@@ -286,10 +286,10 @@ def main():
         help="Whether to use synthetic data.",
     )
     parser.add_argument(
-        "--synthetic_split",
+        "--synthetic_ratio",
         type=float,
         default=1,
-        help="Percentage of synthetic data to use in the training set.",
+        help="Ratio of synthetic data to real data.",
     )
     parser.add_argument(
         "--synthetic_input_dir",
@@ -424,7 +424,7 @@ def main():
         perfect_beat_resample=args.perfect_beat_resample,
         perfect_beat_resample_eval=args.perfect_beat_resample_eval,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
-        synthetic_split=args.synthetic_split if args.use_synthetic else None,
+        synthetic_ratio=args.synthetic_ratio if args.use_synthetic else None,
         synthetic_input_dir=args.synthetic_input_dir if args.use_synthetic else None,
         use_synthetic=args.use_synthetic,
         synthetic_only=args.synthetic_only,
