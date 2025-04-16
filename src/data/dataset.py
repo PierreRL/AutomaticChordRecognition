@@ -641,13 +641,13 @@ class FixedLengthRandomChordDataset(Dataset):
                     ]
                 )
 
-        if self.cqt_pitch_shift:
+        # if self.cqt_pitch_shift:
             shift = self.get_random_shift()
             if shift != 0:
                 cqt_patch = pitch_shift_cqt(cqt_patch, shift, BINS_PER_OCTAVE)
                 chord_ids_patch = torch.tensor(
-                    transpose_chord_id_vector(chord_ids_patch, shift), dtype=torch.long
-                )
+                    transpose_chord_id_vector(chord_ids_patch.cpu(), shift), dtype=torch.long
+                ).to(cqt_patch.device)
 
         return cqt_patch, gen_features_patch, chord_ids_patch
 
@@ -855,6 +855,8 @@ def generate_datasets(
 
     if test_on_synthetic:
         test_synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
+    else:
+        test_synthetic_filenames = None
 
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
