@@ -106,7 +106,6 @@ def evaluate_model(
         EvalMetric.THIRD,
         EvalMetric.SEVENTH,
         EvalMetric.MAJMIN,
-        EvalMetric.TRIADS,
         EvalMetric.ACC,
     ],
     batch_size: int = 32,
