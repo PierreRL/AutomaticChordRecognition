@@ -274,7 +274,7 @@ print_to_file(call)
 # Synthetic data
 output_dir = "synthetic_data"
 exp_name = "real_only"
-synthetic_input_dir = f"{EDDIE}/data/processed/synthetic"
+synthetic_input_dir = f"{EDDIE}/data/synthetic"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir}"
 print_to_file(call)
