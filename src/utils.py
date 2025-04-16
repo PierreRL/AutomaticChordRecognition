@@ -54,6 +54,22 @@ def get_filenames(dir: str = "data/processed/audio") -> list:
     ]
     return filenames
 
+def get_synthetic_filenames(dir: str = "data/synthetic/audio") -> list:
+    """
+    Get a list of filenames in a directory.
+
+    Args:
+        directory (str): The directory to get the filenames from.
+
+    Returns:
+        filenames (list): A list of filenames in the directory.
+    """
+    filenames = os.listdir(dir)
+    filenames = [
+        filename.split(".")[0] for filename in filenames if filename.endswith(".wav")
+    ]
+    return filenames
+
 
 def get_split_filenames(dir: str = "data/processed/") -> Tuple[List, List, List]:
     """Get the filenames for the train, validation, and test sets.
@@ -144,6 +160,29 @@ def get_chord_seq(
     beats = beats + [chord_ann[-1].time + chord_ann[-1].duration]  # Add the last 'beat'
     return seq, beats
 
+def get_synthetic_chord_seq(
+    filename, override_dir: str, use_small_vocab: bool = SMALL_VOCABULARY
+):
+    """
+    Retrieves the chord sequence from a JAMS file and the associated 'beats'.
+
+    Args:
+        filename (str): The filename of the JAMS file to load.
+
+    Returns:
+        chord_seq (list[str]): A list of chord annotations.
+    """
+    chord_ann = get_raw_synthetic_annotation(filename, override_dir=override_dir)
+    seq = [chord["value"] for chord in chord_ann]
+
+    # Convert to local vocabulary
+    seq = [chord_to_id(chord, use_small_vocab) for chord in seq]
+    seq = [id_to_chord(chord, use_small_vocab) for chord in seq]
+
+    beats = [obs["time"] for obs in chord_ann]
+    beats = beats + [chord_ann[-1]["time"] + chord_ann[-1]["duration"]]  # Add the last 'beat'
+    return seq, beats
+
 
 @lru_cache(maxsize=None)
 def get_annotation_metadata(filename):
@@ -161,8 +200,8 @@ def get_annotation_metadata(filename):
     return metadata
 
 
-def load_audio(filename: str, override_dir: str = None, sr: int = SR) -> np.ndarray:
-    path = os.path.join(override_dir or "./data/processed/audio/", f"{filename}.mp3")
+def load_audio(filename: str, override_dir: str = None, sr: int = SR, file_extension: str = 'mp3') -> np.ndarray:
+    path = os.path.join(override_dir or "./data/processed/audio/", f"{filename}.{file_extension}")
     return librosa.load(path, sr=sr)[0]
 
 
@@ -183,8 +222,9 @@ def get_cqt(
     fmin: float = librosa.note_to_hz("C1"),
     absolute: bool = True,
     return_as_tensor: bool = True,
+    file_extension :str = 'mp3'
 ):
-    src = load_audio(filename, override_dir, sr)
+    src = load_audio(filename, override_dir, sr, file_extension)
     cqt = librosa.cqt(
         src,
         sr=sr,
@@ -798,6 +838,9 @@ def get_chord_annotation(
         chord_ids (torch.Tensor): A tensor of shape (num_frames,) where each element is a chord id.
         transitions (torch.Tensor): A tensor of shape (num_frames,) where each element is True if the chord changes in that frame.
     """
+    # If f start with synthetic_
+    if filename.startswith("synthetic_"):
+        return get_synthetic_annotation(filename, frame_length, return_transitions, override_dir)
 
     chord_ann = get_raw_chord_annotation(filename, override_dir=override_dir)
     duration = chord_ann[-1].time + chord_ann[-1].duration
@@ -872,7 +915,7 @@ def get_raw_synthetic_annotation(
     
     
 
-def get_synthetic_annoation(
+def get_synthetic_annotation(
     filename: str,
     frame_length: float = HOP_LENGTH / SR,
     return_transitions: bool = False,

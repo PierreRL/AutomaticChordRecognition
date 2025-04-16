@@ -6,7 +6,7 @@ import torch
 
 from src.train import TrainingArgs, train_model
 from src.eval import evaluate_model
-from src.data.dataset import generate_datasets
+from src.data.dataset import generate_datasets, get_calibrated_priors
 from src.models.crnn import CRNN
 from src.models.cnn import CNN
 from src.models.logistic_acr import LogisticACR
@@ -280,6 +280,39 @@ def main():
         default=None,
         help="Job ID for the experiment. Used for tracking in the cluster.",
     )
+    parser.add_argument(
+        "--use_synthetic",
+        action="store_true",
+        help="Whether to use synthetic data.",
+    )
+    parser.add_argument(
+        "--synthetic_split",
+        type=float,
+        default=1,
+        help="Percentage of synthetic data to use in the training set.",
+    )
+    parser.add_argument(
+        "--synthetic_input_dir",
+        type=str,
+        default="./data/synthetic",
+        help="Directory containing the synthetic data.",
+    )
+    parser.add_argument(
+        "--synthetic_only",
+        action="store_true",
+        help="Whether to use only synthetic data for training.",
+    )
+    parser.add_argument(
+        "--test_on_synthetic",
+        action="store_true",
+        help="Whether to test on synthetic data.",
+    )
+    parser.add_argument(
+        "--no_calibrate_logits",
+        action="store_false",
+        dest="calibrate_logits",
+        help="Disable calibration of logits to synthetic data.",
+    )
     parser.add_argument("--seed", type=int, default=0, help="Seed for reproducibility.")
     parser.add_argument(
         "--fdr",  # Fast Debug Run for faster testing. Sets datasets to size 10 and epoch 1.
@@ -299,6 +332,19 @@ def main():
             args.hop_length = 1024
         else:
             args.hop_length = 4096
+
+    assert not (args.use_synthetic and args.weight_loss), (
+        "Synthetic data is not supported with weighted loss."
+    )
+
+    assert not (args.use_synthetic and args.use_generative_features), (
+        "Generative features are not supported with synthetic data."
+    )
+
+    if args.test_on_synthetic:
+        assert args.use_synthetic, (
+            "test_on_synthetic is only valid when use_synthetic is set."
+        )
 
     assert args.train_split in [
         "60",
@@ -341,6 +387,8 @@ def main():
 
     if not args.exp_name:
         args.exp_name = generate_experiment_name()
+    
+    use_augs = args.audio_pitch_shift or args.cqt_pitch_shift
 
     print("=" * 50)
     print(f"Running experiment: {args.exp_name}")
@@ -357,6 +405,7 @@ def main():
         test_dataset,
         train_final_test_dataset,
         val_final_test_dataset,
+        synthetic_final_test_dataset,
     ) = generate_datasets(
         train_split=args.train_split,
         input_dir=args.input_dir,
@@ -375,6 +424,10 @@ def main():
         perfect_beat_resample=args.perfect_beat_resample,
         perfect_beat_resample_eval=args.perfect_beat_resample_eval,
         subset_size=(10 if args.fdr else None),  # We subset for FDR
+        synthetic_split=args.synthetic_split if args.use_synthetic else None,
+        synthetic_input_dir=args.synthetic_input_dir if args.use_synthetic else None,
+        use_synthetic=args.use_synthetic,
+        synthetic_only=args.synthetic_only,
     )
 
     # Params for Fast Development Run (FDR)
@@ -470,7 +523,6 @@ def main():
 
 
     if not args.no_train:
-        use_augs = args.audio_pitch_shift or args.cqt_pitch_shift
         training_args = TrainingArgs(
             epochs=args.epochs,
             lr=args.lr,
@@ -522,22 +574,57 @@ def main():
 
     torch.set_grad_enabled(False)
 
+    if args.calibrate_logits:
+        log_calibration = get_calibrated_priors(
+            train_dataset.full_dataset,
+            train_final_test_dataset,
+            aug_shift_prob=args.aug_shift_prob if use_augs else 0,
+            root_invariance=True,
+            return_as_log=True
+        )
+    else:
+        log_calibration = None
+
+
     # Validation set
     if args.train_split == "60":
         print("Evaluating model on validation set...")
-        val_metrics = evaluate_model(model, val_final_test_dataset, batch_size=args.eval_batch_size)
+        val_metrics = evaluate_model(
+            model, 
+            val_final_test_dataset, 
+            batch_size=args.eval_batch_size, 
+            log_calibration=log_calibration
+        )
         write_json(val_metrics, f"{DIR}/val_metrics.json")
 
     # Test set
     if args.train_split != "100":
         print("Evaluating model on test...")
-        test_metrics = evaluate_model(model, test_dataset, batch_size=args.eval_batch_size)
+        test_metrics = evaluate_model(
+            model, 
+            test_dataset, 
+            batch_size=args.eval_batch_size, 
+            log_calibration=log_calibration
+        )
         write_json(test_metrics, f"{DIR}/test_metrics.json")
 
     # Train set
     print("Evaluating model on train...")
-    train_metrics = evaluate_model(model, train_final_test_dataset, batch_size=args.eval_batch_size)
+    train_metrics = evaluate_model(
+        model, 
+        train_final_test_dataset, 
+        batch_size=args.eval_batch_size, 
+        log_calibration=log_calibration
+    )
     write_json(train_metrics, f"{DIR}/train_metrics.json")
+
+    # Test on synthetic train set
+    if args.test_on_synthetic:
+        print("Evaluating model on synthetic test set...")
+        synthetic_metrics = evaluate_model(
+            model, synthetic_final_test_dataset, batch_size=args.eval_batch_size
+        )
+        write_json(synthetic_metrics, f"{DIR}/synthetic_metrics.json")
 
     # Calculate elapsed time
     end_time = datetime.now()

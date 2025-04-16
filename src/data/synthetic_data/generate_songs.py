@@ -84,9 +84,9 @@ def main(args):
         for i in range(batch_size):
             output_file = os.path.join(args.output_dir, 'audio', f"synthetic_{song_idx}.wav")
             audio_write(output_file, audio_batch[i], sample_rate)
-            write_json(metadata_batch[i], os.path.join(args.output_dir, 'metadata', f"metadata_{song_idx}.json"))
+            write_json(metadata_batch[i], os.path.join(args.output_dir, 'metadata', f"synthetic_{song_idx}.json"))
             chord_seq = reformat_chord_sequence(metadata_batch[i], song_length=song_length)
-            write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"chords_{song_idx}.json"))
+            write_json(chord_seq, os.path.join(args.output_dir, 'chords', f"synthetic_{song_idx}.json"))
             print(f"Saved song {song_idx} to {output_file}")
             song_idx += 1
             local_idx += 1

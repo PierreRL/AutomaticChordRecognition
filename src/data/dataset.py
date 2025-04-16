@@ -1,16 +1,20 @@
 import autorootcwd
 import os
-from torch.utils.data import Dataset, random_split
-import torch
 import random
-from torch import Tensor
+from collections import defaultdict
 from typing import Tuple, List, Optional
+
 import numpy as np
+import torch
+from torch import Tensor
+from torch.utils.data import Dataset, random_split
 
 from src.utils import (
     pitch_shift_cqt,
     get_torch_device,
     get_split_filenames,
+    get_chord_quality,
+    get_synthetic_filenames,
     get_chord_annotation,
     transpose_chord_id_vector,
     SMALL_VOCABULARY,
@@ -26,7 +30,6 @@ from src.data.beats.beatwise_resampling import (
 )
 
 
-# Create a torch dataset
 class FullChordDataset(Dataset):
     def __init__(
         self,
@@ -45,7 +48,8 @@ class FullChordDataset(Dataset):
         beat_resample_interval: float = 1,
         perfect_beat_resample: bool = False,
         synthetic_filenames: List[str] = None,
-        synthetic_input_dir: str = "./data/synthetic_data",
+        synthetic_input_dir: str = "./data/synthetic",
+        synthetic_only: bool = False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -66,7 +70,7 @@ class FullChordDataset(Dataset):
             beat_resample_interval (float): The beat interval to use for resampling.
             perfect_beat_resample (bool): If True, resample all modalities by beat using the perfect beat annotation provided by the labels.
         """
-        if not filenames:
+        if filenames is None:
             print("Using all filenames!")
             filenames = os.listdir(f"{input_dir}/audio")
             # Filter out non-mp3 files and remove the extension
@@ -125,12 +129,22 @@ class FullChordDataset(Dataset):
         self.beat_resample_interval = beat_resample_interval
         self.perfect_beat_resample = perfect_beat_resample
 
-        self.synthetic_filenames = synthetic_filenames
-        self.synthetic_input_dir = synthetic_input_dir
+        self.synthetic = synthetic_filenames is not None
+        if self.synthetic:
+            self.synthetic_filenames = synthetic_filenames
+            self.synthetic_input_dir = synthetic_input_dir
+            self.synthetic_cqt_dir = f"{self.synthetic_input_dir}/cache/{self.hop_length}/{feature_dir}"      
+            self.synthetic_chord_dir = f"{self.synthetic_input_dir}/cache/{self.hop_length}/chords"
+            self.synthetic_gen_cache_dir = f"{self.synthetic_input_dir}/cache/{self.hop_length}/gen-{self.gen_model_name}/{self.gen_reduction}"
+            self.synthetic_only = synthetic_only
+            if synthetic_only:
+                # If synthetic_only is True, we ignore the original dataset
+                self.filenames = []
+                
 
     def __len__(self):
         length = len(self.filenames) 
-        if self.synthetic_filenames:
+        if self.synthetic:
             length += len(self.synthetic_filenames)
         return length
 
@@ -142,7 +156,7 @@ class FullChordDataset(Dataset):
         Returns:
             A tensor of transitions.
         """
-        filename = self.filenames[idx]
+        filename = self.get_filename(idx)
         _, transitions = get_chord_annotation(
             filename, frame_length=self.hop_length / SR, return_transitions=True, override_dir=f"{self.input_dir}/chords"
         )
@@ -188,7 +202,7 @@ class FullChordDataset(Dataset):
     
     def get_class_weights_old(self, epsilon=10, alpha=0.3) -> torch.Tensor:
         """
-        Calculate the chord loss weights for the dataset.
+        DEPRECATED: Calculate chord loss weights for the dataset.
 
         Args:
             epsilon (float): A value to prevent division by zero. The effective number of samples for each class is epsilon + counts.
@@ -223,6 +237,66 @@ class FullChordDataset(Dataset):
 
         return weights
     
+
+    def get_class_counts(self, aug_shift_prob=None) -> torch.Tensor:
+        """
+        Calculate chord counts for the dataset. This method is used to compute the class weights. It calculates expected counts, accounting for any pitch shifting probabilities.
+        Args:
+            aug_shift_prob (float): Probability of applying a pitch shift.
+        Returns:
+            counts (torch.Tensor): The chord counts for each class.
+        """
+        if aug_shift_prob is None or not self.use_augs:
+            aug_shift_prob = 0
+        # Allowed nonzero pitch shifts.
+        low, high = -5, 6
+        allowed_shifts = [s for s in range(low, high + 1) if s != 0]
+
+        total_counts = torch.zeros(NUM_CHORDS, dtype=torch.float)
+
+        for i in range(len(self.filenames)):
+            # Load the chord IDs for the current sample. Frame-based are good enough estimates based on duration.
+            chord_ids = torch.load(
+                f"{self.chord_cache_dir}/{self.filenames[i]}.pt",
+                weights_only=True,
+            ).flatten()
+            chord_ids = chord_ids[chord_ids != -1]
+            if chord_ids.numel() == 0:
+                continue
+            # Count chords in the original (unshifted) annotation.
+            orig_count = torch.bincount(chord_ids, minlength=NUM_CHORDS).float()
+            expected_count = (1 - aug_shift_prob) * orig_count
+            # For each allowed pitch shift, transpose the chord IDs and add the weighted counts.
+            for s in allowed_shifts:
+                transposed = transpose_chord_id_vector(chord_ids, s)
+                transposed = torch.tensor(transposed, dtype=torch.long, device=chord_ids.device)
+                transposed = transposed.flatten()
+                transposed = transposed[transposed != -1]
+                if transposed.numel() == 0:
+                    continue
+                trans_count = torch.bincount(transposed, minlength=NUM_CHORDS).float()
+                expected_count += (aug_shift_prob / len(allowed_shifts)) * trans_count
+
+            total_counts += expected_count
+        
+        # Account for synthetic data
+        if self.synthetic:
+            for i in range(len(self.synthetic_filenames)):
+                # Load the chord IDs for the synthetic sample (no augmentation).
+                chord_ids = torch.load(
+                    f"{self.synthetic_chord_dir}/{self.synthetic_filenames[i]}.pt",
+                    weights_only=True,
+                ).flatten()
+                chord_ids = chord_ids[chord_ids != -1]
+                if chord_ids.numel() == 0:
+                    continue
+                # Just do direct counts
+                synth_count = torch.bincount(chord_ids, minlength=NUM_CHORDS).float()
+                total_counts += synth_count
+        
+        return total_counts
+
+    
     def get_class_weights(
         self,
         epsilon: float = 10,
@@ -246,42 +320,8 @@ class FullChordDataset(Dataset):
         Returns:
             weights (torch.Tensor): Normalized inverse frequency weights for each chord class.
         """
-        if aug_shift_prob is None or not self.use_augs:
-            aug_shift_prob = 0
-        # Allowed nonzero pitch shifts.
-        low, high = -5, 6
-        allowed_shifts = [s for s in range(low, high + 1) if s != 0]
 
-        total_counts = torch.zeros(NUM_CHORDS, dtype=torch.float)
-
-        for i in range(len(self.filenames)):
-            
-            # Load the chord IDs for the current sample. Frame-based are good enough estimates based on duration.
-            chord_ids = torch.load(
-                f"{self.chord_cache_dir}/{self.filenames[i]}.pt",
-                weights_only=True,
-            ).flatten() # Always use the unaugmented chord IDs as we compensate for the shifts later
-
-            chord_ids = chord_ids[chord_ids != -1]
-            if chord_ids.numel() == 0:
-                continue # Skip empty samples
-
-            # Count chords in the original (unshifted) annotation.
-            orig_count = torch.bincount(chord_ids, minlength=NUM_CHORDS).float()
-            expected_count = (1 - aug_shift_prob) * orig_count
-
-            # For each allowed pitch shift, transpose the chord IDs and add the weighted counts.
-            for s in allowed_shifts:
-                transposed = transpose_chord_id_vector(chord_ids, s)
-                transposed = torch.tensor(transposed, dtype=torch.long, device=chord_ids.device)
-                transposed = transposed.flatten()
-                transposed = transposed[transposed != -1]
-                if transposed.numel() == 0:
-                    continue
-                trans_count = torch.bincount(transposed, minlength=NUM_CHORDS).float()
-                expected_count += (aug_shift_prob / len(allowed_shifts)) * trans_count
-
-            total_counts += expected_count
+        total_counts = self.get_class_counts(aug_shift_prob=aug_shift_prob)
 
         # Compute inverse frequency weights.
         weights = 1.0 / (total_counts + epsilon) ** alpha
@@ -296,6 +336,16 @@ class FullChordDataset(Dataset):
             weights[1] = 0
 
         return weights
+    
+    def is_synthetic(self, idx):
+        """
+        Check if the given index corresponds to a synthetic file.
+        Args:
+            idx (int): The index of the item to check.
+        Returns:
+            bool: True if the index corresponds to a synthetic file, False otherwise.
+        """
+        return idx >= len(self.filenames) and idx < len(self.filenames) + len(self.synthetic_filenames)
 
     def __get_cached_item(self, idx, pitch_aug=None) -> Tuple[Tensor, Tensor]:
         """
@@ -306,19 +356,28 @@ class FullChordDataset(Dataset):
         Returns:
             A tuple of the CQT, generative features, and chord IDs.
         """
-        filename = self.filenames[idx]
-
+        
         aug = pitch_aug is not None and pitch_aug != 0 and self.use_augs
 
-        cqt_dir = self.feature_cache_dir if not aug else self.aug_cqt_cache_dir
-        chord_dir = self.chord_cache_dir if not aug else self.aug_chord_cache_dir
-        gen_dir = self.gen_cache_dir if not aug else self.aug_gen_cache_dir
+        if self.is_synthetic(idx):
+            filename = self.synthetic_filenames[idx - len(self.filenames)]
+            cqt_dir = self.synthetic_cqt_dir
+            chord_dir = self.synthetic_chord_dir
+            gen_dir = self.synthetic_gen_cache_dir
+        else:
+            filename = self.filenames[idx]
+            cqt_dir = self.feature_cache_dir
+            chord_dir = self.chord_cache_dir
+            gen_dir = self.gen_cache_dir
+            if aug:
+                # Only use the augmented CQT and chord files for non-synthetic files
+                cqt_dir = self.aug_cqt_cache_dir
+                chord_dir = self.aug_chord_cache_dir
+                gen_dir = self.aug_gen_cache_dir
+                filename = f"{filename}_shifted_{pitch_aug}"
 
-        if aug:
-            filename = f"{filename}_shifted_{pitch_aug}"
-
-        cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True)
-        chord_ids = torch.load(f"{chord_dir}/{filename}.pt")
+        cqt = torch.load(f"{cqt_dir}/{filename}.pt", weights_only=True, map_location=get_torch_device())
+        chord_ids = torch.load(f"{chord_dir}/{filename}.pt", weights_only=True, map_location=get_torch_device())
         try:
             gen = torch.load(
                 f"{gen_dir}/{filename}.pt",
@@ -387,10 +446,8 @@ class FullChordDataset(Dataset):
         Returns:
             A list of beat times.
         """
-        filename = self.filenames[idx]
-
+        filename = self.get_filename(idx)
         if self.beat_wise_resample:
-
             # Get raw cqt to find song length for beat-wise cutoff
             aug = self.use_augs and self.aug_cqt_cache_dir is not None
             cqt_dir = self.feature_cache_dir if not aug else self.aug_cqt_cache_dir
@@ -415,6 +472,8 @@ class FullChordDataset(Dataset):
             return beats.tolist()
 
     def get_filename(self, idx):
+        if self.is_synthetic(idx):
+            return self.synthetic_filenames[idx - len(self.filenames)]
         return self.filenames[idx]
 
 
@@ -440,6 +499,9 @@ class FixedLengthRandomChordDataset(Dataset):
         beat_wise_resample=False,
         beat_resample_interval=1,
         perfect_beat_resample=False,
+        synthetic_filenames=None,
+        synthetic_input_dir="./data/synthetic_data",
+        synthetic_only=False,
     ):
         """
         Initialize a chord dataset. Each sample is a tuple of features and chord annotation.
@@ -464,6 +526,9 @@ class FixedLengthRandomChordDataset(Dataset):
             beat_wise_resample=beat_wise_resample,
             beat_resample_interval=beat_resample_interval,
             perfect_beat_resample=perfect_beat_resample,
+            synthetic_filenames=synthetic_filenames,
+            synthetic_input_dir=synthetic_input_dir,
+            synthetic_only=synthetic_only,
         )
         self.audio_pitch_shift = audio_pitch_shift
         self.aug_shift_prob = aug_shift_prob
@@ -609,6 +674,8 @@ class FixedLengthChordDataset(Dataset):
         beat_wise_resample=False,
         beat_resample_interval=1,
         perfect_beat_resample=False,
+        synthetic_filenames=None,
+        synthetic_input_dir="./data/synthetic_data",
     ):
         """
         Creates an instance of the FixedLengthChordDataset class.
@@ -633,6 +700,8 @@ class FixedLengthChordDataset(Dataset):
             beat_wise_resample=beat_wise_resample,
             beat_resample_interval=beat_resample_interval,
             perfect_beat_resample=perfect_beat_resample,
+            synthetic_filenames=synthetic_filenames,
+            synthetic_input_dir=synthetic_input_dir,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
@@ -736,7 +805,11 @@ def generate_datasets(
     beat_resample_interval: float = 1,
     perfect_beat_resample: bool = False,
     perfect_beat_resample_eval: bool = False,
-    subset_size=None,
+    subset_size: int =None,
+    use_synthetic: bool =False,
+    synthetic_split: float = 1,
+    synthetic_input_dir:str=None,
+    synthetic_only: bool = False,
 ):
     """
     Generate the training, validation, and test datasets.
@@ -772,6 +845,13 @@ def generate_datasets(
         val_filenames = val_filenames[:subset_size]
         test_filenames = test_filenames[:subset_size]
 
+    if use_synthetic:
+        synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
+        # Use the synthetic filenames for training and validation
+        synthetic_filenames = synthetic_filenames[:int(len(synthetic_filenames) * synthetic_split)]
+    else:
+        synthetic_filenames = None
+
     train_dataset = FixedLengthRandomChordDataset(
         filenames=train_filenames,
         segment_length=segment_length,
@@ -788,6 +868,9 @@ def generate_datasets(
         beat_wise_resample=beat_wise_resample,
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample,
+        synthetic_filenames=synthetic_filenames,
+        synthetic_input_dir=synthetic_input_dir,
+        synthetic_only=synthetic_only,
     )
     val_dataset = FixedLengthChordDataset(
         filenames=val_filenames,
@@ -842,14 +925,128 @@ def generate_datasets(
         beat_resample_interval=beat_resample_interval,
         perfect_beat_resample=perfect_beat_resample_eval,
     )
+    synthetic_final_test_dataset = FullChordDataset(
+        filenames=[],
+        hop_length=hop_length,
+        mask_X=mask_X,
+        input_dir=input_dir,
+        gen_reduction=gen_reduction,
+        gen_model_name=gen_model_name,
+        spectrogram_type=spectrogram_type,
+        input_transitions=input_transitions,
+        beat_wise_resample=beat_wise_resample,
+        beat_resample_interval=beat_resample_interval,
+        perfect_beat_resample=perfect_beat_resample_eval,
+        synthetic_filenames=synthetic_filenames,
+        synthetic_input_dir=synthetic_input_dir,
+        synthetic_only=True
+    )
     return (
         train_dataset,
         val_dataset,
         test_dataset,
         train_final_test_dataset,
         val_final_test_dataset,
+        synthetic_final_test_dataset,
     )
 
+
+def get_calibrated_priors(
+    training_dataset: FullChordDataset,
+    target_dataset: FullChordDataset,
+    aug_shift_prob: float = 0.5,
+    smoothing: float = 1e-6,
+    root_invariance: bool = True,
+    return_as_log: bool = True,
+) -> torch.Tensor:
+    """
+    Compute ratio-based calibration priors for chord recognition.
+    
+    Specifically:
+      ratio[y] = ( P_target(y) / P_train(y) )
+
+    If root_invariance=True, then instead of having a unique ratio for each chord ID, 
+    we group chords by their "quality" (e.g., 'maj','min','dim', etc.), sum up the 
+    probabilities P_train and P_target within each quality, and assign a single ratio 
+    to all chord IDs in that quality group.
+
+    Args:
+        training_dataset (FullChordDataset): The dataset used in training.
+        target_dataset (FullChordDataset): The dataset whose distribution we want to match 
+                                           (often a real subset or validation set).
+        aug_shift_prob (float): Probability of pitch-shifting used for both training_dataset
+                                and target_dataset when counting chords. Adjust if needed.
+        smoothing (float): A tiny constant to avoid division by zero.
+        root_invariance (bool): If True, lumps all chords with the same quality together 
+                                so they share the same ratio.
+
+    Returns:
+        ratio (torch.Tensor): A 1D tensor of length NUM_CHORDS, 
+                              where ratio[y] = P_target(y) / P_train(y)
+                              (possibly collapsed over roots if root_invariance=True).
+    """
+    # 1) Compute distributions on train & target sets
+    p_train = training_dataset.get_class_counts(aug_shift_prob=aug_shift_prob)
+    p_target = target_dataset.get_class_counts(aug_shift_prob=aug_shift_prob)
+
+    # Normalize each distribution
+    train_sum = p_train.sum()
+    target_sum = p_target.sum()
+
+    if train_sum < smoothing:
+        raise ValueError("Training dataset chord counts sum to zero. Check data or smoothing.")
+    if target_sum < smoothing:
+        raise ValueError("Target dataset chord counts sum to zero. Check data or smoothing.")
+
+    p_train = p_train / train_sum
+    p_target = p_target / target_sum
+
+    # If not root-invariant, return elementwise ratio
+    ratio = (p_target + smoothing) / (p_train + smoothing)
+    if not root_invariance:
+        if return_as_log:
+            return torch.log(torch.tensor(ratio))
+        else:
+            return torch.tensor(ratio)
+
+    # Root invariance, group chords by 'quality' & average over roots
+    chord_ids_by_quality = defaultdict(list)
+
+    # Build a dictionary mapping from chord quality -> list of chord IDs
+    for chord_id in range(len(ratio)):
+        quality_str = get_chord_quality(
+            chord_id, 
+            use_small_vocab=training_dataset.small_vocab,
+            return_idx=False
+        )
+        chord_ids_by_quality[quality_str].append(chord_id)
+
+    # Sum up p_train and p_target for each quality
+    sum_train_by_quality = {}
+    sum_target_by_quality = {}
+
+    for quality, ids in chord_ids_by_quality.items():
+        sum_train_by_quality[quality] = p_train[ids].sum()
+        sum_target_by_quality[quality] = p_target[ids].sum()
+
+    # Compute a single ratio for each quality
+    ratio_by_quality = {}
+    for quality in chord_ids_by_quality:
+        ratio_by_quality[quality] = (
+            sum_target_by_quality[quality] + smoothing
+        ) / (
+            sum_train_by_quality[quality] + smoothing
+        )
+
+    # Assign that ratio back to every chord ID in that quality group
+    ratio_root_inv = torch.zeros_like(ratio)
+    for quality, ids in chord_ids_by_quality.items():
+        ratio_root_inv[ids] = ratio_by_quality[quality]
+
+    if return_as_log:
+        return torch.log(ratio_root_inv)
+    else:
+        return ratio_root_inv
 
 def main():
     import torch

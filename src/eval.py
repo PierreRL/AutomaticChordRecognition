@@ -16,6 +16,7 @@ from src.utils import (
     get_torch_device,
     collate_fn_indexed,
     get_chord_seq,
+    get_synthetic_chord_seq,
     id_to_chord_table,
     chord_to_id_map,
     NUM_CHORDS,
@@ -110,6 +111,7 @@ def evaluate_model(
     ],
     batch_size: int = 32,
     device: torch.device = None,
+    log_calibration: torch.Tensor = None,
 ) -> dict:
     """
     Evaluate a model using continuous, song-based metrics computed with mir_eval.
@@ -181,12 +183,12 @@ def evaluate_model(
 
         if hasattr(model, "use_generative_features") and model.use_generative_features:
             predictions = model.predict(
-                batch_cqts, batch_gens, mask=valid_mask, device=device
+                batch_cqts, batch_gens, mask=valid_mask, device=device, log_calibration=log_calibration
             )
         else:
             crf_mask = valid_mask.clone()
             crf_mask[:, 0] = True  # Ensure the first frame is always valid
-            predictions = model.predict(batch_cqts, mask=crf_mask)
+            predictions = model.predict(batch_cqts, mask=crf_mask, device=device, log_calibration=log_calibration)
 
         predictions = predictions.cpu().numpy()
 
@@ -204,15 +206,21 @@ def evaluate_model(
 
     for song in tqdm(song_predictions, desc="Evaluating"):
         filename = dataset.get_filename(song["idx"])
+        is_synthetic = dataset.is_synthetic(song["idx"])
         pred_labels = [id_to_chord_table[x] for x in song["pred_ids"]]
 
         # Get estimated beat boundaries (from the features) and reference beat boundaries.
         est_beats = dataset.get_beats(song["idx"])
 
         # Get ground-truth chord sequence (one label per reference beat interval).
-        ref_labels, ref_beats = get_chord_seq(
-            filename, override_dir=f"{dataset.input_dir}/chords"
-        )
+        if is_synthetic:
+            ref_labels, ref_beats = get_synthetic_chord_seq(
+                filename, override_dir=f"{dataset.synthetic_input_dir}/chords"
+            )
+        else:
+            ref_labels, ref_beats = get_chord_seq(
+                filename, override_dir=f"{dataset.input_dir}/chords"
+            )
 
         # Convert beat boundaries into intervals.
         est_intervals = np.column_stack((est_beats[:-1], est_beats[1:]))

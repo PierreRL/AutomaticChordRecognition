@@ -25,6 +25,7 @@ class BaseACR(torch.nn.Module):
         features: torch.Tensor = None,
         gens: torch.Tensor = None,
         mask: torch.Tensor = None,
+        log_calibration: torch.Tensor = None,
         device=None,
     ) -> torch.Tensor:
         """
@@ -54,6 +55,9 @@ class BaseACR(torch.nn.Module):
 
             if hasattr(self, "structured_loss") and self.structured_loss:
                 output = output[0]
+
+            if log_calibration is not None:
+                output = output + log_calibration
 
             if hasattr(self, "crf"):
                 if mask is None:
