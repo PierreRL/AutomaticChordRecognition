@@ -12,7 +12,7 @@ input_dir = f"{DATA_HOME}/audio"
 files = os.listdir(input_dir)
 files = [f for f in files if f.endswith(".mp3")]
 max_group_size = 243
-base_call = f"python {REPO_HOME}/src/data/generative_features/create_generative_features.py --dir={DATA_HOME} --output_dir={DATA_HOME}/cache/4096/gen-large"
+base_call = f"python {REPO_HOME}/src/data/generative_features/create_generative_features.py --dir={DATA_HOME}/audio --output_dir={DATA_HOME}/cache/4096/gen-large"
 
 output_file = open("./scripts/experiments.txt", "w")
 
