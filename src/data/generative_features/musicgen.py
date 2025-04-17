@@ -310,14 +310,14 @@ def extract_song_hidden_representation(
 
     # Build results dict
     result = {
-        # "avg": avg_rep,        # (torch.Tensor)
+        "avg": avg_rep,        # (torch.Tensor)
         "concat": concat_rep,  # (torch.Tensor)
     }
 
     # Insert each codebook at top-level ("codebook_0", etc.)
-    # for k in range(K):
-    #     # Convert each codebook’s final tensor to numpy if desired
-    #     result[f"codebook_{k}"] = resampled_per_codebook[k]
+    for k in range(K):
+        # Convert each codebook’s final tensor to numpy if desired
+        result[f"codebook_{k}"] = resampled_per_codebook[k]
 
     return result
 
