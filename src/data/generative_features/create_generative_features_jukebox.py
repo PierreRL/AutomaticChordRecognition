@@ -119,7 +119,6 @@ if __name__ == "__main__":
         dir=args.dir,
         output_dir=args.output_dir,
         max_chunk_length=args.max_chunk_length,
-        batch_size=args.batch_size,
         start_idx=args.start_idx,
         end_idx=args.end_idx,
     )
