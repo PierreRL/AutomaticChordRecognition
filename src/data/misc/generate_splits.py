@@ -9,15 +9,15 @@ import os
 import json
 import random
 
-from src.utils import get_filenames
+from src.utils import get_filenames, get_synthetic_filenames
 
 SPLIT_RATIOS = {"train": 0.6, "val": 0.2, "test": 0.2}
-OUT_DIR = "data/processed/splits"
+OUT_DIR = "data/synthetic"
 
 def generate_splits():
     random.seed(42)
     # Get all the filenames
-    filenames = get_filenames(dir=f'{OUT_DIR}/audio')
+    filenames = get_synthetic_filenames(dir=f'{OUT_DIR}/audio')
 
     # Shuffle the filenames
     random.shuffle(filenames)

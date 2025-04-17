@@ -514,8 +514,8 @@ def main():
         "seed": args.seed,
         "job_id": args.job_id,
         "dataset": {
-            "train_size": len(train_dataset),
-            "val_size": len(val_dataset),
+            "train_size": len(train_final_test_dataset),
+            "val_size": len(val_final_test_dataset),
             "test_size": len(test_dataset),
             "NUM_CHORDS": NUM_CHORDS,
         },

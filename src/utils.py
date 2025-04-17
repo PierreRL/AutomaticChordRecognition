@@ -70,6 +70,19 @@ def get_synthetic_filenames(dir: str = "data/synthetic/audio") -> list:
     ]
     return filenames
 
+def get_split_synthetic_filenames(dir: str = "data/synthetic/") -> Tuple[List, List, List]:
+    """Get the filenames for the train, validation, and test sets.
+
+    Returns:
+
+        train_filenames (list): The filenames for the training set.
+        val_filenames (list): The filenames for the validation set.
+        test_filenames (list): The filenames for the test set."""
+    with open(f"{dir}/splits.json", "r") as f:
+        splits = json.load(f)
+
+    return splits["train"], splits["val"], splits["test"]
+
 
 def get_split_filenames(dir: str = "data/processed/") -> Tuple[List, List, List]:
     """Get the filenames for the train, validation, and test sets.

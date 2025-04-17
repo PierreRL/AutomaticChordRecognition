@@ -15,6 +15,7 @@ from src.utils import (
     get_split_filenames,
     get_chord_quality,
     get_synthetic_filenames,
+    get_split_synthetic_filenames,
     get_chord_annotation,
     transpose_chord_id_vector,
     SMALL_VOCABULARY,
@@ -847,14 +848,14 @@ def generate_datasets(
         test_filenames = test_filenames[:subset_size]
 
     if use_synthetic:
-        synthetic_filenames_train = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
+        synthetic_filenames_train, _, _ = get_split_synthetic_filenames(synthetic_input_dir)
         # Use the synthetic filenames for training and validation
         synthetic_filenames_train = synthetic_filenames_train[:int(len(train_filenames) * synthetic_ratio)]
     else:
         synthetic_filenames_train = None
 
     if test_on_synthetic:
-        test_synthetic_filenames = get_synthetic_filenames(f"{synthetic_input_dir}/audio")
+        _, _, test_synthetic_filenames = get_split_synthetic_filenames(synthetic_input_dir)
     else:
         test_synthetic_filenames = None
 
