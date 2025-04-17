@@ -49,7 +49,7 @@ def main(
             print(f"Skipping {filename} as it already exists.")
             continue
         song_repr_dict = extract_song_hidden_representation_jukebox(
-            dir=dir,
+            dir=f"{dir}/audio",
             filename=filename,
             max_chunk_length=max_chunk_length,
             jukebox_bundle=bundle,
