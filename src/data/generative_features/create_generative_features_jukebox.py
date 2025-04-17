@@ -19,7 +19,7 @@ def main(
     start_idx=0,
     end_idx=None,
     max_chunk_length=5,
-    batch_size=16,
+    # batch_size=16,
 ):
     if output_dir is None:
         output_dir = f"{dir}/cache/{hop_length}/gen-jukebox"
@@ -53,8 +53,7 @@ def main(
             filename=filename,
             max_chunk_length=max_chunk_length,
             jukebox_bundle=bundle,
-            frame_length=frame_length,
-            max_batch_size=batch_size,
+            frame_length=frame_length
         )
         for reduction, song_repr in song_repr_dict.items():
             os.makedirs(f"{output_dir}/{reduction}", exist_ok=True)
@@ -93,12 +92,12 @@ if __name__ == "__main__":
         default=10,
         help="The length of context in seconds to pass through the model at once. Absolute maximum 30s.",
     )
-    parser.add_argument(
-        "--batch_size",
-        type=int,
-        default=16,
-        help="Batch size for processing. Default is 16.",
-    )
+    # parser.add_argument(
+    #     "--batch_size",
+    #     type=int,
+    #     default=16,
+    #     help="Batch size for processing. Default is 16.",
+    # )
     parser.add_argument(
         "--start_idx",
         type=int,

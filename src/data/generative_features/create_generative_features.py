@@ -16,16 +16,14 @@ from src.data.generative_features.musicgen import get_musicgen_model, extract_so
 
 def main(
     hop_length=4096,
-    dir="./data/processed",
-    output_dir=None,
+    dir="./data/processe/audio",
+    output_dir='./data/processed/cache/4096/gen-large',
     model_name="large",
     start_idx=0,
     end_idx=None,
     max_chunk_length=5,
     batch_size=16,
 ):
-    if output_dir is None:
-        output_dir = f"{dir}/cache/{hop_length}/gen-{model_name}"
     device = get_torch_device(allow_mps=False)
     print(f"Using device: {device}")
 
