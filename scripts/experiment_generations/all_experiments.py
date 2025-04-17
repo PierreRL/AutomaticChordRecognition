@@ -225,7 +225,7 @@ for dim in dims:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
     print_to_file(call)
 
-"""
+
 # Gen feature comparison
 output_dir = "gen_feature_comparison"
 model_name = "large"
@@ -241,7 +241,7 @@ exp_name = "gen_and_cqt"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
 print_to_file(call)
-
+"""
 
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
@@ -272,25 +272,25 @@ print_to_file(call)
 # print_to_file(call)
 
 # Synthetic data
-# output_dir = "synthetic_data"
-# exp_name = "real_only"
-# synthetic_input_dir = f"{EDDIE}/data/synthetic"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir}"
-# print_to_file(call)
-# output_dir = "synthetic_data"
-# exp_name = "real_only_weighted"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --cqt_pitch_shift --weight_loss --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir}"
-# print_to_file(call)
-# exp_name = "synthetic_and_real"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir} --use_synthetic"
-# print_to_file(call)
-# exp_name = "synthetic_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_only --synthetic_input_dir={synthetic_input_dir} --use_synthetic"
-# print_to_file(call)
+output_dir = "synthetic_data"
+exp_name = "real_only"
+synthetic_input_dir = f"{EDDIE}/data/synthetic"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir}"
+print_to_file(call)
+output_dir = "synthetic_data"
+exp_name = "real_only_weighted"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --cqt_pitch_shift --weight_loss --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir}"
+print_to_file(call)
+exp_name = "synthetic_and_real"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_input_dir={synthetic_input_dir} --use_synthetic"
+print_to_file(call)
+exp_name = "synthetic_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --cqt_pitch_shift --hmm_smoothing --structured_loss --test_on_synthetic --synthetic_only --synthetic_input_dir={synthetic_input_dir} --use_synthetic"
+print_to_file(call)
 
 # Final experiments
 # output_dir = "final_experiments"
