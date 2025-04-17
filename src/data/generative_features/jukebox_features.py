@@ -129,7 +129,7 @@ def get_wav(
                            or [channels, samples] if mono=False
        sr (int): sample rate
     """
-    path = os.path.join(dir, filename)
+    path = os.path.join(dir, f"{filename}.mp3")
     # If it's .mp3 or .wav, etc., librosa.load can handle it
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
