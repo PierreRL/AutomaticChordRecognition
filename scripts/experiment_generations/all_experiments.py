@@ -50,17 +50,19 @@ for k, l, c in zip(kernel_sizes, layers, channels):
         f"--cnn_channels={c} "
     )
     print_to_file(call)
-
+"""
 # LR search on CRNN
 output_dir = "crnn_lr_search"
-lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-schedulers = ["cosine", "plateau", "none"]
-for lr, scheduler in product(lrs, schedulers):
+# lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+# schedulers = ["cosine", "plateau", "none"]
+lrs = [0.0001, 0.001, 0.01]
+schedulers = ["cosine"]
+for lr, scheduler in [(l, s) for l in lrs for s in schedulers]:
     exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --lr={lr} --lr_scheduler={scheduler} --hidden_size=256 --segment_length=8"
     print_to_file(call)
-
+"""
 # CRNN Hparams random search
 output_dir = "crnn_hparams"
 kernel_sizes = [5, 15]
@@ -227,20 +229,20 @@ for dim in dims:
 
 """
 # Gen feature comparison
-output_dir = "gen_feature_comparison"
-model_name = "large"
-exp_name = "gen_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
-print_to_file(call)
-exp_name = "cqt_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
-print_to_file(call)
-exp_name = "gen_and_cqt"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-print_to_file(call)
+# output_dir = "gen_feature_comparison"
+# model_name = "large"
+# exp_name = "gen_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
+# print_to_file(call)
+# exp_name = "cqt_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+# print_to_file(call)
+# exp_name = "gen_and_cqt"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+# print_to_file(call)
 
 
 # Beatwise sampling
