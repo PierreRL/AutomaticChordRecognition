@@ -1,38 +1,18 @@
 \chapter{A Convolution Recurrent Neural Network}
 
-In this chapter, I implement a convolutional recurrent neural network (CRNN) from the literature~\citep{StructuredTraining}, train it on the \emph{Pop} dataset and compare it to two baselines. I then conduct a thorough analysis of the behaviour and failure modes of the model and provide motivation for further improvements. 
+In this chapter, I implement a convolutional recurrent neural network (CRNN) from the literature~\citep{StructuredTraining}, train it on the \emph{Pop} dataset and compare it to two baselines. I then conduct a thorough analysis of the behaviour and failure modes of the CRNN and provide motivation for improvements. 
 
-\section{Baseline Models}
+\section{The CRNN Model}\label{sec:crnn}
 
-As simple baselines, we consider a single layer neural network (NN) which treats each frame independently. 
+I implement a convolutional recurrent neural network (CRNN) as described in \citet{StructuredTraining}, referred to as \emph{CRNN}. The model receives input of size $B \times F$ where $B=216$ is the number of bins in the CQT and $F$ is the number of frames in the song. The input is passed through a layer of batch normalisation~\citep{BatchNorm} before being fed through two convolutional layers with a rectified linear unit (ReLU) after each one. The first convolutional layer has a $5\times 5$ kernel and outputs only one channel of the same size as the input. It is intended to smooth out noise and spread information about sustained notes across adjacent frames. The second layer has a kernel of size $1\times I$, and outputs 36 values per frame intended to collapse the information over all frequencies into a single 36-dimensional vector. This acts as a linear layer across frames with shared parameters for each frame. The output is passed through a bi-directional GRU~\citep{GRU}, with hidden size initially set to $256$ and a final dense layer with softmax activation. This produces a vector of length $C$ for each frame.
 
-The layer receives an input of size $216$ and outputs a $C$-dimensional vector, where $C$ is the cardinality of the chord vocabulary. For these experiments, $C=170$. The outputs are then passed through a softmax layer such that values can be interpreted as the probability of each chord and the cross-entropy loss with the true distribution is calculated. We call this model \emph{Logistic} as this can be seen as a logistic regression model trained using stochastic gradient descent (SGD). We could have used a logistic regression model implemented in \texttt{sklearn} which may have found better minima but implementation as a neural network was fast and easy and unlikely to yield significantly worse results.
+The authors of the model also propose using a second GRU as a decoder before the final dense layer, called `CR2'. However, a similar effect could be achieved with more layers in the initial GRU. Furthermore, both in the paper and in brief empirical tests, the results with `CR2' were indistinguishable from the model without it. I therefore do not include this addition in model. Results left to Appendix~\ref{app:crnn_with_cr2} as they are neither relevant nor interesting.
 
-% TODO: Add CNN once I've done experiments with it.
+% \subsection{Small to Large Vocabulary}
 
-A grid search on learning rates and learning rate schedulers was conducted on the sets \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[Cosine, Plateau, None]} respectively. The \texttt{Plateau} scheduler halves the learning rate when the validation loss hasn't improved for 10 epochs and \texttt{Cosine} is as described in Section~\ref{sec:training}. The best model was found to be a learning rate of $0.01$ with a \texttt{Cosine} scheduler. This best model was chosen for having the highest score on most of the metrics in validation set. All models with learning rates of $0.01$ or $0.001$ converged within 150 epochs. Although the best model had a learning rate $0.01$, a learning rate of $0.001$ over 150 epochs had a more stable validation accuracy. The model's results can be seen in Table~\ref{tab:baseline_results}. Full results are omitted as they are not relevant to the main discussion. The model serves simply as a baseline to compare the more complex models to. These results give us the first empirical evidence that the task is non-trivial. The model is only able to predict the root of the chord with a mean frame-wise accuracy of $0.64$ and a mirex of $0.65$. The model identifies both the root and the third with an accuracy of $0.56$ but struggles more with the seventh with an accuracy of $0.44$. The lowest scores are the class-wise accuracies. The model is only able to predict the class of the chord with \texttt{class}\textsubscript{mean}$=0.13$ and \texttt{class}\textsubscript{median}$=0.03$. This gives us the first insight into each of the evaluation metrics and what we can hope from more complex models and other improvements.
+% Initial experiments were conducted on the simpler chord vocabulary with $C=25$. Only if the model could somewhat accurately classify the smaller vocabulary and if performance did not decrease using a model trained on the larger vocabulary and tested on the smaller chord vocabulary, would we proceed to using the larger vocabulary. 
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{lcccccccc}
-        \toprule
-        Model & frame & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\  
-        \midrule
-        \emph{Logistic} & 0.42 & 0.64 & 0.56 & 0.44 & 0.65 & 0.13 & 0.03 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Baseline model results}\label{tab:baseline_results}
-\end{table}
-
-\section{CRNN}
-
-We implement a convolutional recurrent neural network (CRNN) as described in \citet{StructuredTraining}. The model takes as input a matrix of size $I \times F$ where $I$ is the number of input features and $F$ is the number of frames. The model passes the input through a layer of batch normalisation, before being fed through two convolutional layers with ReLU after each one. The first convolutional layer has a $5\times 5$ kernel, and outputs only one channel the same size as the input. It is intended to smooth out noise and spread information about sustained notes across adjacent frames. The second layer has a kernel of size $1\times I$, and outputs 36 values per frame intended to collapse the information over all frequencies with 36 bins per octave into a single 36-dimensional chroma vector. This also acts as a linear layer across frames with shared parameters. The output is passed through a bi-directional GRU~\citep{GRU}, with hidden size initially set to $256$ and a final dense layer with softmax activation. This produces a vector of length $V$ for each frame, where $V$ is the size of the chord vocabulary.
-
-The authors of the model also propose using a second GRU as a decoder before the final dense layer, called `CR2'. However, we believe that a similar effect could be achieved with more layers in the initial GRU. Furthermore, both in the paper and in brief empirical tests of our own, the results with `CR2' were indistinguishable from the model without it. We therefore do not include it in our final model. Results are omitted as they are neither relevant nor interesting.
-
-\subsection{Small to Large Vocabulary}
-
-Initial experiments were conducted on the simpler chord vocabulary with $C=25$. Only if the model could somewhat accurately classify the smaller vocabulary and if performance did not decrease using a model trained on the larger vocabulary and tested on the smaller chord vocabulary, would we proceed to using the larger vocabulary. In keeping with with the methodology in \citet{StructuredTraining}, we initially run experiments using a learning rate of $0.001$. We reduce the learning rate to half its previous value if the validation loss hasn't improved for 10 epochs and stop training if it has not improved for 25 epochs, with a maximum of 100 epochs. Training samples were set to 10 seconds long. Model convergence was manually checked using the validation and training losses over epochs.
+% In keeping with with the methodology in \citet{StructuredTraining}, I initially run experiments using a learning rate of $0.001$. The learning rate is reduced to half its previous value if the validation loss hasn't improved for 10 epochs and training is stopped if it has not improved for 25 epochs, with a maximum of 100 epochs. Training patches of audio were set to 10 seconds long. Model convergence was manually checked using the validation and training losses over epochs.
 
 % A plot of the training history used to ensure check convergence is shown in Figure~\ref{fig:crnn_small_vocab_loss}.
 
@@ -42,38 +22,44 @@ Initial experiments were conducted on the simpler chord vocabulary with $C=25$. 
 %     \caption{CRNN model training history on small vocabulary. We see the training loss and the validation loss and accuracy. The accuracy here is over all chord labels, not ignoring \texttt{X} as in final metric calculations. Training was stopped early at epoch 79. We can see the validation loss flattening out after around epoch 50. However, the model could have continued to be trained as it has not started overfitting yet. This behaviour later contributed to the argument for the removal of early stopping.}\label{fig:crnn_small_vocab_loss}
 % \end{figure}
 
-Results are shown in Table~\ref{tab:crnn_small_vocab}. For comparison, the table also shows the performance of the same model trained with the large vocabulary, $C=170$ and its predictions mapped back to the smaller vocabulary. A confusion matrix over chord roots of the model trained on $C=26$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. The model performs better than the baseline model which is tested on the larger vocabulary, which is to be expected given the nested nature of the models, and the harder task of classification with the larger vocabulary. From the confusion matrix, it becomes clear that many of the mistakes the model is making lie in the \texttt{X} symbol, which constitutes just over 7\% of the smaller vocabulary dataset. Chords with qualities like \texttt{sus4} could be confused with \texttt{major} by a reasonable model but are represented with \texttt{X} in the smaller vocabulary. Interestingly, the model trained with $C=170$ performs nearly as well on all metrics as the model trained with $C=26$. This implies that training with $C=170$ allows the model to learn almost all the relevant information about the smaller vocabulary, and gives it the chance to learn something about the larger vocabulary as well. Therefore, we proceed with the larger vocabulary for the rest of the experiments.
+% A confusion matrix over chord roots of the model trained on $C=26$ is shown in Figure~\ref{fig:crnn_small_vocab_cm}. The model performs better than the baseline model which is tested on the larger vocabulary, which is to be expected given the nested nature of the models, and the harder task of classification with the larger vocabulary. From the confusion matrix, it becomes clear that many of the mistakes the model is making lie in the \texttt{X} symbol, which constitutes just over 7\% of the smaller vocabulary dataset. Chords with qualities like \texttt{sus4} could be confused with \texttt{major} by a reasonable model but are represented with \texttt{X} in the smaller vocabulary. Interestingly, the model trained with $C=170$ performs nearly as well on all metrics as the model trained with $C=26$. This implies that training with $C=170$ allows the model to learn almost all the relevant information about the smaller vocabulary, and gives it the chance to learn something about the larger vocabulary as well. Therefore, we proceed with the larger vocabulary for the rest of the experiments.
 
-While some other works continue to measure performance on the smaller vocabulary~\citep{BTC}, we believe more metrics distract from the primary goal of increasing performance across a wider range of chords. Additionally, the \texttt{third} metric captures much of the information we would look for in evaluation with $C=26$. We therefore only measure performance on the larger vocabulary from now on.
+% While some other works continue to measure performance on the smaller vocabulary~\citep{BTC}, we believe more metrics distract from the primary goal of increasing performance across a wider range of chords. Additionally, the \texttt{third} metric captures much of the information we would look for in evaluation with $C=26$. We therefore only measure performance on the larger vocabulary from now on.
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{lcccccc}
-        \toprule
-        Model & $V$ for training & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
-        \midrule
-        \emph{CRNN} & 26 & 0.79 & 0.77 & 0.74 & 0.74 \\
-        \emph{CRNN} & 170 & 0.78 & 0.74 & 0.72 & 0.73 \\
-        \bottomrule
-    \end{tabular}
-    \caption{CRNN model results on the small vocabulary with $C=26$. The other metrics are omitted as they are identical to \texttt{third} for classification with $C=26$.}\label{tab:crnn_small_vocab}
-\end{table}
+% \begin{table}[H]
+%     \centering
+%     \begin{tabular}{lcccccc}
+%         \toprule
+%         Model & $V$ for training & root & third & class\textsubscript{mean} & class\textsubscript{median} \\  
+%         \midrule
+%         \emph{CRNN} & 26 & 0.79 & 0.77 & 0.74 & 0.74 \\
+%         \emph{CRNN} & 170 & 0.78 & 0.74 & 0.72 & 0.73 \\
+%         \bottomrule
+%     \end{tabular}
+%     \caption{CRNN model results on the small vocabulary with $C=26$. The other metrics are omitted as they are identical to \texttt{third} for classification with $C=26$.}\label{tab:crnn_small_vocab}
+% \end{table}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1.0\textwidth]{figures/small_vocab_root_cm.png}
-    \caption{Confusion matrix over roots of the CRNN model trained on the small vocabulary. The values have been normalised over rows such that the values on the diagonals are recall metrics. There is a clear outlier in the model's recall with the label \texttt{X}, at just $0.07$. It also performs poorly on \texttt{N}.}\label{fig:crnn_small_vocab_cm}
-\end{figure}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=1.0\textwidth]{figures/small_vocab_root_cm.png}
+%     \caption{Confusion matrix over roots of the CRNN model trained on the small vocabulary. The values have been normalised over rows such that the values on the diagonals are recall metrics. There is a clear outlier in the model's recall with the label \texttt{X}, at just $0.07$. It also performs poorly on \texttt{N}.}\label{fig:crnn_small_vocab_cm}
+% \end{figure}
 
 \subsection{Hyperparameter Tuning}
 
-After progressing to the larger vocabulary, we thought it a good time to conduct some hyperparameter tuning. 
+To ensure that the training hyperparameters are set to reasonable values, I conduct a grid search over learning rates and learning rate schedulers. This is followed by a random search over model hyperparameters. 
 
-\subsubsection{Learning rates}
+\subsubsection{Learning rates}\label{sec:lr_search}
 
-We perform grid search on the same learning rates and learning rate schedulers as for the \emph{Logistic} model. The learning rates were in the set of \texttt{[0.1, 0.01, 0.001, 0.0001]} and the learning rate schedulers to \texttt{[Cosine, Plateau, None]}. We remove early stopping in order to check for convergence and overfitting without the possibility of a pre-emptive stop. Judging by training graphs seen in~\ref{fig:lr_search_cosine}, the best learning rate is $0.001$. Any lower and we do not converge fast enough; any higher and gradient updates cause the validation accuracy to be noisy. These figures also show that the validation loss does not get worse after convergence. We conclude that the model is not quick to overfit, perhaps due to the random sampling in the training process. Combined with the fact that training is relatively quick and we only save on improved validation loss, we decided to remove early stopping. We therefore conduct future experiments without early stopping, for 150 epochs and with \texttt{lr=0.001} and \texttt{Cosine} scheduling.
+I perform a grid search over learning rates and learning rate schedulers in the set \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[cosine, plateau, none]} respectively. \texttt{cosine} is as described in Section~\ref{sec:evaluation} and \texttt{plateau} reduces the learning rate to half its current value when validation loss has not improved for 10 epochs and stops training if it has not improved for 25 epochs.
 
-SGD has been shown to be a good optimiser for a longer run over many epochs if the model is able to converge [XX]. We ran an experiment over 2000 epochs with the above hyperparameters and \texttt{momentum=0.9} and found that the model was able to converge, reaching its best validation loss at around 1000 epochs and remaining flat thereafter. The results with this model did not improve on the best model trained with Adam, with 3\% lower root accuracy and 2\% lower third accuracy, but with 2\% better mirex. Due to the much longer training time and the lower root accuracy, we decided to stick with Adam for the rest of the experiments.
+I report a subset of metrics in Table~\ref{tab:crnn_lr}. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{cosine} scheduling. However, there were no large differences in performance between the learning rate schedulers. I proceed with these hyperparameters as defaults for the rest of the experiments.
+
+Early stopping is disabled in order to check for convergence and overfitting without the possibility of a pre-emptive stop. Judging by training graphs seen in~\ref{fig:lr_search_cosine}, the best learning rate is $0.001$. Any lower and we do not converge fast enough. Any higher and large gradient updates cause the validation accuracy to be noisy. These figures also show that the validation loss does not increase after convergence. I conclude that the model is not quick to overfit, perhaps due to the random sampling of audio patches during training. Combined with the fact that training is relatively quick and that the model is only saved on improved validation loss, I decided to remove early stopping. 
+
+Future experiments are all conducted without early stopping, for a total of 150 epochs and with a learning rate of $0.001$ and \texttt{cosine} scheduling.
+
+In order to check that Adam is the best optimiser to use, a training run with stochastic gradient descent (SGD) was also carried out. Results from \citet{SGD1} and \citet{SGD2} suggest that SGD can find better minima with a stable learning rate over many epochs. To test this, I trained a CRNN over 2000 epochs with a learning rate of $0.001$, the \texttt{cosine} scheduler and momentum set to $0.9$. While the model did converge, it did not perform any better than the models trained with Adam. Results are left to Appendix~\ref{app:long_sgd} for lack of interest.
 
 \begin{figure}[H]
     \centering
@@ -81,60 +67,112 @@ SGD has been shown to be a good optimiser for a longer run over many epochs if t
     \caption{Training graphs for the CRNN model with different learning rates. The learning rate of $0.001$ seems to be the best, as it converges in a reasonable time and the validation accuracy increases in a stable fashion.}\label{fig:lr_search_cosine}
 \end{figure}
 
-We report a subset of metrics in Table~\ref{tab:crnn_lr}. The best performing model by validation metrics was found to be with \texttt{lr=0.001} and \texttt{Cosine} scheduling. However, there were no large differences in performance between the learning rate schedulers. We proceed with these hyperparameters as defaults for the rest of the experiments.
+% lr	scheduler	accuracy	root	third	seventh	mirex	acc_stde	root_stde	third_stde	seventh_stde	mirex_stde
+% 8	0.00001	cosine	7.734154	12.567862	10.301985	7.948638	11.407809	0.756612	0.935874	0.891334	0.764999	0.942923
+% 13	0.00010	cosine	53.176047	72.122734	66.869413	55.225218	72.039027	1.369325	0.953939	1.068539	1.351269	0.794009
+% 0	0.00100	cosine	59.693026	78.289060	75.038317	61.967582	79.788345	1.254995	0.867156	0.973827	1.242128	0.741985
+% 6	0.00100	none	59.757152	78.696339	75.476839	62.032520	78.768536	1.255399	0.832965	0.931400	1.218277	0.821945
+% 2	0.00100	plateau	59.886951	78.385394	75.198397	62.157333	79.680444	1.250376	0.855445	0.959925	1.204478	0.747864
+% 1	0.01000	cosine	53.612974	69.548986	66.851165	55.681087	78.561550	1.351513	1.146554	1.214928	1.328125	0.858521
+% 4	0.10000	cosine	7.093379	12.179759	8.932016	7.338634	9.852282	0.785988	0.921778	0.857688	0.802498	0.906531
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccccc}
+        \toprule
+        lr & scheduler & acc & root & third & seventh & mirex \\
+        \midrule
+        0.01 & Cosine &  53.6 & 69.5 & 66.9 & 55.7 & 78.6 \\
+        0.001 & Cosine & \emph{59.7} & \emph{78.3} & \emph{75.0} & \emph{62.0} & \emph{\textbf{79.8}} \\
+        0.0001 & Cosine & 53.2 & 72.1 & 66.9 & 55.2 & 72.0 \\
+        \midrule
+        0.001 & Plateau & \textbf{59.9} & 78.4 & 75.2 & \textbf{62.2} & 79.7 \\
+        0.001 & None & 59.8 & \textbf{78.7} &\textbf{75.5} & 62.0 & 78.8 \\
+        \bottomrule
+    \end{tabular}
+    \caption{\emph{CRNN} model results with different learning rates and schedulers. Best results over learning rates are \emph{italicised} and best results over schedulers are in \textbf{boldface}. A learning rate of $0.001$ performs the best on all metrics. The differences between learning rate schedulers are so small that the choice between them is arbitrary. }\label{tab:crnn_lr}
+\end{table}
+
+\subsubsection{Model Hyperparameters}
+
+With this learning rate and learning rate scheduler fixed, I perform a random search over the number of layers in the GRU, the hidden size of the layers in the GRU, the training patch segment length, the kernel size in the CNN, the number of layers in the CNN and the number of channels in the CNN. The search is performed by independently and uniformly randomly sampling 30 points over discrete sets of possible hyperparameter values. These sets can be found in Appendix~\ref{app:random_hyperparameter_search_sets}. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were ranked according to each metric and their ranks for each metric were added up. The models were ordered by this total rank. The best model was found to have a hidden size $h=201$, a single layer GRU and a segment length of $L=28$, although the differences between models are all very small. Such small differences are indicative that the model is learning something simple and that increased model complexity does not help. It also seems that the choice of hyperparameters is arbitrary. I therefore proceed with the same parameters suggested by \citet{StructuredTraining} as default for the remainder of experiments.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ccccccccccc}
+        \toprule
+        $L$ & $h$ & $k$ & $c$ & $g$ & $ch$ & acc & root & third & seventh & mirex \\
+        \midrule
+        23 & 231 & 5 & 1 & 1 & 1 & \textbf{59.8} & 78.2 & 74.7 & \textbf{62.0} & \textbf{79.9} \\
+        11 & 150 & 7 & 2 & 1 & 3 & 59.6 & 78.5 & 75.0 & 61.9 & 79.2 \\
+        43 & 222 & 11 & 2 & 2 & 2 & 59.5 & \textbf{78.7} & \textbf{75.2} & 61.8 & 78.9 \\
+        \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots \\
+        34 & 159 & 14 & 4 & 2 & 1 & 56.9 & 75.5 & 72.2 & 59.1 & 77.7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{CRNN model results on the large vocabulary with different hyperparameters. Best results for each metric are in \textbf{boldface}. $L$ is the length of training patches of audio in seconds, $h$ and $g$ are the hidden size and number of layers in the GRU respectively and $k$, $c$ and $ch$ are the kernel sizes, number of layers and number of channels in the CNN respectively. Results across all hyperparameters are very similar. Comparing with the best results from the learning rate search in Table~\ref{tab:crnn_lr}, it seems that the parameters suggested by \citet{StructuredTraining} are good choices. In general, models with more parameters and longer input tend to perform worse but with small difference. This suggests that the model is learning something simple as the increased complexity of larger models does not help with performance. The variance within the data may be largely caused by the stochastic nature of SGD. Regardless of what causes the variance, the effect size is small enough to conclude that it does not make a meaningful difference.}\label{tab:crnn_hparams}
+\end{table}
+
+% Hyperparameters for CQT computation were chosen to be the same as in \citet{StructuredTraining}. However, the hop length was chosen to be $4096$ samples. Other works have used $512$ samples \citet{ACRLargeVocab1} or $2048$ samples \citet{CurriculumLearning}. It should be noted that performance is not directly comparable across hop sizes as we are changing the number of frames and so the likelihoods are different. Nonetheless, if drastically different results are obtained, it may be worth using a different hop size. A plot of accuracy against the hop size is shown in Appendix~\ref{app:accuracy_vs_hop_length}. The plot shows that performance is not affected by hop size much at all. This may be because the hop sizes used are all granular enough such that every chord has at least one frame associated with it, but not so granular that the features in a frame become too noisy. We proceed with the hop size of $4096$ samples to keep computational cost low while keeping consistent with some of the literature.
+
+
+\section{Baseline Models}\label{sec:baselines}
+
+I consider two models as baselines. First, I train a single layer neural network (NN) which treats each frame independently. The layer receives an input of size $B=216$ where $B$ is the number of bins in the CQT and outputs a $C$-dimensional vector, where $C=170$ is the cardinality of the chord vocabulary. The outputs are then passed through a softmax layer such the vector can be interpreted as a probability distribution over the chord vocabulary. Finally, the cross-entropy loss with the true chord distribution is calculated. This model is called \emph{logistic} as it can be viewed as a logistic regression model trained using SGD. I could have used a logistic regression model implemented in \texttt{sklearn} but the implementation as a neural network was fast and easy to implement and unlikely to yield significantly different results.
+
+% A grid search on learning rates and learning rate schedulers was conducted on the sets \texttt{[0.1, 0.01, 0.001, 0.0001]} and \texttt{[Cosine, Plateau, None]} respectively. The \texttt{Plateau} scheduler halves the learning rate when the validation loss hasn't improved for 10 epochs and \texttt{Cosine} is as described in Section~\ref{sec:training}. The best model as measured by \texttt{acc} was trained with a learning rate of $0.01$ and the \texttt{Cosine} scheduler. All models with learning rates of $0.01$ or $0.001$ converged within 150 epochs. Although the best model had a learning rate $0.01$, a learning rate of $0.001$ over 150 epochs had a more stable validation accuracy. Results are omitted for lack of interest to the main discussion. However, the search and justification of choice of model follows an identical reasoning to that followed in Section~\ref{sec:lr_search}.
+
+Secondly, I train a convolutional neural network (CNN). The convolutional layers operate on the CQT similarly to how a convolution operates on an image. After these layers, a single dense layer is used to classify each frame's chord independently. This entire model is referred to as \emph{CNN}. The justification for this choice can be found in Section~\ref{sec:lr_search}. The number of convolutional layers, kernel size and number of channels are left as hyperparameters. I train three models, with increasing numbers of layers, kernel sizes and channels. In each case, all layers have the same kernel size and number of channels. Results for these models are deferred to Appendix~\ref{app:cnn_hparams}. The best performing hyperparameter selection is kept as the baseline to compare with \emph{CRNN}.
+
+\citet{FeatureMaps} train a deep CNN which remains competitive with state-of-the-art to this day. It contains many more layers than experimented with here. \citet{BTC} find that the performance of this deep CNN is very similar to that of the CRNN which I describe in Section~\ref{sec:crnn}, both reaching \texttt{root} recalls between $81$ and $82$. Results here found that a much shallower CNN can reach almost the same performance as the deep CNN trained by \citet{FeatureMaps}. Training much deeper convolutional networks was found to be far more computationally expensive than training the CRNN, with little performance gain to be had. Therefore, the CNNs are kept as a baseline and later experiments are conducted with \emph{CRNN}.
+
+I performed a grid search over learning rates and schedulers for these baselines to ensure that convergence was reached. Convergence results were not meaningfully different than those obtained with the CRNN and are hence omitted. I use the best performing results in each case. This was with a learning rate of $0.001$ for both models and with schedulers of \texttt{plateau} and \texttt{cosine} for \emph{logistic} and \emph{CNN} respectively.
+
+%  The model's results can be seen in Table~\ref{tab:baseline_results}. Full results are omitted as they are not relevant to the main discussion. The model serves simply as a baseline to compare the more complex models to. These results give us the first empirical evidence that the task is non-trivial. The model is only able to predict the root of the chord with a mean frame-wise accuracy of $0.64$ and a mirex of $0.65$. The model identifies both the root and the third with an accuracy of $0.56$ but struggles more with the seventh with an accuracy of $0.44$. The lowest scores are the class-wise accuracies. The model is only able to predict the class of the chord with \texttt{class}\textsubscript{mean}$=0.13$ and \texttt{class}\textsubscript{median}$=0.03$. This gives us the first insight into each of the evaluation metrics and what we can hope from more complex models and other improvements.
+
+% \begin{table}[H]
+%     \centering
+%     \begin{tabular}{lcccccccc}
+%         \toprule
+%         Model & frame & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\  
+%         \midrule
+%         \emph{Logistic} & 0.42 & 0.64 & 0.56 & 0.44 & 0.65 & 0.13 & 0.03 \\
+%         \bottomrule
+%     \end{tabular}
+%     \caption{Baseline model results}\label{tab:baseline_results}
+% \end{table}
+
+\section{First Results}
+
+logistic 42.981399	64.464031	56.901664	60.883659	12.024866	1.709139
+cnn 
 
 \begin{table}[H]
     \centering
     \begin{tabular}{lccccccc}
         \toprule
-        lr & scheduler & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\
+        model & acc & root & third & seventh & mirex & acc\textsubscript{class} & median\textsubscript{class} \\  
         \midrule
-        0.01 & Cosine & 0.71 & 0.68 & 0.55 & 0.76 & 0.13 & 0.00 \\
-        0.001 & Cosine & \textbf{0.77} & \textbf{0.73} & \textbf{0.60} & 0.80 & 0.17 & \textbf{0.01} \\
-        0.0001 & Cosine & 0.70 & 0.65 & 0.54 & 0.70 & 0.10 & 0.00 \\
-        \midrule
-        0.001 & Plateau & 0.74 & \textbf{0.73} & \textbf{0.60} & 0.80 & \textbf{0.18} & \textbf{0.01} \\
-        0.001 & None & 0.71 & 0.70 & 0.58 & \textbf{0.82} & 0.17 & 0.00 \\
+        \emph{logistic} & 0.42 & 0.64 & 0.56 & 0.44 & 0.65 & 0.13 & 0.03 \\
+        \emph{CNN} & 57.8 & 78.1 & 74.0 & 60.0 & 77.8 & 19.2 & 3.2 \\
         \bottomrule
     \end{tabular}
-    \caption{CRNN model results on the large vocabulary with different learning rates and schedulers. Overall, a learning rate of $0.001$ and a scheduler of \texttt{Cosine} performs the best in many metrics, though a scheduler of \texttt{Plateau} performs just as well or better on many metrics. We prioritise the performance of the model on the root as this is more important than the \texttt{mirex} metric. }\label{tab:crnn_lr}
+    \caption{Baseline model results}\label{tab:first_results}
 \end{table}
 
-\subsubsection{Model Hyperparameters}
+\section{Model Analysis}\label{sec:crnn_analysis}
 
-With this learning rate and learning rate scheduler fixed, we perform a random search on the number of layers in the GRU, the hidden size of the layers in the GRU and the training patch segment length. The search is performed by independently and uniformly randomly sampling 32 points in the sets $\texttt{hidden\_size}\in\{64,65,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$ and $\texttt{segment\_length}\in\{10,11,\ldots,60\}$. A sample of the results are shown in Table~\ref{tab:crnn_hparams}. The models were then ranked according to each metric and their ranks for each metric added up. The models were ordered by this total rank. The best model was found to have a hidden size $h=201$, a single layer GRU and a segment length of $L=28$, although the differences between models were very small. Such small differences might indicate that the model is learning something relatively simple and that increased model complexity does not help. We proceed with this model as the default for the rest of the experiments, referred to simply as the \emph{CRNN}.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{cccccccccc}
-        \toprule
-        $L$ & layers & $h$ & frame & root & third & seventh & mirex & class\textsubscript{mean} & class\textsubscript{median} \\
-        \midrule
-        28 & 1 & 201 & \textbf{0.58} & \textbf{0.78} & 0.75 & 0.62 & \textbf{0.79} & 0.18 & 0.01 \\
-        23 & 2 & 295 & 0.58 & 0.78 & \textbf{0.75} & \textbf{0.62} & 0.78 & 0.19 & 0.02 \\
-        14 & 2 & 374 & 0.57 & 0.77 & 0.74 & 0.61 & 0.79 & 0.19 & \textbf{0.02} \\
-        56 & 1 & 463 & 0.58 & 0.77 & 0.74 & 0.61 & 0.78 & 0.19 & 0.02 \\
-        42 & 3 & 222 & 0.57 & 0.77 & 0.74 & 0.60 & 0.79 & 0.16 & 0.00 \\
-        \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots & \ldots \\
-        \bottomrule
-    \end{tabular}
-    \caption{CRNN model results on the large vocabulary with different hyperparameters. Best unrounded metrics are bolded. Results across all hyperparameters were very similar. We proceed with the best model found with hidden size of $201$, a single layer GRU and a segment length of $28$, although any configuration would work similarly. This may implies that model is learning something simple because the increased complexity of larger models did not help with performance. The variance within the data may be entirely due to the stochastic nature of SGD. Regardless of what makes the results different, the effect size is small enough to conclude that it does not make a meaningful difference.}\label{tab:crnn_hparams}
-\end{table}
-
-Hyperparameters for CQT computation were chosen to be the same as in \citet{StructuredTraining}. However, the hop length was chosen to be $4096$ samples. Other works have used $512$ samples \citet{ACRLargeVocab1} or $2048$ samples \citet{CurriculumLearning}. It should be noted that performance is not directly comparable across hop sizes as we are changing the number of frames and so the likelihoods are different. Nonetheless, if drastically different results are obtained, it may be worth using a different hop size. A plot of accuracy against the hop size is shown in Appendix~\ref{app:accuracy_vs_hop_length}. The plot shows that performance is not affected by hop size much at all. This may be because the hop sizes used are all granular enough such that every chord has at least one frame associated with it, but not so granular that the features in a frame become too noisy. We proceed with the hop size of $4096$ samples to keep computational cost low while keeping consistent with some of the literature.
-
-\section{Model Analysis}
+While quantitative metrics summarise how well a model performs over songs, they do not tell us much about the predictions the model makes and where it goes wrong. In this section, I answer several questions about the behaviour of the model.
 
 \subsection{Qualities and Roots}
 
-How does the model deal with the long tail of the chord distribution? The class-wise metrics give strong indication that the performance is poor. We used a confusion matrix over qualities of chords to provide more granular detail. The confusion matrix is shown in Figure~\ref{fig:crnn_qual_cm}. 
+\textbf{How does the model deal with the long tail of the chord distribution?} The class-wise metrics in Table~\ref{tab:first_results} give strong indication that the performance is poor. I use a confusion matrix over qualities of chords to provide more granular detail. The confusion matrix is shown in Figure~\ref{fig:crnn_qual_cm}.
 
-We also looked at confusion matrices over roots. We do not illustrate these matrices as the model performs similarly over all roots with a recall between $0.74$ and $0.82$, approximately increasing with commonality of the chord. This aligns with the fact that the roots do not represent a long-tailed distribution as with the qualities, as previously seen in Figure~\ref{fig:chord-distribution}. However, the two special symbols, \texttt{N} and \texttt{X}, have poorer performance with recalls of $0.63$ and $0.24$ respectively. Many of the \texttt{N} chords are at the beginning and end of the piece. Clearly, the model struggles with understanding when the music begins and ends. An example where the model mistakenly thinks chords are playing part-way through a piece is discussed in Section~\ref{sec:crnn_examples}. The low performance on \texttt{X} is to be expected. It is a highly ambiguous class with many possible inputs that are mapped to it, all of which will be fairly close to some symbol in the true vocabulary. It is unreasonable to expect the model to be able to predict this class well which further supports the argument for ignoring this class during evaluation.
-
+I also looked at confusion matrices over roots. These are not included as the model performs similarly over all roots with a recall of between $0.74$ and $0.82$. This is not surprising given that the distribution over roots is relatively uniform, as previously seen in Figure~\ref{fig:chord-distribution}. However, the two special symbols, \texttt{N} and \texttt{X}, have poorer performance with recalls of $0.63$ and $0.24$ respectively. Many of the \texttt{N} chords are at the beginning and end of the piece. The model may struggle with understanding when the music begins and ends. An example of the model erroneously predicting that chords are playing part-way through a song is discussed in Section~\ref{sec:crnn_examples}. The low performance on \texttt{X} is to be expected. It is a highly ambiguous class with many possible sounds that are mapped to it. All of the chords mapped to \texttt{X} will share many notes with at least one class in the rest of the vocabulary. Therefore, it is unreasonable to expect the model to be able to predict this class well. This supports the case for ignoring this class during evaluation as is standard in the literature.
 
 \subsection{Transition Frames}\label{sec:transition_frames}
 
-We hypothesise that the model is worse at detecting chords on frames where the chord changes. Such transition frames are present because frames are calculated based on hop length irrespective of the tempo and time signature of the song. To test this, we isolate the transition frames and compare the accuracies for transition and non-transition frames separately. We found that with a hop length of 4096, $4.4\%$ of frames are transition frames. On the \emph{CRNN} model with a \texttt{frame} of $0.59$, the model achieves a \texttt{frame} of $0.36$ on the transition frames and $0.60$ on non-transition frames. Therefore, the model is certainly worse at predicting chords on transition frames. However, improving performance on these frames to the level of non-transition frames would increase the overall frame-wise accuracy by less than $0.01$. 
+\textbf{Are predictions worse on frames where the chord changes?} Such \emph{transition frames} are present because frames are calculated based on hop length irrespective of the tempo and time signature of the song. Thus, some frames will have multiple chords playing during  To test this, I compute accuracies for transition and non-transition frames separately. With a hop length of 4096, $4.4\%$ of frames are transition frames. On the \emph{CRNN} model with a \texttt{acc} of $0.59$, the model achieves a \texttt{acc} of $0.36$ on the transition frames and $0.60$ on non-transition frames. Therefore, the model is certainly worse at predicting chords on transition frames. However, improving performance on these frames to the level of non-transition frames would increase the overall frame-wise accuracy by less than $0.01$. 
 
 Through manual investigation explained in Section~\ref{sec:crnn_performance_across_context} we found that on some songs the model did struggle to correctly identify the boundary of a chord change. This was not captured by the above metrics as if the boundary is ambiguous enough to span multiple frames, there may be a larger impact in accuracy than a single frame. Furthermore, some songs will have more obvious boundaries than others. Though the average may be low, for some songs this may be the main limiting factor in performance. However on such songs, the boundaries are likely to be highly subjective and the model would have to learn to detect the beat to consistently predict the boundaries. As previously discussed, we did not wish to introduce another failure mode by using a separate model for beat detection. Some work has attempted to simultaneously predict chord changes and chord classes~\citep{HarmonyTransformer}. This is a related task which we do not address here.
 
@@ -142,7 +180,7 @@ Through manual investigation explained in Section~\ref{sec:crnn_performance_acro
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.68\textwidth]{figures/confusion_matrix_qualities.png}
-    \caption{Row-normalised confusion matrices over qualities of the \emph{CRNN} model without (above) and with (below) weighted loss. The weighting is with with $\alpha = 0.55$ as in Equation\ref{eq:weighted_loss}. Rows are ordered by frequency of chord quality. We can see that both models struggle with the long tail. However, weighting the loss does improve the model, notably on \texttt{7} and \texttt{maj7} qualities and predicts \texttt{maj} less often. Recall on the \texttt{maj} worsens by $0.18$ and recall on \texttt{X} decreases from $0.24$ to $0.05$. The weighted model predicts \texttt{X} approximately four times less often. This may be how the weighted model improves class-wise metrics without sacrificing too much overall accuracy, since \texttt{X} frames are ignored. We can also see that both models frequently confuse \texttt{dim7} and \texttt{dim} qualities, consistently predict \texttt{maj} for \texttt{sus2, sus4, maj6, maj7} and \texttt{minmaj7} and struggles with \texttt{aug}.}\label{fig:crnn_qual_cm}
+    \caption{Row-normalised confusion matrices over qualities of the \emph{CRNN} model without (above) and with (below) a weighted loss. The weighting is with with $\alpha = 0.3$ as in Equation\ref{eq:weighted_loss}. Rows are ordered by frequency of chord quality. We can see that both models struggle with the imbalanced distribution. However, weighting the loss does improve the model, notably on \texttt{7} and \texttt{maj7} qualities and predicts \texttt{maj} less often. Recall on the \texttt{maj} worsens by $0.18$ and recall on \texttt{X} decreases from $0.24$ to $0.05$. The weighted model predicts \texttt{X} approximately four times less often. This may be how the weighted model improves class-wise metrics without sacrificing too much overall accuracy, since \texttt{X} frames are ignored. We can also see that both models frequently confuse \texttt{dim7} and \texttt{dim} qualities, consistently predict \texttt{maj} for \texttt{sus2, sus4, maj6, maj7} and \texttt{minmaj7} and struggles with \texttt{aug}.}\label{fig:crnn_qual_cm}
 \end{figure}
 
 Given the above evidence that few frames are affected, and the difficulty of directly addressing the beat detection problem, we leave further investigate of transition frames to further work.
@@ -154,19 +192,21 @@ TODO: Add in comparison to discrete evaluation as a measure of transition frame 
 
 \subsection{Smoothness}\label{sec:smoothness}
 
-Are the models outputs \emph{smooth}? Most chords in the dataset last longer than a second but there are more than 10 frames per second. If many of the model's errors are due to rapid fluctuations in chord probability, some post-processing could be applied to help smooth out predicted chords. We use two crude measures of smoothness.
+\textbf{Are the models outputs smooth?} There are over 10 frames per second. If many of the model's errors are due to rapid fluctuations in chord probability, the model will over-predict chord transitions. I use two crude measures of smoothness to answer this question.
 
-Firstly, we look at the number and length of incorrect regions. Such a region is defined as a sequence of incorrectly predicted frames with the same prediction. We find that $26.9\%$ of all incorrect regions are one frame wide and $3.8\%$ of incorrect frames have different predictions on either side. This can be interpreted as $3.8\%$ of errors being due to rapidly changing chord predictions. A histogram over region lengths can be found in Appendix~\ref{app:histogram_over_region_lengths}.
+Firstly, I look at the number and length of \emph{incorrect regions}. Such a region is defined as a sequence of incorrectly predicted frames with the same prediction. $26.9\%$ of all incorrect regions are one frame wide and $3.8\%$ of incorrect frames have different predictions on either side. This can be interpreted as $3.8\%$ of errors being due to rapidly changing chord predictions. A histogram over incorrect region lengths can be found in Appendix~\ref{app:histogram_over_region_lengths}. This plot shows that distribution of lengths of incorrect regions is long-tailed, with the vast majority very short.
 
-Secondly, we can simply count the mean number of chord transitions per song and compare with the labels. We find that the model predicts $170$ transitions per song in the validation set versus the a true count of $104$ transitions per song. This raises significant concerns as the smoothness of its outputs. 
+Secondly, I compare the mean number of chord transitions per song predicted by the model with the true number of transitions per song in the validation set. The model predicts $170$ transitions per song while the number is $104$ transitions per song. This is convincing evidence that smoothing the outputs of the model could help. 
 
-With these two observations combined, we conclude that further work on the model to improve the smoothness would might performance a little, but not significantly. Although we might hope to improve on roughly $3.8\%$ of errors, this would not improve overall accuracy very much. While rapid changes may be smoothed out, there is no guarantee that smoothing will result in correct predictions. Indeed, it may even render some previously correct predictions erroneous. Nonetheless, the model is clearly over-predicting transitions in general and when being used by a musician or researcher, smoothed predictions are valuable to make the chords more interpretable. This motivates the exploration of a decoding step in Section~\ref{sec:decoding}.
+With these two observations combined, I conclude that further work on the model to improve the smoothness would might performance a little, but not significantly. Although we might hope to improve on roughly $3.8\%$ of errors, this would not improve overall accuracy very much. While rapid changes may be smoothed out, there is no guarantee that smoothing will result in correct predictions. Indeed, it may even render some previously correct predictions erroneous. Nonetheless, the model is clearly over-predicting transitions in general and when being used by a musician or researcher, smoothed predictions are valuable to make the chords more interpretable. This motivates the exploration of a `decoding' step in Section~\ref{sec:decoding}.
 
 \subsection{Performance Across the Context}\label{sec:crnn_performance_across_context}
 
-How does the model perform across its context? We hypothesise that the model is worse at predicting chords at the beginning and end of a patch of audio as it has less context on either side. Analysing this will also help to understand to what extent the bi-directional context is important for performance.
+\textbf{How does the model perform across its context?} I hypothesise that the model is worse at predicting chords at the beginning and end of a patch of audio as it has less context on either side. 
 
-To test this, we evaluate the model using the same fixed-length validation conducted during training as described in Section~\ref{sec:training}. We then calculate average frame-wise accuracies over the context and plot them in Figure~\ref{fig:crnn_context}. We use a segment length of $10$ seconds corresponding to $L=108$ frames. We can see performance is worst at the beginning and end of the patch, as expected, but not by much. Performance only dips $0.05$, perhaps because the model still does have significant context on one side. We can also see that performance starts decreasing 5 or 6 frames from either end.
+% Answering this question may also help to understand to what extent the bi-directionality of the GRU is important for performance.
+
+To test this, I evaluate the model using the same fixed-length validation conducted during training as described in Section~\ref{sec:training}. We then calculate average frame-wise accuracies over the context and plot them in Figure~\ref{fig:crnn_context}. We use a segment length of $10$ seconds corresponding to $L=108$ frames. We can see performance is worst at the beginning and end of the patch, as expected, but not by much. Performance only dips $0.05$, perhaps because the model still does have significant context on one side. We can also see that performance starts decreasing 5 or 6 frames from either end.
 
 We conducted a further experiment, measuring overall accuracy with increasing segment lengths used during evaluation. Indeed accuracy increases, but only by a tiny $0.005$ from 5 seconds to 20 seconds and is flat thereafter. Results can found in Appendix~\ref{app:accuracy_vs_context_length}. We conclude that the context length does not make a big difference and continue to evaluate the model over the entire song at once.
 
