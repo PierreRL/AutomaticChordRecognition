@@ -53,14 +53,12 @@ for k, l, c in zip(kernel_sizes, layers, channels):
 """
 # LR search on CRNN
 output_dir = "crnn_lr_search"
-# lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
-# schedulers = ["cosine", "plateau", "none"]
-lrs = [0.0001, 0.001, 0.01]
-schedulers = ["cosine"]
+lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
+schedulers = ["cosine", "plateau", "none"]
 for lr, scheduler in [(l, s) for l in lrs for s in schedulers]:
     exp_name = f"crnn_lr_{lr}_scheduler_{scheduler}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --lr={lr} --lr_scheduler={scheduler} --hidden_size=256 --segment_length=8"
+    call = f"{base_call} --lr={lr} --lr_scheduler={scheduler}"
     print_to_file(call)
 """
 # CRNN Hparams random search
