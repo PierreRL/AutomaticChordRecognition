@@ -204,7 +204,7 @@ for p in probabilities:
     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
     print_to_file(call)
 
-"""
+
 
 # Generative features
 output_dir = "generative_features"
@@ -217,8 +217,8 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
-"""
 
+"""
 # Gen down dimension
 output_dir = "gen_down_dim"
 model_name = "large"
@@ -226,7 +226,7 @@ dims = [1024, 512, 256, 128, 64]
 for dim in dims:
     exp_name = f"model_{model_name}_dim_{dim}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3 --no_cqt --batch_size=16 --eval_batch_size=4"
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_1 --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
 
@@ -245,7 +245,7 @@ exp_name = "gen_and_cqt"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3 --batch_size=16 --eval_batch_size=4"
 print_to_file(call)
-"""
+
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
 # exp_name = "none"
