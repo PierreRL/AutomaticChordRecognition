@@ -245,7 +245,6 @@ exp_name = "gen_and_cqt"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3 --batch_size=16 --eval_batch_size=4"
 print_to_file(call)
-
 """
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
