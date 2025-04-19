@@ -232,7 +232,7 @@ output_dir = "gen_feature_comparison"
 model_name = "large"
 exp_name = "gen_only"
 reduction = "avg"
-down_dimension = 256
+down_dimension = 64
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction={reduction} --batch_size=16 --eval_batch_size=4 --gen_down_dim={down_dimension}"
 print_to_file(call)
