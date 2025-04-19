@@ -50,7 +50,7 @@ for k, l, c in zip(kernel_sizes, layers, channels):
         f"--cnn_channels={c} "
     )
     print_to_file(call)
-"""
+
 # LR search on CRNN
 output_dir = "crnn_lr_search"
 lrs = [0.00001, 0.0001, 0.001, 0.01, 0.1]
@@ -60,7 +60,7 @@ for lr, scheduler in [(l, s) for l in lrs for s in schedulers]:
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --lr={lr} --lr_scheduler={scheduler}"
     print_to_file(call)
-"""
+
 # CRNN Hparams random search
 output_dir = "crnn_hparams"
 kernel_sizes = [5, 15]
@@ -204,6 +204,7 @@ for p in probabilities:
     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
     print_to_file(call)
 
+"""
 
 # Generative features
 output_dir = "generative_features"
@@ -212,8 +213,9 @@ reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebo
 for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     exp_name = f"model_{model_name}_reduction_{reduction}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss"
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss --no_cqt"
     print_to_file(call)
+
 
 # Gen down dimension
 output_dir = "gen_down_dim"
@@ -222,25 +224,25 @@ dims = [1024, 512, 256, 128, 64]
 for dim in dims:
     exp_name = f"model_{model_name}_dim_{dim}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_3 --no_cqt"
     print_to_file(call)
 
-"""
+
 # Gen feature comparison
-# output_dir = "gen_feature_comparison"
-# model_name = "large"
-# exp_name = "gen_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
-# print_to_file(call)
-# exp_name = "cqt_only"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
-# print_to_file(call)
-# exp_name = "gen_and_cqt"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
-# print_to_file(call)
+output_dir = "gen_feature_comparison"
+model_name = "large"
+exp_name = "gen_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3"
+print_to_file(call)
+exp_name = "cqt_only"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+print_to_file(call)
+exp_name = "gen_and_cqt"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3"
+print_to_file(call)
 
 
 # Beatwise sampling
