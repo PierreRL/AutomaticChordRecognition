@@ -49,15 +49,20 @@ class StructuredLoss(nn.Module):
         if device is None:
             device = get_torch_device()
 
-        chord_output, root_output, pitch_class_output = output
-
-        # Overall chord loss
-        chord_loss = F.cross_entropy(chord_output, target, ignore_index=self.ignore_index)
-
         # Mask out invalid targets (and optional "X" pitches)
         valid_mask = target != self.ignore_index  # (B*T,)
         if self.ignore_X_pitches:
             valid_mask &= (target != 1)  # chord ID 1 is "X" (no chord), skip it too
+
+        if not valid_mask.any():
+            # If all targets are invalid, return the chord loss
+            return 0
+
+        chord_output, root_output, pitch_class_output = output
+
+        # Overall chord loss
+        chord_loss = F.cross_entropy(chord_output, target, ignore_index=self.ignore_index)
+        
         valid_targets = target[valid_mask]  # Only valid chord class IDs
 
         # Root loss
