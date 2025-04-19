@@ -134,18 +134,18 @@ exp_name = "crf"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --crf "
 print_to_file(call)
-
+"""
 
 # Hmm alphas
 output_dir = "hmm_alphas"
-alphas = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+alphas = [0.3]
 for alpha in alphas:
     exp_name = f"alpha_{alpha}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha}"
     print_to_file(call)
 
-
+"""
 # Spectrograms
 output_dir = "spectrograms"
 spectrograms = ["cqt", "mel", "linear", "chroma"]
@@ -204,8 +204,6 @@ for p in probabilities:
     call = f"{base_call} --weight_loss --audio_pitch_shift --cqt_pitch_shift --aug_shift_prob={p} --hmm_smoothing --structured_loss"
     print_to_file(call)
 
-
-"""
 # Generative features
 output_dir = "generative_features"
 model_names = ["large", "small", "large-lerp", "melody", "chord"]
@@ -218,7 +216,7 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_reduction={reduction} --hmm_smoothing --structured_loss --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
-"""
+
 # Gen down dimension
 output_dir = "gen_down_dim"
 model_name = "large"
