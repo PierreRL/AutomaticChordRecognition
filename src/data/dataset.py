@@ -642,7 +642,7 @@ class FixedLengthRandomChordDataset(Dataset):
                     ]
                 )
 
-        # if self.cqt_pitch_shift:
+        if self.cqt_pitch_shift:
             shift = self.get_random_shift()
             if shift != 0:
                 cqt_patch = pitch_shift_cqt(cqt_patch, shift, BINS_PER_OCTAVE)
@@ -677,6 +677,7 @@ class FixedLengthChordDataset(Dataset):
         perfect_beat_resample=False,
         synthetic_filenames=None,
         synthetic_input_dir="./data/synthetic_data",
+        dev_mode=False
     ):
         """
         Creates an instance of the FixedLengthChordDataset class.
@@ -703,6 +704,7 @@ class FixedLengthChordDataset(Dataset):
             perfect_beat_resample=perfect_beat_resample,
             synthetic_filenames=synthetic_filenames,
             synthetic_input_dir=synthetic_input_dir,
+            dev_mode=dev_mode,
         )
         self.segment_length = segment_length
         self.data = self.generate_fixed_segments()
