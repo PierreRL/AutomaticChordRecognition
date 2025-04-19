@@ -222,7 +222,8 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
 # Gen down dimension
 output_dir = "gen_down_dim"
 model_name = "large"
-dims = [1024, 512, 256, 128, 64]
+dims = [1024, 512, 256, 128, 64, 32, 16]
+dims = [32,16]
 for dim in dims:
     exp_name = f"model_{model_name}_dim_{dim}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
