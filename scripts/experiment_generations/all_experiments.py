@@ -223,11 +223,10 @@ for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
 output_dir = "gen_down_dim"
 model_name = "large"
 dims = [1024, 512, 256, 128, 64, 32, 16]
-dims = [32,16]
 for dim in dims:
     exp_name = f"model_{model_name}_dim_{dim}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
-    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_1 --no_cqt --batch_size=16 --eval_batch_size=4"
+    call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=avg --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
 # Gen feature comparison
