@@ -340,6 +340,9 @@ def main():
     assert not (args.use_synthetic and args.use_generative_features), (
         "Generative features are not supported with synthetic data."
     )
+    assert not (args.use_generative_features and args.cqt_pitch_shift), (
+        "CQT pitch shift is not supported with generative features."
+    )
 
     assert args.train_split in [
         "60",
