@@ -31,7 +31,7 @@ We did not implement a CRF. All related works to use a CRF use a linear chain CR
 
 \section{The Loss Function}
 
-\subsection{Weighted Loss}
+\subsection{Weighted Loss}\label{sec:weighted_loss}
 
 One of the biggest problems highlighted above is low recall on less common qualities. Two common methods for dealing with long-tailed distributions are re-sampling and weighting the loss function. \citet{CurriculumLearning} also explore the use of curriculum learning as form of re-sampling which we do not explore here. Sampling is explored by \citet{BalanceRandomForestACR} but they use a different model based on pre-computing chroma vectors and re-sampling these chroma vectors for use in training a random forest for frame-wise decoding. In our setting, re-sampling training patches of audio may be interesting but is left as future work as it would require significant effort to manage sampling many chords at once. Weighting has been explored by \citet{ACRLargeVocab1} however their weighting is over chord classes and chord `components' which they define in their work. We employ a similar but simpler implementation here.
 
@@ -57,13 +57,13 @@ Where $\mathcal{C}$ is the set of all chords in the vocabulary. This keeps the e
     \caption{Effect of weighted loss on the \emph{CRNN} model with varying $\alpha$. As we increase $\alpha$, class-wise metrics improve but accuracy-based metrics worsen. We claim a sweet-spot in the middle where we trade only a little overall performance for better class-wise recall. We choose this to be $\alpha = 0.55$. The \texttt{root} and \texttt{third} metrics improve and less than $3\%$ is lost on other metrics while mean class-wise accuracy improves by $6\%$ and the median improved by $0.2$. This plot also reveals strong correlation between metrics. }\label{fig:weighted_loss}
 \end{figure}
 
-\subsection{Structured Loss}
+\subsection{Structured Loss}\label{sec:structured_loss} 
 
 \section{Generative Features}
 
 - As in [MelodyTranscriptionViaGenerativePreTraining], use Jukebox (?) to generate features at frames (? is it possible to do it on the same frames?). Train on these features and evaluate.
 
-\section{Pitch Augmentation}
+\section{Pitch Augmentation}\label{sec:pitch-augmentation}
 - Two methods:
 - On CQT \citet{ACRLargeVocab1}, not good.
 - Using \texttt{pyrubberband}\footnote{\url{https://github.com/bmcfee/pyrubberband}} on the audio [everyone else], works?
@@ -71,7 +71,7 @@ Where $\mathcal{C}$ is the set of all chords in the vocabulary. This keeps the e
 Pitch augmentation has been done in other works on chord recognition. This has been done on the CQT~\citep{ACRLargeVocab1} by shifting the CQT bins and directly on the audio~\citep{BTC,StructuredTraining}. These are not the same process. Shifting the CQT is a simple matrix operation, whereas pitch shifting introduces other artefacts due to 
 
 
-\section{Synthetic Data Generation}\label{chap:synthetic_data}
+\section{Synthetic Data Generation}\label{sec:synthetic_data}
 
 Motivation
 
