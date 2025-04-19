@@ -6,8 +6,8 @@
 #$ -o /home/$USER/logs/job-$JOB_ID-$TASK_ID.out
 #$ -e /home/$USER/logs/job-$JOB_ID-$TASK_ID.out
 
-#$ -l h_vmem=16G
-#$ -l h_rt=02:00:00
+#$ -l h_vmem=48G
+#$ -l h_rt=06:00:00
 
 # ===================
 # Environment Setup
