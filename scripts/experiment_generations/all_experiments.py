@@ -134,7 +134,6 @@ exp_name = "crf"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --crf "
 print_to_file(call)
-"""
 
 # Hmm alphas
 output_dir = "hmm_alphas"
@@ -145,7 +144,7 @@ for alpha in alphas:
     call = f"{base_call} --hmm_smoothing --hmm_alpha={alpha}"
     print_to_file(call)
 
-"""
+
 # Spectrograms
 output_dir = "spectrograms"
 spectrograms = ["cqt", "mel", "linear", "chroma"]
@@ -227,12 +226,15 @@ for dim in dims:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=avg --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
+    """
 # Gen feature comparison
 output_dir = "gen_feature_comparison"
 model_name = "large"
 exp_name = "gen_only"
+reduction = "avg"
+down_dimension = 256
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=avg --batch_size=16 --eval_batch_size=4"
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction={reduction} --batch_size=16 --eval_batch_size=4 --gen_down_dim={down_dimension}"
 print_to_file(call)
 exp_name = "cqt_only"
 base_call = get_base_call(output_dir, exp_name=exp_name)
@@ -240,9 +242,9 @@ call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
 print_to_file(call)
 exp_name = "gen_and_cqt"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=avg --batch_size=16 --eval_batch_size=4"
+call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction={reduction} --batch_size=16 --eval_batch_size=4 --gen_down_dim={down_dimension}"
 print_to_file(call)
-"""
+
 
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
