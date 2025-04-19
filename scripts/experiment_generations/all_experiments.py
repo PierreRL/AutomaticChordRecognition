@@ -229,22 +229,21 @@ for dim in dims:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=codebook_1 --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
-
 # Gen feature comparison
-output_dir = "gen_feature_comparison"
-model_name = "large"
-exp_name = "gen_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_3 --batch_size=16 --eval_batch_size=4"
-print_to_file(call)
-exp_name = "cqt_only"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
-print_to_file(call)
-exp_name = "gen_and_cqt"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_3 --batch_size=16 --eval_batch_size=4"
-print_to_file(call)
+# output_dir = "gen_feature_comparison"
+# model_name = "large"
+# exp_name = "gen_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --no_cqt --gen_reduction=codebook_1 --batch_size=16 --eval_batch_size=4"
+# print_to_file(call)
+# exp_name = "cqt_only"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+# print_to_file(call)
+# exp_name = "gen_and_cqt"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction=codebook_1 --batch_size=16 --eval_batch_size=4"
+# print_to_file(call)
 
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
