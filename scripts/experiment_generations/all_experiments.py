@@ -208,8 +208,9 @@ for p in probabilities:
 
 # Generative features
 output_dir = "generative_features"
-model_names = ["large"]
+model_names = ["large", "small", "large-lerp", "melody", "chord"]
 reductions = ["concat", "avg", "codebook_0", "codebook_1", "codebook_2", "codebook_3"]
+reductions = ["codebook_3"]
 for model_name, reduction in [(m, r) for m in model_names for r in reductions]:
     exp_name = f"model_{model_name}_reduction_{reduction}"
     base_call = get_base_call(output_dir, exp_name=exp_name)
