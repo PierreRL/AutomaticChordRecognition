@@ -1,10 +1,29 @@
-
-% You may delete everything from \appendix up to \end{document} if you don't need it.
 \appendix
 
 \chapter{Appendix}
 
 \section{Small vs Large Vocabulary}\label{app:small_vs_large_vocabulary}
+
+Some initial experiments were conducted over a smaller vocabulary with $C=26$. This vocabulary includes a symbol for major and minor over each root and two special symbols, \texttt{N} and \texttt{X} for no chord and unknown chord respectively. This contrasts the much larger vocabulary with 14 chord qualities for each root which is used for the majority of the experiments. With this larger vocabulary, $C=170$.
+
+Table~\ref{tab:small_vs_large_vocab} shows the results of the \emph{CRNN} trained over the smaller and larger vocabulary evaluated on the small vocabulary. The predictions of the model and the reference labels are all mapped to the small vocabulary before being evaluated in the same was as described in Section~\ref{sec:evaluation}. This test was to verify that the model trained on the larger vocabulary performs well competitively on the smaller vocabulary. If the model trained on the larger vocabulary performed poorly on the smaller vocabulary, it may be prudent to first try to improve performance on this smaller vocabulary. It may also be a sign that the larger vocabulary is too complex or that the more detailed annotations are inconsistent.
+
+However, the table shows very similar performance between both models. This allows us to proceed with the larger vocabulary for the rest of the experiments. The larger vocabulary is also more consistent with the literature and allows for a model to produce far more interesting chord predictions than simply minor, major and root. 
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lccc}
+        \toprule
+        Vocab & $C$ & acc & root \\  
+        \midrule
+        small & $26$ & 76.7 & 80.1 \\
+        large & $170$ & 76.0 & 79.1 \\
+        \bottomrule
+    \end{tabular}
+    \caption{\emph{CRNN} with a small and large vocabulary.}\label{tab:small_vs_large_vocab}
+\end{table}
+
+Note that the \texttt{mir\_eval} package also includes a \texttt{majmin} evaluation metric that compares chords over just the major and minor qualities. However, this is not quite the same as the test above due to subtleties in how \texttt{mir\_eval} chooses whether or not a chord is major or minor. It ends up ignoring many chords that could be mapped to these qualities in the smaller vocabulary. Coincidentally, \emph{CRNN} with the default parameters attains a \texttt{majmin} accuracy of $76.0\%$ over the larger vocabulary. This further confirms that we need not continue to test on the smaller vocabulary. The  \texttt{majmin} metric is not used in the rest of the thesis as it is not as informative as the other metrics and the \texttt{third} metric is highly correlated with it.
 
 \section{Chord Mapping}\label{app:chord_mapping}
 
@@ -35,7 +54,17 @@ Chords in Harte notation were mapped to the vocabulary with $C=170$ by first con
 
 \section{Random Hyperparameter Search Sets}\label{app:random_hyperparameter_search_sets}
 
-$\texttt{hidden\_size}\in\{32,33,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\}$, $\texttt{segment\_length}\in\{5,6,\ldots,45\}$, $\texttt{kernel\_size}\in\{5,6,\ldots,15\}$, $\texttt{cnn\_layers}\in\{1,2,\ldots,5\}$ and $\texttt{cnn\_channels}\in\{1,2,\ldots,5\}$
+The hyperparameter search for \emph{CRNN} was done over the following variables and values:
+\begin{itemize}
+    \item \texttt{hidden\_size} $\in$ \{32, 64, 128, 256, 512\}
+    \item \texttt{num\_layers} $\in$ \{1, 2, 3\}
+    \item \texttt{segment\_length} $\in$ \{5, 10, 15, 20, 25, 30, 35, 40, 45\}
+    \item \texttt{kernel\_size} $\in$ \{5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15\}
+    \item \texttt{cnn\_layers} $\in$ \{1,2,\ldots,5\}
+    \item \texttt{cnn\_channels} $\in$ \{1,2,\ldots,5\}
+\end{itemize}
+
+For each run, a value was selected for each hyperparameter, with each possible value equally likely.
 
 % \section{CNN Hyperparameter Search}\label{app:cnn_hparams}
 
@@ -95,3 +124,94 @@ $\texttt{hidden\_size}\in\{32,33,\ldots,512\}$, $\texttt{num\_layers}\in\{1,2,3\
     \caption{Accuracy with increasing segment length of validation set. The accuracy increases very slightly. I choose to continue evaluating over the entire song at once.}
     \label{fig:accuracy_vs_context_length}
 \end{figure}
+
+\section{HMM Smoothing Effect}\label{app:hmm_smoothing_effect}
+
+\begin{figure}[H]
+    \centering
+    \hspace{-1.5cm}
+    \includegraphics[width=0.9\textwidth]{figures/hmm_smoothing_example.png}
+    \caption{An example of the effect of the HMM on the predictions of the \emph{CRNN} model. The top plot shows the ground truth. The middle plot shows frame-wise predictions of the \emph{CRNN} without smoothing. The bottom plot shows the predictions after smoothing. Chords are coloured by their equivalent chord in the small vocabulary as it makes the plot easier to interpret. The original predictions contain many unnecessary and nonsensical chord transitions. These have been smoothed out by the HMM. The resulting chords appear more similar to the ground truth even if frame-wise accuracy has not changed much.}\label{fig:hmm_smoothing_example}
+\end{figure}
+
+\section{Weighted Loss Confusion MAtrix}\label{app:weighted_loss_confusion_matrix}
+
+\begin{figure}[H]
+    \centering
+    \hspace{-1.5cm}
+    \includegraphics[width=0.9\textwidth]{figures/confusion_matrix_difference.png}
+    \caption{ Most of the diagonal entries in the confusion matrix increase. Recall on major7 qualities increases by $0.17$. The only qualities to decrease in recall are major, \texttt{N} and \texttt{X}. I conclude that weighting the loss does improve the model. The weighted model predicts \texttt{X} $2.2$ times less often. This may be how the weighted model improves class-wise metrics without sacrificing too much overall accuracy since \texttt{X} frames are ignored for evaluation.}\label{fig:hmm_smoothing_example}
+\end{figure}
+
+\section{Details of Generative Feature Extraction}\label{app:generative_feature_extraction}
+
+\section{Upsampling Methods in Generative Feature Extraction}\label{app:linear_interpolation_vs_area_averaging}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{cccccc}
+        \toprule
+        upsample & accuracy & root & third & seventh & mirex  \\  
+        \midrule
+        area & \textbf{59.4} & \textbf{77.8} & \textbf{74.6} & \textbf{61.7} & \textbf{78.1} \\
+        lerp & 58.4 & 77.7 & 74.0 & 60.6 & 78.2 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of generative feature extraction with linear interpolation and area averaging for the musicgen-large and a linear projection down to $64$ dimensions and averaging over the four codebooks. The results are very similar, but the area averaging method is slightly better in all metrics. I therefore choose to continue averaging over model frames in order to upsample to CQT frames.}\label{tab:linear_interpolation_vs_area_averaging}
+\end{table}
+
+\section{Generative Feature Low-Dimensional Projection}\label{app:projection_dimensionality}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{cccccc}
+        \toprule
+        $d$ & accuracy & root & third & seventh & mirex  \\  
+        \midrule
+        16   & 58.4       & 77.6       & \textbf{74.5} & 60.6       & 77.2       \\
+        32   & 57.8       & 77.5       & 73.6          & 60.0       & 77.8       \\
+        64   & \textbf{59.2} & 77.5    & 74.3          & \textbf{61.4} & \textbf{77.9} \\
+        128  & 58.1       & 77.0       & 73.6          & 60.3       & 77.4       \\
+        256  & 58.7       & 77.6       & 74.3          & 60.9       & 77.5       \\
+        512  & 58.3       & \textbf{77.9} & 74.3      & 60.6       & 77.6       \\
+        1024 & 58.4       & 76.7       & 73.5          & 60.7       & 76.7       \\ 
+        \bottomrule
+    \end{tabular}
+    \caption{Generative feature extraction with different projection dimensions, $d$. All results use the musicgen-large model and average across the four codebooks. There are no large differences between the different dimension reductions. I take $d=64$ as it performs the best, but there is no evidence that this is not due to randomness in the optimisation process. }\label{tab:projection_dimensionality}
+\end{table}
+
+\section{Generative Features with Different Models}\label{app:generative_feature_extraction_models}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lc}
+        \toprule
+        model  & acc  \\
+        \midrule
+        large  & \textbf{60.2} \\
+        small  & 59.8 \\
+        melody & 59.9 \\
+        chord  & 59.7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Results for generative features extracted from MusicGen~\citep{MusicGen} and MusiConGen~\citep{MusiConGen} models with different musicgen-models. Only accuracy is reported as the other metrics are qually similar. These models are musicgen-large, musicgen-small, musicgen-melody and MusiConGen, referred to as large, small, melody and chord respectively. There are very few differences between the models. This suggests that the small model has just as much information in its internal representations that is useful for identifying chords as the other models. Another point of note is the comparison between chord and melody. The chord model is a chord-conditioned fine-tuned version of melody. It is surprising that the chord-conditioning did not help compared to the non chord-conditioned model.}\label{tab:musicgen_pivot}
+\end{table}
+
+\section{Generative Features with Different Codebook Reductions}\label{app:generative_feature_extraction_reductions}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lc}
+        \toprule
+        reduction   & accuracy \\  
+        \midrule
+        concat       & 58.9     \\
+        codebook\_2  & 58.9     \\
+        codebook\_3  & 57.5     \\
+        codebook\_1  & 59.0     \\
+        codebook\_0  & 58.1     \\
+        avg          & \textbf{59.4}     \\
+        \bottomrule
+    \end{tabular}
+    \caption{Accuracy for different codebook reduction methods. Other metrics are omitted as they do not provide more information. All results are for musicgen-large with reduction down to $64$ dimensions. Reductions of the form `codebook\_$n$' refer to training on codebook of index $n$ from the model. Performance is similar across reductions except for codebook\_0 and codebook\_3 which perform worse. I choose the averaging reduction based on maximum accuracy. }\label{tab:reduction_accuracy}
+\end{table}

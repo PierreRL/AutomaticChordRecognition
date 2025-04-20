@@ -32,7 +32,7 @@ A simpler chord vocabulary is also sometimes used. This contains only the major 
 
 The method for converting from Harte notation to a symbol in the chord vocabulary is similar to that used by \citet{StructuredTraining} and is detailed in Appendix~\ref{app:chord_mapping}.
 
-Frames are allocated a chord based on which chord is playing at the middle of the frame. While this may not be a perfect solution, frames are only $\approx93$ms long which is longer than the minimum duration of a chord in the dataset. This guarantees that the chord label for every frame is playing for at least half the frame. Furthermore, only $4.4\%$ of frames include a chord transition.
+Frames are allocated a chord symbol based on which chord is playing at the middle of the frame. While this may not be a perfect solution, frames are $\approx93$ms long which is shorter than the minimum duration of a chord in the dataset. This guarantees that the chord label for every frame plays for at least half the frame. Furthermore, only $4.4\%$ of frames include a chord transition.
 
 \subsection{Pop Dataset}
 
@@ -79,15 +79,15 @@ Much of the recent literature has focused on the long tail of the chord distribu
 \end{figure}
 
 
-\subsection{JAAH Dataset}
+% \subsection{JAAH Dataset}
 
-TODO: I was warned by Andrea that the JAAH dataset has not been as commonly used as dataset the Billboard dataset. Therefore he could not guarantee that the audio was aligned for this dataset.
+% TODO: I was warned by Andrea that the JAAH dataset has not been as commonly used as dataset the Billboard dataset. Therefore he could not guarantee that the audio was aligned for this dataset.
 
-- As yet, JAAH is unused in this work
-- Data was received as \texttt{.flac} files which were first converted to \texttt{.mp3} files to be in line with the Billboard dataset
-- Comparison of the two datasets
-- Description of the JAAH dataset and its use in this work
-- Intended to be used as a test set to test the synthetic data generation.
+% - As yet, JAAH is unused in this work
+% - Data was received as \texttt{.flac} files which were first converted to \texttt{.mp3} files to be in line with the Billboard dataset
+% - Comparison of the two datasets
+% - Description of the JAAH dataset and its use in this work
+% - Intended to be used as a test set to test the synthetic data generation.
 
 \section{Evaluation}\label{sec:evaluation}
 
