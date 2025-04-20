@@ -155,28 +155,41 @@ It might be argued that it is better to use musicgen-small to save on computatio
 
 It is surprising that the concatenated representation performs worse than the averaged representation as it contains at least as much information. However, if the information provided by each of the codebooks is largely the same then there are no reasons that the concatenated representation should perform better and training may simply find a worse minima. Regardless, training on $8192$-dimensional vectors is computationally very expensive, even with dimensionality reduction.
 
-To test whether or not these features help when compared with a CQT, I test with the CQT only, generative features only and a concatenation of the two. The results are shown in Table~\ref{tab:gen_feature_comparison}. The generative features do not improve performance over the CQT alone. However, they do improve performance when combined with the CQT. The structured loss does not help when using generative features.
+To test whether or not these features help when compared with a CQT, I test with the CQT only, generative features only and a concatenation of the two. The results are shown in Table~\ref{tab:gen_feature_comparison}. The generative features perform worse than the CQT. When used together, performance marginally increases. This experiment was run multiple times, with similar results each time. There is no clear evidence that the generative features provide any benefit over the CQT. 
+
+This is surprising as \citet{MelodyTranscriptionViaGenerativePreTraining} claim that generative features are better than hand-crafted features for the related task of melody recognition. However, they only compare to mel-spectrograms which do not perform as well as CQTs. Conclusions here cast doubt on the validity of their claims. It may be the case that features extracted from other generative models such as Jukebox~\citep{Jukebox} or MusicLM~\citep{MusicLM} may perform better. The comparison is left for future work.
 
 \begin{table}
     \centering
     \begin{tabular}{lccccc}
         \toprule
-        exp\_name      & accuracy & root  & third & seventh & mirex \\  
+        features & accuracy & root  & third & seventh & mirex \\  
         \midrule
-        gen\_and\_CQT  & \textbf{61.0}     & \textbf{80.3}  & \textbf{77.0}  & \textbf{63.3}    & 78.4  \\
+        gen$\cdot$CQT  & \textbf{61.0}     & \textbf{80.3}  & \textbf{77.0}  & \textbf{63.3}    & 78.4  \\
         gen      & 58.7     & 77.6  & 74.3  & 60.9    & 77.5  \\
         CQT      & \textbf{61.0}     & 79.8  & 76.8  & 63.2    & \textbf{79.3}  \\
         \bottomrule
     \end{tabular}
-    \caption{Comparison of CQT and generative features with a concatenation of the two.}\label{tab:gen_feature_comparison}
+    \caption{Comparison of CQT and generative features with a concatenation of the two, denoted as gen$\cdot$CQT. The concatenation performs the best on most metrics, but not by enough to claim that it is meaningfully better. }\label{tab:gen_feature_comparison}
 \end{table}
 
 \section{Pitch Augmentation}\label{sec:pitch-augmentation}
-- Two methods:
-- On CQT \citet{ACRLargeVocab1}, not good.
-- Using \texttt{pyrubberband}\footnote{\url{https://github.com/bmcfee/pyrubberband}} on the audio [everyone else], works?
 
-Pitch augmentation has been done in other works on chord recognition. This has been done on the CQT~\citep{ACRLargeVocab1} by shifting the CQT bins and directly on the audio~\citep{BTC,StructuredTraining}. These are not the same process. Shifting the CQT is a simple matrix operation, whereas pitch shifting introduces other artefacts due to 
+Pitch augmentation has been done in other works on chord recognition, either on the CQT~\citep{ACRLargeVocab1} by shifting the CQT bins up or down or directly on the audio~\citep{BTC,StructuredTraining}. Although similar, these are not identical transformations. Shifting the CQT takes place after discarding phase information and leaves empty bins behind whereas audio pitch shifting can introduce other artefacts intended to preserve harmonic structure and maintain phase information. I implement both methods and compare.
+
+When a sample is drawn from the training set, it is shifted with probability $p$. The shift is measured in semitones in the set $\{-5,-4\ldots -1, 1, \ldots 6\}$ with equal probability of each shift. This means there is 12 times as much training data. Convergence was still reached in 150 epochs. Shifting the CQT matrix is done by moving all items up or down by the numbers of bins corresponding to the number of semitones in the shift. The bins left behind after the shift are filled with a value of -80dB. Audio shifting is done with \texttt{pyrubberband}.\footnote{\url{https://github.com/bmcfee/pyrubberband}}. CQTs are calculated on the shifted audio. A plot of the effect of the shift probability $p$ on the model's performance can be found in Figure~\ref{fig:pitch_augmentation}.
+
+Results show a clear trend that increasing $p$ improves performance. Shifting the audio provides a very similar effect to simply shifting the CQT. Choosing $p=0.9$ results in a $2.1\%$ increase in accuracy, and an increase of $1-2\%$. The \texttt{mirex} score breaks the trend with performance varying over different values for $p$. \texttt{acc}\textsubscript{class} also improves by over $2\%$. This can be explained by the model being forced to become root-invariant. With $p=0.9$, all notes in the Western chromatic scale become almost equally likely. I proceed with pitching shifting with $p=0.9$ on the CQT for the remainder of the experiments, as it is computationally cheaper than shifting the audio.
+
+\citet{StructuredTraining} claim an increase of $5\%$ on the median across most metrics. I do not find such a large effect here. Nonetheless, it is clear that pitch shifting is a useful augmentation.
+
+Note that the weights for the weighted loss are calculated based on \emph{expected} counts, taking the shift probability $p$ into account. I also tested shifting with both methods at once but results were not any different than shifting with either method alone. Unfortunately, it was not computationally feasible to test pitch shifting with generative features as the feature extraction over $12 * 1210 = 14,520$ songs is too expensive.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/pitch_shift_analysis.png}
+    \caption{Effect of pitch augmentation on the \emph{CRNN} model with varying $p$. Pitch shifting provides a clear increase in performance. Shifting the audio or the CQT has a similar effect. I choose $p=0.9$ which is close to making the model root-invariant.}\label{fig:pitch_augmentation}
+\end{figure}
 
 
 \section{Synthetic Data Generation}\label{sec:synthetic_data}
