@@ -300,6 +300,7 @@ output_dir = "final_experiments"
 exp_name = "normal_cqt"
 base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call}"
+print_to_file(call)
 # exp_name = "cqt_weighted_structured_hmm"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --train_split=80"
