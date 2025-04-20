@@ -226,7 +226,7 @@ for dim in dims:
     call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --gen_down_dim={dim} --hmm_smoothing --structured_loss --gen_reduction=avg --no_cqt --batch_size=16 --eval_batch_size=4"
     print_to_file(call)
 
-    """
+
 # Gen feature comparison
 output_dir = "gen_feature_comparison"
 model_name = "large"
@@ -245,7 +245,7 @@ base_call = get_base_call(output_dir, exp_name=exp_name)
 call = f"{base_call} --weight_loss --use_generative_features --gen_model_name={model_name} --hmm_smoothing --structured_loss --gen_reduction={reduction} --batch_size=16 --eval_batch_size=4 --gen_down_dim={down_dimension}"
 print_to_file(call)
 
-
+"""
 # Beatwise sampling
 # output_dir = "beatwise_sampling"
 # exp_name = "none"
@@ -296,8 +296,31 @@ print_to_file(call)
 # print_to_file(call)
 
 # Final experiments
-# output_dir = "final_experiments"
-
+output_dir = "final_experiments"
+exp_name = "cqt_weighted_structured_hmm"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+print_to_file(call)
+exp_name = "wiht_gen"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --use_generative_features --gen_model_name=large --gen_reduction=avg --batch_size=16 --eval_batch_size=4"
+print_to_file(call)
+exp_name = "with_pitch_shift"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift"
+print_to_file(call)
+exp_name = "synthetic_data"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --test_on_synthetic --synthetic_input_dir={EDDIE}/data/synthetic --use_synthetic"
+print_to_file(call)
+exp_name = "beat_wise_sampling"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample"
+print_to_file(call)
+exp_name = "perfect_beats"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval"
+print_to_file(call)
 
 
 # Print number of experiments in the file
