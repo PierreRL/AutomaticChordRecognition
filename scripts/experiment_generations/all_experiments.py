@@ -299,27 +299,27 @@ print_to_file(call)
 output_dir = "final_experiments"
 exp_name = "cqt_weighted_structured_hmm"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --train_split=80"
 print_to_file(call)
 exp_name = "wiht_gen"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --use_generative_features --gen_model_name=large --gen_reduction=avg --batch_size=16 --eval_batch_size=4"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --use_generative_features --gen_model_name=large --gen_reduction=avg --batch_size=32 --eval_batch_size=4 --train_split=80"
 print_to_file(call)
 exp_name = "with_pitch_shift"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --train_split=80"
 print_to_file(call)
 exp_name = "synthetic_data"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --test_on_synthetic --synthetic_input_dir={EDDIE}/data/synthetic --use_synthetic"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --test_on_synthetic --synthetic_input_dir={EDDIE}/data/synthetic --use_synthetic --train_split=80"
 print_to_file(call)
 exp_name = "beat_wise_sampling"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample --train_split=80"
 print_to_file(call)
 exp_name = "perfect_beats"
 base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval"
+call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --train_split=80"
 print_to_file(call)
 
 
