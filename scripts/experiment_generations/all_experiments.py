@@ -297,10 +297,10 @@ print_to_file(call)
 
 # Final experiments
 output_dir = "final_experiments"
-exp_name = "normal_cqt"
-base_call = get_base_call(output_dir, exp_name=exp_name)
-call = f"{base_call}"
-print_to_file(call)
+# exp_name = "normal_cqt"
+# base_call = get_base_call(output_dir, exp_name=exp_name)
+# call = f"{base_call}"
+# print_to_file(call)
 # exp_name = "cqt_weighted_structured_hmm"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --train_split=80"
@@ -317,10 +317,10 @@ print_to_file(call)
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --hmm_smoothing --structured_loss --cqt_pitch_shift --test_on_synthetic --synthetic_input_dir={EDDIE}/data/synthetic --use_synthetic --train_split=80"
 # print_to_file(call)
-# exp_name = "beat_wise_sampling"
-# base_call = get_base_call(output_dir, exp_name=exp_name)
-# call = f"{base_call} --weight_loss --structured_loss --cqt_pitch_shift --beat_wise_resample --train_split=80"
-# print_to_file(call)
+exp_name = "beat_wise_sampling"
+base_call = get_base_call(output_dir, exp_name=exp_name)
+call = f"{base_call} --weight_loss --structured_loss --cqt_pitch_shift --beat_wise_resample --train_split=80"
+print_to_file(call)
 # exp_name = "perfect_beats"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --structured_loss --cqt_pitch_shift --beat_wise_resample --perfect_beat_resample --perfect_beat_resample_eval --train_split=80"
