@@ -234,7 +234,7 @@ While performance does not improve, the lack of overfitting and the improvement 
 
 Chords exist in time. Musicians interpret chords in songs as lasting for a certain number of beats, not a fixed length of time. In its current form, the model outputs frame-wise predictions. While these could be stitched together to produce a predicted chord progression or beat-wise predictions could be made as a post-processing step, I decide to implement a model that outputs beat-wise predictions directly. This allows the model to use information from the entire duration of the beat to make its prediction.
 
-Following the methodology of \citet{MelodyTranscriptionViaGenerativePreTraining} for melody transcription, I first detect beats for every song in the dataset using \texttt{madmom}~\citep{madmom}. This returns a list of time steps where beats have been detected. While this model is comparable to state-of-the-art, I first verify that the beats are plausible. I performed a cross-correlation analysis with the chord transitions in a similar manner to Section~\ref{sec:data-integrity}. A histogram of maximum lags within a window of $0.3$ seconds can be found in Appendix~\ref{app:beat_histogram}. I find that almost all maximum lags occur within a window of $0.1$ seconds, while the minimum beat length is $0.27$ seconds and mean is $0.52$ seconds. In order to provide more evidence, I compute the maximum accuracy a model could attain if predicting chords at the beat level. This is done by iterating over each beat interval and assigning the chord with maximum overlap with the ground truth. This yields an accuracy of $97.1\%$. With these observations combined, I am satisfied that beat-wise predictions will not limit the model.
+Following the methodology of \citet{MelodyTranscriptionViaGenerativePreTraining} for melody transcription, I first detect beats for every song in the dataset using \texttt{madmom}~\citep{madmom}. This returns a list of time steps where beats have been detected. While this model is comparable to state-of-the-art, I first verify that the beats are plausible. I performed a cross-correlation analysis with the chord transitions in a similar manner to Section~\ref{sec:data-integrity}. A histogram of maximum lags within a window of $0.3$ seconds can be found in Appendix~\ref{app:maximum_lag_cross_correlation_beats}. I find that almost all maximum lags occur within a window of $0.1$ seconds. To provide further evidence, I compute the maximum accuracy a model could attain if predicting chords at the beat level. This is done by iterating over each beat interval and assigning the chord with maximum overlap with the ground truth. This yields an accuracy of $97.1\%$. With these observations combined, I am satisfied that beat-wise predictions will not limit the model.
 
 \citet{MelodyTranscriptionViaGenerativePreTraining} task the model will producing predictions for every 1/16th of a beat. However, such fast transitions are not necessary for chord recognition. The possible accuracy of $97.1\%$ over beats suggests that the model need only predict once every beat interval.
 
@@ -261,7 +261,7 @@ The model with `perfect' beat intervals performs slightly worse on accuracy metr
         perfect             & 61.1           & 79.6          & 76.1          & 63.4           & \textbf{90.4}\\
         \bottomrule
     \end{tabular}
-    \caption{Results for different beat divisions. The beat division of `none' refers to a frame-wise \emph{CRNN} with a hop length of $4096$ and HMM smoothing applied and `perfect' refers to intervals that are calculated from the labels. Note that this `perfect' model is not a fair test. Beat-wise predictions with beat intervals of $1$ and below see no decrease in performance compared to frame-wise predictions. Beat intervals greater than $1$ increasingly suffer from being forced to assign predictions to larger periods of time that may not line up with true chord transitions. Interestingly, a beat interval of 2 still performs relatively well. A notable result is the \texttt{mirex} score of the `perfect' model. A score of $90.4\%$ is the highest of any in the literature. Despite this, its accuracy is not improved. It is not entirely clear why. }\label{tab:beat_division}
+    \caption{Results for different beat divisions. The beat division of `none' refers to a frame-wise \emph{CRNN} with a hop length of $4096$ and HMM smoothing applied and `perfect' refers to intervals that are calculated from the labels. Note that this `perfect' model is not a fair test. Beat-wise predictions with beat intervals of $1$ and below see no decrease in performance compared to frame-wise predictions. Beat intervals greater than $1$ increasingly suffer from being forced to assign predictions to larger periods of time that may not line up with true chord transitions. Interestingly, a beat interval of 2 still performs relatively well. A notable result is the \texttt{mirex} score of the `perfect' model. A score of $90.4\%$ is the highest of any in the literature. Despite this, its accuracy does not improve. }\label{tab:beat_division}
 \end{table}
 
 
@@ -269,7 +269,9 @@ The model with `perfect' beat intervals performs slightly worse on accuracy metr
 
 For final results, I retrain select models on the combined training and validation splits and test on the held out test split. This is an 80/20\% train/test split. I consider the original \emph{CRNN} with no improvements, \emph{CRNN} with a weighted and structured loss and HMM smoothing, concatenating generative features with CQTs, pitch augmentation, beat-wise recognition, `perfect' beat-wise recognition and training on synthetic data. 
 
-Results are shown in Table~\ref{tab:test_set}. The model with the best performance on the test set is the \emph{CRNN} with perfect beat tracking. Observations are largely similar to those found previously. Weighted and structured loss with smoothing improve accuracy by $1.2\%$, with pitch shifting improving by a further $1\%$. Generative features do not help but synthetic data improves performance by a further $0.6\%$. This alone is not a clear enough signal that the model is better but provides hope for further work in using synthetic data. Beat-wise resampling does not harm performance while the `perfect' model achieves the highest performance across all metrics. The \texttt{mirex} of $90\%$ has reduced to $88.7\%$, and the gap with accuracy has closed when compared with results in Table~\ref{tab:beat_division}. 
+Results are shown in Table~\ref{tab:test_set}. The model with the best performance on the test set is the \emph{CRNN} with perfect beat tracking. Observations are largely similar to those found previously. Weighted and structured loss with smoothing improve accuracy by $1.2\%$, with pitch shifting improving by a further $1\%$. Generative features do not help but synthetic data improves performance by a further $0.6\%$. This alone is not a clear enough signal that the model is better but provides hope for further work in using synthetic data. Finally, Beat-wise resampling continues to maintain performance.
+
+The `perfect' model achieves the highest performance across all metrics. The \texttt{mirex} of $90\%$ has reduced to $88.7\%$, and the gap with accuracy has closed when compared with results in Table~\ref{tab:beat_division}. This is still a very high score and suggests that there is hope for breaking through the `glass ceiling'.
 
 The mean class-wise accuracy does not improve past $19.7\%$ without `perfect' beats. The median in this case is $6\%$. The model's performance on the long tail remains poor. Using a greater $\alpha$ in weighting may improve the picture but would require sacrificing accuracy.
 
@@ -293,3 +295,33 @@ The mean class-wise accuracy does not improve past $19.7\%$ without `perfect' be
 
 
 \section{Qualitative Analysis}
+
+To conclude this section, I present two examples of the model's predictions from the test set. I use the `+ synthetic data' model and look at two songs in the dataset. Finally, I compare beat-wise predictions with frame-wise predictions on songs not contained the dataset.
+
+The first song is \emph{Don't Stop Me Now} by Queen. With stable vocals and a clear piano part, the model fares well. The model's predictions are shown in Figure~\ref{fig:dontstopmenow}. Transitions are not all perfectly timed but they are close. Almost all chords have the correct root. The only discrepancies with the ground truth lie in the 7th of the chord. The model often misses the upper extensions of the chord. The \texttt{root} and \texttt{mirex} on this song are both $\approx 87\%$ while the overall accuracy is only $56.2\%$.
+
+\begin{figure}[H]
+    \centering
+    % \hspace{-1.5cm}
+    \includegraphics[width=1.0\textwidth]{figures/dontstopmenow.png}
+    \caption{Comparison of predictions with ground truth on a section of \emph{Don't Stop Me Now} by Queen. Predictions have the correct root and third and are well timed, but have discrepancies in the sevenths. However, the true chord during these sections is ambiguous. Overall, this is a high quality annotation. }\label{fig:dontstopmenow}
+\end{figure}
+
+The second song is \emph{Roxanne} by The Police, illustrated in Figure~\ref{fig:roxanne}. Featuring syncopated guitar plucks, ambiguous bass movement and a vocal part that slides over pitch transitions, this is a harder song to annotate. Predictions often have the correct root with a recall of almost $80\%$ but \texttt{mirex} is only $64\%$. Once again, sevenths or often omitted, but this time qualities are sometimes wrong as well. The model confuses major and minor, and sus4 and major qualities. There are also some chord transitions which are not present in the ground truth and chord transitions are not all well-timed.
+
+\begin{figure}[H]
+    \centering
+    % \hspace{-1.5cm}
+    \includegraphics[width=1.0\textwidth]{figures/roxanne_thepolice.png}
+    \caption{Comparison of predictions with ground truth on a section of \emph{Roxanne} by The Police. Predictions have the correct root but are not always well timed and do not always have the correct quality. The model's annotation is not very good on this song. }\label{fig:roxanne}
+\end{figure}
+
+The model's outputs are good when audio has clearer pitch information. Once pitch information is distorted, the model cannot use wider context to discern the correct chord. Performance is also highly song dependent. The model's accuracies over songs in the test set have a standard deviation of $20\%$.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/someone_like_you_chord_blocks.png}
+    \includegraphics[width=1.0\textwidth]{figures/someone_like_you_chord_chart.png}
+    \caption{}\label{fig:someone_like_you}
+\end{figure}

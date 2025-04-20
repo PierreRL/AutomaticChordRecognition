@@ -129,7 +129,7 @@ For each run, a value was selected for each hyperparameter, with each possible v
 
 \begin{figure}[H]
     \centering
-    \hspace{-1.5cm}
+    % \hspace{-1.5cm}
     \includegraphics[width=0.9\textwidth]{figures/hmm_smoothing_example.png}
     \caption{An example of the effect of the HMM on the predictions of the \emph{CRNN} model. The top plot shows the ground truth. The middle plot shows frame-wise predictions of the \emph{CRNN} without smoothing. The bottom plot shows the predictions after smoothing. Chords are coloured by their equivalent chord in the small vocabulary as it makes the plot easier to interpret. The original predictions contain many unnecessary and nonsensical chord transitions. These have been smoothed out by the HMM. The resulting chords appear more similar to the ground truth even if frame-wise accuracy has not changed much.}\label{fig:hmm_smoothing_example}
 \end{figure}
@@ -264,7 +264,7 @@ Figure~\ref{fig:calibration} shows the calibration of the model's outputs to acc
     \caption{Element-wise difference in normalised confusion matrix of the model trained on synthetic data and \emph{pop} data versus just \emph{pop} data with a weighted loss function. There are some notable differences. Training on synthetic data strongly discourages the model from predicting \texttt{X} chords, which are not present in the synthetic data. Recall on \texttt{min7} qualities increases by $13\%$ and by $7\%$ on \texttt{dim} qualities. However, recall \texttt{hdim7} and \texttt{min6} worsens. In general, the model predicts \texttt{maj} less often for rarer qualities. Another interesting observation is that the synthetic data corrects many of the predictions on \texttt{7} qualities from erroneous predictions of \texttt{min} to erroneous predictions of \texttt{maj}. Something similar happens with \texttt{min7} qualities. It is hard to say which model is better. Indeed, their overall accuracies are the same.}\label{fig:cm_synthetic_data}
 \end{figure}
 
-\section{Maximum Lag Cross Correlation of Chord Transitions with Beats}\label{app:maximum_lag_cross_correlation}
+\section{Maximum Lag Cross Correlation of Chord Transitions with Beats}\label{app:maximum_lag_cross_correlation_beats}
 
 \begin{figure}[H]
     \centering
