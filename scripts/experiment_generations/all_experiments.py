@@ -305,7 +305,7 @@ output_dir = "final_experiments"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --train_split=80"
 # print_to_file(call)
-# exp_name = "wiht_gen"
+# exp_name = "with_gen"
 # base_call = get_base_call(output_dir, exp_name=exp_name)
 # call = f"{base_call} --weight_loss --hmm_smoothing --structured_loss --use_generative_features --gen_model_name=large --gen_reduction=avg --batch_size=32 --eval_batch_size=4 --train_split=80"
 # print_to_file(call)

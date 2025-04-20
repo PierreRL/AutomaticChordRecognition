@@ -215,3 +215,59 @@ For each run, a value was selected for each hyperparameter, with each possible v
     \end{tabular}
     \caption{Accuracy for different codebook reduction methods. Other metrics are omitted as they do not provide more information. All results are for musicgen-large with reduction down to $64$ dimensions. Reductions of the form `codebook\_$n$' refer to training on codebook of index $n$ from the model. Performance is similar across reductions except for codebook\_0 and codebook\_3 which perform worse. I choose the averaging reduction based on maximum accuracy. }\label{tab:reduction_accuracy}
 \end{table}
+
+\section{Jazz Chord Progression Generation}\label{app:jazz_chord_progression_generation}
+
+The theory of functional harmony is a set of rules that govern the relationships between chords in a piece of music. While these rules are not always followed, many chord progressions can be parsed and broken down into the rules that have been followed to create them. The rules are based on the relationships between the chords and the keys they are in. For example, a chord progression that moves from a tonic chord to a dominant chord is said to be following the rule of \emph{dominant function}. This is a common rule in jazz music and is often used to create tension and resolution in a piece of music.
+
+I first decide whether we are in major or minor, each with probability $0.5$. I then uniformly sample a tonic from the set of notes in the Western chromatic scale. From this tonic, seven functional chords are decided before sequence generation. These are all probabilistic. For example, the tonic chord is always the tonic, but the dominant chord can be of \texttt{maj}, \texttt{7}, \texttt{sus4}, \texttt{aug} or \texttt{dim7} qualities. The probabilities are user-tuned but do not matter very much to the funcionality of the synthetic dataset. 
+
+For chord sequence generation, various rules are followed in a probabilistic manner. Progressions have a random length, uniformly sampled in the range $[4, 10]$.
+
+\begin{itemize}
+    \item Tonic (I) may move to predominant chords (ii, IV, vi) or occasionally mediant (iii).
+    \item Predominant chords (ii, IV) resolve to the dominant (V).
+    \item Dominant (V) usually cadences back to tonic (I) or sometimes moves to vi.
+    \item Tonic substitute (vi) leads to ii or iii.
+    \item Mediants (iii) feed into vi.
+    \item Unspecified or fallback transitions are routed toward ii to maintain forward motion.
+\end{itemize}
+
+A time-aligned chord sequence is then calculated in a similar format to that provided by the \texttt{jams} package. This assumes that each chord is played for one bar, that the BPM is always followed, and that MusiConGen simply loops over the chord progression if the end is reached. These assumptions were found to hold on manually inspected examples.
+
+For further details and exact probabilities used, please refer to the provided code.\footnote{\url{https://github.com/PierreRL/LeadSheetTranscription/blob/main/src/data/synthetic_data/chord_sequence.py}}
+
+\section{Calibration to Handle Distribution Shift}\label{app:calibration}
+
+To correct for the distribution shift between synthetic training data and the \emph{pop} train split, I estimate the empirical class probabilities in each domain---\(P_{\text{train}}(y)\) and \(P_{\text{pop}}(y)\)---and rescale the model’s logits by the ratio
+\begin{equation}
+r(y)\;=\;\frac{P_{\text{pop}}(y)}{P_{\text{train}}(y)}.
+\end{equation}
+
+In order for calibration to be root invariant, I take the mean ratio over chords that share the same quality, and a single calibration factor \(r_q\) is applied to every chord with that quality.
+
+Note that the model's outputs are in logits so the log ratio is added in implementation.
+
+Figure~\ref{fig:calibration} shows the calibration of the model's outputs to account for distribution shift.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/calibration_ratios.png}
+    \caption{Calibration ratios $r_q$ of the model's outputs to account for distribution shift. The high ratio on rare chord qualities like \texttt{majmin} show that these qualities are much more common in the synthetic dta.}\label{fig:calibration}
+\end{figure}
+
+\section{Difference in Confusion Matrixces with Synthetic Data}\label{app:cm_synthetic_data}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/confusion_matrix_synth.png}
+    \caption{Element-wise difference in normalised confusion matrix of the model trained on synthetic data and \emph{pop} data versus just \emph{pop} data with a weighted loss function. There are some notable differences. Training on synthetic data strongly discourages the model from predicting \texttt{X} chords, which are not present in the synthetic data. Recall on \texttt{min7} qualities increases by $13\%$ and by $7\%$ on \texttt{dim} qualities. However, recall \texttt{hdim7} and \texttt{min6} worsens. In general, the model predicts \texttt{maj} less often for rarer qualities. Another interesting observation is that the synthetic data corrects many of the predictions on \texttt{7} qualities from erroneous predictions of \texttt{min} to erroneous predictions of \texttt{maj}. Something similar happens with \texttt{min7} qualities. It is hard to say which model is better. Indeed, their overall accuracies are the same.}\label{fig:cm_synthetic_data}
+\end{figure}
+
+\section{Maximum Lag Cross Correlation of Chord Transitions with Beats}\label{app:maximum_lag_cross_correlation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/beats_max_lags.png}
+    \caption{Maximum lag cross correlation of chord transitions with beats within a window of $0.3$ seconds. Almost all maximum lags occur between $-0.1$ and $0.1$ seconds.}\label{fig:maximum_lag_cross_correlation}
+\end{figure}

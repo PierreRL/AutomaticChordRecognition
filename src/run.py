@@ -597,6 +597,7 @@ def main():
 
     # Validation set
     if args.train_split == "60":
+        print("What?")
         print("Evaluating model on validation set...")
         val_metrics = evaluate_model(
             model, 
