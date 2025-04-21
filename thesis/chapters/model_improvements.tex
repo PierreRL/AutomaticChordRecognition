@@ -269,7 +269,7 @@ The model with `perfect' beat intervals performs slightly worse on accuracy metr
 
 For final results, I retrain select models on the combined training and validation splits and test on the held out test split. This is an 80/20\% train/test split. I consider the original \emph{CRNN} with no improvements, \emph{CRNN} with a weighted and structured loss and HMM smoothing, concatenating generative features with CQTs, pitch augmentation, beat-wise recognition, `perfect' beat-wise recognition and training on synthetic data. 
 
-Results are shown in Table~\ref{tab:test_set}. The model with the best performance on the test set is the \emph{CRNN} with perfect beat tracking. Observations are largely similar to those found previously. Weighted and structured loss with smoothing improve accuracy by $1.2\%$, with pitch shifting improving by a further $1\%$. Generative features do not help but synthetic data improves performance by a further $0.6\%$. This alone is not a clear enough signal that the model is better but provides hope for further work in using synthetic data. Finally, Beat-wise resampling continues to maintain performance.
+Results are shown in Table~\ref{tab:test_set}. The model with the best performance on the test set is the \emph{CRNN} with perfect beat tracking. Observations are largely similar to those found previously. Weighted and structured loss with smoothing improve accuracy by $1.2\%$, with pitch shifting improving by a further $1\%$. Generative features do not help but synthetic data improves performance by a further $0.6\%$. This alone is not a clear enough signal that the model is better but provides hope for further work in using synthetic data. Finally, beat-wise prediction maintain the same performance.
 
 The `perfect' model achieves the highest performance across all metrics. The \texttt{mirex} of $90\%$ has reduced to $88.7\%$, and the gap with accuracy has closed when compared with results in Table~\ref{tab:beat_division}. This is still a very high score and suggests that there is hope for breaking through the `glass ceiling'.
 
@@ -286,6 +286,7 @@ The mean class-wise accuracy does not improve past $19.7\%$ without `perfect' be
         + gen features           & 62.7  & 80.4  & 77.9  & 64.6  & \textbf{80.6}  & 19.5 \\
         + pitch shift           & 63.8  & \textbf{82.4}  & 79.4  & 65.6  & 80.3  & \textbf{19.7} \\
         + synthetic data         & \textbf{64.4}  & 82.2  & \textbf{79.9}  & \textbf{66.3}  & \textbf{81.5}  & 18.3 \\
+        + beats & 63.7  & 82.4  & 79.7  & 65.6  & 80.9  & \textbf{19.7} \\
         \midrule
         + perfect beats          & 65.8  & 84.5  & 81.7  & 67.6  & 88.7  & 21.2 \\
         \bottomrule
@@ -309,6 +310,10 @@ The first song is \emph{Don't Stop Me Now} by Queen. With stable vocals and a cl
 
 The second song is \emph{Roxanne} by The Police, illustrated in Figure~\ref{fig:roxanne}. Featuring syncopated guitar plucks, ambiguous bass movement and a vocal part that slides over pitch transitions, this is a harder song to annotate. Predictions often have the correct root with a recall of almost $80\%$ but \texttt{mirex} is only $64\%$. Once again, sevenths or often omitted, but this time qualities are sometimes wrong as well. The model confuses major and minor, and sus4 and major qualities. There are also some chord transitions which are not present in the ground truth and chord transitions are not all well-timed.
 
+Outputs are a lot smoother than found in eeSection~\ref{sec:crnn_examples} with more cohesive predictions of the same chord for a series of frames. However, the problem associated with identifying rarer chord qualities still remains.
+
+Performance is also highly song dependent. The model's accuracies over songs in the test set have a standard deviation of $20\%$. 
+
 \begin{figure}[H]
     \centering
     % \hspace{-1.5cm}
@@ -316,12 +321,14 @@ The second song is \emph{Roxanne} by The Police, illustrated in Figure~\ref{fig:
     \caption{Comparison of predictions with ground truth on a section of \emph{Roxanne} by The Police. Predictions have the correct root but are not always well timed and do not always have the correct quality. The model's annotation is not very good on this song. }\label{fig:roxanne}
 \end{figure}
 
-The model's outputs are good when audio has clearer pitch information. Once pitch information is distorted, the model cannot use wider context to discern the correct chord. Performance is also highly song dependent. The model's accuracies over songs in the test set have a standard deviation of $20\%$.
-
+As a final example, frame-wise and beat-wise predictions are compared on two songs which are not part of the dataset in Figure~\ref{fig:frame_vs_beat_wise}. These are \emph{Someone Like You} by Adele and \emph{Misty} by Ella Fitzgerald. In both cases, very similar chordal information is displayed differently. From the perspective of a musician, the frame-wise predictions lead to ambiguity over how long chords should last. While beats are discernible in the frame-wise chords predictions from the lengths of blocks of the same chord, they are not consistently the same length. With time changes this would become more problematic. In regions where there are rapid chord transitions, chords are not musically interpretable. By contrast, beat-wise predictions are more similar to common musical notation and the length of beat intervals prevents the model from producing very rapid chord changes. However, where there are erroneous chord predictions part-way through bars or the model misses a chord transition by a beat, the beat-wise predictions can still be messy and hard to interpret.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/someone_like_you_chord_blocks.png}
-    \includegraphics[width=1.0\textwidth]{figures/someone_like_you_chord_chart.png}
-    \caption{}\label{fig:someone_like_you}
+    \includegraphics[width=1.0\textwidth]{figures/someone_like_you_chord_chart.png}\\
+    \vspace{0.5cm}
+    \includegraphics[width=1.0\textwidth]{figures/misty_chord_plot.png}
+    \includegraphics[width=1.0\textwidth]{figures/misty_chord_chart.png}
+    \caption{Comparison of frame-wise and beat-wise predictions on \emph{Someone Like You} by Adele and \emph{Misty} by Ella Fitzgerald. Beat-wise predictions are visualised over bars with a meter of 4. For both methods, adjacent predictions of the same chord are grouped together. While beat-wise predictions are more musically meaningful and easily parsed, they can be messy and hard to interpret when chord transitions are late or off the beat.}\label{fig:frame_vs_beat_wise}
 \end{figure}

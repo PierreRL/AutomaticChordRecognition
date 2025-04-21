@@ -239,7 +239,7 @@ In the next two songs, `Brandy' and `Earth, Wind and Fire', the model's mistakes
     \caption{Chord predictions of the \emph{CRNN} model on four songs from the validation set (blue: correct, red: incorrect, gray: \texttt{X}). This allows us to understand some of the behaviour of the model. We can see regular repeated errors in `Mr.\ Moonlight', which are mostly mistaking two similar qualities. The discrepancy between accuracy and \texttt{mirex} on `Ain't No Sunshine' can be explained by missing sevenths in many predictions. The large incorrect region is a voice and drum only section where the model continues to predict chords due to implied harmony by the melody. Predictions in `Brandy' are quite good in general, though many errors arise from predicting the boundaries of chord changes incorrectly. The model struggles with `Earth,  Wind and Fire', missing chord boundaries, and sometimes predicting completely wrong chords. There are clearly songs where the model's outputs are less sensible. However, in general most of the model's mistakes can be explained and are reasonable.}\label{fig:crnn_examples}
 \end{figure}
 
-\section{Takeways and Next Steps}
+\section{Takeaways and Next Steps}
 
 Below, I summarise the main takeaways from this section and motivate further improvements to the model.
 
