@@ -2,6 +2,112 @@
 
 \chapter{Appendix}
 
+\section{Weighted Chord Symbol Recall Definitions}\label{app:weighted_chord_symbol_recall_definitions}
+
+A formal definition of WCSR is provided in Equation~\ref{eq:wcsr}. The WCSR is a measure of the percentage of time that the model's predictions are correct.
+
+\begin{equation}\label{eq:wcsr}
+    WCSR = 100\cdot\frac{1}{Z}\sum_{i=1}^{N} \int_{t=0}^{T_i} M(y_{i,t},\hat{y}_{i,t}) dt
+\end{equation}
+\begin{equation}
+    Z = \sum_{i=1}^{N} \int_{t=0}^{T_i} \mathbb{I}_M(y_{i,t}) dt
+\end{equation}
+
+where $M(y, \hat{y})\in\{0,1\}$ is the measure of correctness which varies across metrics. For example, $M(y, \hat{y})$ for \texttt{root} equals $1$ if $y$ and $\hat{y}$ share the same root and $0$ otherwise. $N$ is the number of songs, $T_i$ is the length of song $i$, $y_{i,t}$ is the true chord at time $t$ of song $i$, and $\hat{y}_{i,t}$ is the predicted chord at time $t$ of song $i$. $Z$ normalises by the length of time for which the metric $M$ is defined. This is necessary as \texttt{X} symbols are ignored and \texttt{seventh} ignores some qualities. Further details can be found in the \texttt{mir\_eval} documentation. $\mathbb{I}_M(y_{i,t})=1$ if $M$ is defined for label $y_{i,t}$ and $0$ otherwise. Finally, we multiply by 100 to convert to a percentage.
+
+I also define WCSR for a single class $c$ in Equation~\ref{eq:wcsr_c}. This is useful for understanding the performance of the model on a specific chord class.
+
+\begin{equation}\label{eq:wcsr_c}
+    \text{WCSR}(c) = \frac{1}{Z_c}\sum_{i=1}^{N} \int_{t=0}^{T_i} M(y_{i,t},\hat{y}_{i,t}) \cdot \mathbb{I}_c(y_{i,t}) dt
+\end{equation}
+\begin{equation}
+    Z_c = \sum_{i=1}^{N} \int_{t=0}^{T_i} \mathbb{I}_M(y_{i,t})\cdot \mathbb{I}_c(y_{i,t}) dt
+\end{equation}
+
+where $N$, $T$, $M$, $y_{i,t}$, $\hat{y}_{i,t}$ and $\mathbb{I}_M(y_{i,t})$ are defined as before in Equation~\ref{eq:wcsr}. $\mathbb{I}_c(y_{i,t})$ is $1$ if the true chord at time $t$ of song $i$ is class $c$ abd $0$ otherwise. $Z_c$ normalises by the length of time for which the chord $c$ is playing and for which the metric $M$ is defined, in a similar fashion to $Z$ in Equation~\ref{eq:wcsr}.
+
+\section{Cross Correlation for Alignment Verification}\label{app:cross_correlation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/cross_correlation.png}
+    \caption{Cross-correlation of the derivative of the CQT of the audio and the chord annotations for a single song. We can see correlation peaking in regular intervals of around 20 frames. 1 frame is $93$ms so 20 frames $\approx 1.86$ seconds. Zooming out, we observe peaks in correlation centred around 0.}\label{fig:cross-correlation}
+\end{figure}
+
+\section{Learning Rate and Scheduler Experiment Results}\label{app:learning_experiment_results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/lr_search_cosine.png}
+    \caption{Training graphs for \emph{CRNN} with different learning rates and the \texttt{cosine} scheduler. The learning rate of $0.001$ seems to be the best, as it converges in a reasonable time and the validation accuracy increases in a stable fashion. While it may seem that running for more epochs may increase performance, this was not found to be the case empirically. The best model was often achieved around epoch 100.}\label{fig:lr_search_cosine}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccccc}
+        \toprule
+        lr & scheduler & acc & root & third & seventh & mirex \\
+        \midrule
+        0.01 & Cosine &  53.6 & 69.5 & 66.9 & 55.7 & 78.6 \\
+        0.001 & Cosine & \emph{59.7} & \emph{78.3} & \emph{75.0} & \emph{62.0} & \emph{\textbf{79.8}} \\
+        0.0001 & Cosine & 53.2 & 72.1 & 66.9 & 55.2 & 72.0 \\
+        \midrule
+        0.001 & Plateau & \textbf{59.9} & 78.4 & 75.2 & \textbf{62.2} & 79.7 \\
+        0.001 & None & 59.8 & \textbf{78.7} &\textbf{75.5} & 62.0 & 78.8 \\
+        \bottomrule
+    \end{tabular}
+    \caption{\emph{CRNN} model results with different learning rates and schedulers. Best results over learning rates are \emph{italicised} and best results over schedulers are in \textbf{boldface}. A learning rate of $0.001$ performs the best on all metrics. The differences between learning rate schedulers are so small that the choice between them is arbitrary. }\label{tab:crnn_lr}
+\end{table}
+
+\section{Revisiting the Spectrogram}\label{sec:spectrogram-results}
+
+\subsection{Spectrogram Variants}\label{sec:spectrogram-variants}
+
+It is standard practice in ACR to use a CQT as input. However, \citet{20YearsofACR} raise the question of whether the CQT is truly the best choice. They suggest that the pitch-folding of the CQT may distort the harmonic structure of notes. By contrast, \citet{MelodyTranscriptionViaGenerativePreTraining} use a mel-spectrogram in place of a CQT. 
+
+I test four spectrogram variants in Table~\ref{tab:spectrograms}. These include the standard CQT, mel-spectrogram and linear spectrogram. I also calculate a chroma-CQT to test whether the model is using information from multiple octaves better than a hand-crafted algorithm. The chroma-CQT is calculated by summing CQT values across octaves. Spectrogram calculations are all implemented in \texttt{librosa}~\citep{librosa}. I use $216$ bins for the CQT and mel spectrograms and $2048$ fast Fourier transform (FFT) bins for the linear spectrogram with a hop length of $4096$ for all. 
+
+Results show that CQTs are the best choice. This raises questions as to the validity of the conclusions drawn by \citet{MelodyTranscriptionViaGenerativePreTraining}. They claim that their generative features are better than hand-crafted features. However, they only compare to mel-spectrograms which may not perform as well as CQTs for the related task of melody recognition. The CQT is also better the chroma-CQT. We can be confident that the model is using information from multiple octaves more efficiently than the simply summing across octaves.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lccccc}
+        \toprule
+        spectrogram & acc & root & third & seventh & mirex \\  
+        \midrule
+        CQT & \textbf{60.2} & \textbf{78.4} & \textbf{75.3} & \textbf{62.5} & \textbf{79.5} \\
+        chroma-CQT & 50.1 & 71.4 & 65.7 & 52.0 & 69.8 \\
+        mel & 52.7 & 69.1 & 66.3 & 54.6 & 70.6 \\
+        linear & 51.2 & 66.1 & 63.0 & 53.1 & 73.8 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Results for CQT, chroma-CQT, mel and linear spectrograms. The CQT is certainly the best feature. The other all perform similarly on accuracy and \text{mirex}, but the chroma-CQT does comparatively at identifying thirds and sevenths. }\label{tab:spectrograms}
+\end{table}
+
+\subsection{Hop Lengths}\label{sec:hop-lengths}
+
+Different hop lengths have been used to calculate the CQT ranging from 512~\cite{ACRLargeVocab1} up to 4096~\citep{StructuredTraining}. In previous experiments I have used a hop length of $4096$ as is used by the authors of \emph{CRNN}~\citep{StructuredTraining}. Shorter frames would reduce the number of transition frames but require more computational cost. If frame lengths are too short, the Fourier transform may not be able to capture the harmonic structure of the audio.
+
+In Table~\ref{tab:hop_lengths}, I test the effect of different hop lengths on the model's performance. I use a CQT with $216$ bins and a hop length of $512$, $1024$, $2048$, $4096$, $8192$ and $16384$. Results indicate that performance is similar for hop lengths of $4096$ and below. Performance suffers for greater hop lengths. While it could be argued that $2048$ does better than $4096$, this difference is small enough that it is not worth the increased computational cost. Models trained with a hop size of $2048$ take at least twice as long to train and evaluate as those trained on a hop size of $4096$.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lccccc}
+        \toprule
+        hop length & acc & root & third & seventh & mirex \\  
+        \midrule
+        512 & 60.1 & 78.3 & \textbf{75.5} & 62.4 & \textbf{80.0} \\
+        1024 & 60.2 & \textbf{78.7} & 75.2 & 62.5 & 79.6 \\
+        2048 & \textbf{60.3} & 78.5 & 75.2 & \textbf{62.6} & 79.6 \\
+        4096 & 60.0 & 78.1 & 75.0 & 62.2 & 79.2 \\
+        8192 & 57.9 & 76.2 & 72.9 & 60.1 & 79.3 \\
+        16384 & 53.3 & 71.7 & 68.0 & 55.4 & 77.9 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Results over different hop lengths for CQT calculation. Any hop length in the range $512$ to $4096$ has similar performance. For frames that are any longer, performance suffers. This is likely caused by the requirement for the model to assign a single chord class to each frame. The longer the frame, the greater potential there is for multiple chords to be playing during the frame. }\label{tab:hop_lengths}
+\end{table}
+
+
 \section{Small vs Large Vocabulary}\label{app:small_vs_large_vocabulary}
 
 Some initial experiments were conducted over a smaller vocabulary with $C=26$. This vocabulary includes a symbol for major and minor over each root and two special symbols, \texttt{N} and \texttt{X} for no chord and unknown chord respectively. This contrasts the much larger vocabulary with 14 chord qualities for each root which is used for the majority of the experiments. With this larger vocabulary, $C=170$.
@@ -143,7 +249,16 @@ For each run, a value was selected for each hyperparameter, with each possible v
     \caption{ Most of the diagonal entries in the confusion matrix increase. Recall on major7 qualities increases by $0.17$. The only qualities to decrease in recall are major, \texttt{N} and \texttt{X}. I conclude that weighting the loss does improve the model. The weighted model predicts \texttt{X} $2.2$ times less often. This may be how the weighted model improves class-wise metrics without sacrificing too much overall accuracy since \texttt{X} frames are ignored for evaluation.}\label{fig:hmm_smoothing_example}
 \end{figure}
 
+\section{Structured Loss Experiment Results}\label{app:structured_loss_experiment_results}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/structured_loss_accuracy.png}
+    \caption{Effect of structured loss on the \emph{CRNN} model with varying $\gamma$. As we increase $\gamma$, accuracy improves but \texttt{mirex} behaves erratically, worsening at the higher end. The other metrics behave similarly to accuracy. I choose $\gamma=0.7$ based on peak accuracy. }\label{fig:structured_loss}
+\end{figure}
+
 \section{Details of Generative Feature Extraction}\label{app:generative_feature_extraction}
+
+Overlapping $5$ second chunks of audio were fed through MusicGen in a batched fashion. This first requires passing the audio through the pre-trained Encodec audio tokeniser~\citep{Encodec}. These are then fed through the language model. I take the output logits as the representation for each frame. The model outputs logits in four `codebooks', each $2048$-dimensional vectors, intended to represent different granularities of detail in the audio. Audio segments are overlapped such that every frame has context from both directions. The multiple representations for each frame are averaged. Finally, these representations are upsampled. The model operates at a frame rate of 50Hz. To compute a representation with the same frame length as the CQT, I take the mean over the frames outputted by the model closest to the centre of the CQT frame. In case averaging over frames dampened the signal, I also tried linearly interpolating between the two closest frames outputted by the model. However, this was empirically found to perform slightly worse. Results are left to Appendix~\ref{app:linear_interpolation_vs_area_averaging}. This feature extraction required the use of NVIDIA RTX A6000 GPUs. The extraction process takes 4 hours for each model over the entire dataset.
 
 \section{Upsampling Methods in Generative Feature Extraction}\label{app:linear_interpolation_vs_area_averaging}
 
@@ -271,3 +386,11 @@ Figure~\ref{fig:calibration} shows the calibration of the model's outputs to acc
     \includegraphics[width=0.8\textwidth]{figures/beats_max_lags.png}
     \caption{Maximum lag cross correlation of chord transitions with beats within a window of $0.3$ seconds. Almost all maximum lags occur between $-0.1$ and $0.1$ seconds.}\label{fig:maximum_lag_cross_correlation}
 \end{figure}
+
+\section{Limitations and Ethics Statement}\label{app:limitations_and_ethics}
+
+It is worth bearing in mind the limitations of the work presented here and its conclusions. The dataset used focuses largely on pop and rock and cross-genre generalisation is not considered. These models expect music in standard tuning in the Wester chromatic scale. Chords themselves are also a highly Western concept. Not all music can be well described by the harmony structures considered in the chord vocabulary in this work. 
+
+There are also ethical issues relevant to training musical machine learning models worth mentioning. The audio data in this work is subject to copyright. Research on chord recognition falls under fair use but distribution of such data should be carefully controlled. 
+
+The generative models also present an ethical dilemma. Such models can be trained on copyrighted data without proper legal agreements with rights holder. The authors of the MusicGen models used in this work claim to have addressed such concerns. I do not support the use of work in chord recognition as a basis for advancing music generation models without proper legal and ethical issues being addressed.
