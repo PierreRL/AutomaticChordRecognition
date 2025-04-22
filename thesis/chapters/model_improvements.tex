@@ -54,7 +54,7 @@ Weighting has been explored by \citet{ACRLargeVocab1}. We employ a similar but s
     w_c = \frac{1}{{(\text{count}(c) + 10)}^\alpha}
 \end{equation}
 
-Where $w_c$ is the weight for chord $c$, $\text{count}(i)$ is the number of frames with chord $c$ in the dataset and $\alpha$ is a hyperparameter controlling the strength of weighting. $\alpha=0$ results in no weighting and increasing $alpha$ increases the severity of weighting. We add $10$ in the denominator to avoid dividing by $0$ and to diminish the dominating effect of chords with very few occurrences. I then define normalised weights $w_c^*$ in Equation~\ref{eq:weighted_loss} so that the learning rate can remain the same.
+Where $w_c$ is the weight for chord $c$, $\text{count}(i)$ is the number of frames with chord $c$ in the dataset and $\alpha$ is a hyperparameter controlling the strength of weighting. $\alpha=0$ results in no weighting and increasing $alpha$ increases the severity of weighting. I add $10$ in the denominator to avoid dividing by $0$ and to diminish the dominating effect of chords with very few occurrences. I then define normalised weights $w_c^*$ in Equation~\ref{eq:weighted_loss} so that the learning rate can remain the same.
 
 \begin{equation}\label{eq:weighted_loss}
     w_c^* = \frac{w_c}{s} \text{ where } s = \frac{\sum_{c\in \mathcal{C}} \text{count}(c)\cdot w_c}{\sum_{c\in \mathcal{C}} \text{count}(c)}
