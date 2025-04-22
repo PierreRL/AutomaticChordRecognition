@@ -2,6 +2,14 @@
 
 \chapter{Appendix}
 
+\section{Limitations and Ethics Statement}\label{app:limitations_and_ethics}
+
+It is worth bearing in mind the limitations of the work presented here and its conclusions. The dataset used focuses largely on pop and rock. Cross-genre generalisation is not considered. These models expect music in standard tuning in the Wester chromatic scale. Chords themselves are also a highly Western concept. Not all music can be well described by the harmony structures considered in the chord vocabulary in this work. 
+
+There are also ethical issues relevant to training musical machine learning models worth mentioning. The audio data in this work is subject to copyright. Research on chord recognition falls under fair use but distribution of such data should be carefully controlled. 
+
+The generative models also present an ethical dilemma. Such models can be trained on copyrighted data without proper legal agreements with rights holder. The authors of the MusicGen models used in this work claim to have addressed such concerns. I do not support the use of work in chord recognition as a basis for advancing music generation models without proper legal and ethical issues being addressed.
+
 \section{Weighted Chord Symbol Recall Definitions}\label{app:weighted_chord_symbol_recall_definitions}
 
 A formal definition of WCSR is provided in Equation~\ref{eq:wcsr}. The WCSR is a measure of the percentage of time that the model's predictions are correct.
@@ -39,7 +47,7 @@ where $N$, $T$, $M$, $y_{i,t}$, $\hat{y}_{i,t}$ and $\mathbb{I}_M(y_{i,t})$ are 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/lr_search_cosine.png}
-    \caption{Training graphs for \emph{CRNN} with different learning rates and the \texttt{cosine} scheduler. The learning rate of $0.001$ seems to be the best, as it converges in a reasonable time and the validation accuracy increases in a stable fashion. While it may seem that running for more epochs may increase performance, this was not found to be the case empirically. The best model was often achieved around epoch 100.}\label{fig:lr_search_cosine}
+    \caption{Training graphs for the \emph{CRNN} with different learning rates and the \texttt{cosine} scheduler. The learning rate of $0.001$ seems to be the best, as it converges in a reasonable time and the validation accuracy increases in a stable fashion. While it may seem that running for more epochs may increase performance, this was not found to be the case empirically. The best model was often achieved around epoch 100.}\label{fig:lr_search_cosine}
 \end{figure}
 
 \begin{table}[H]
@@ -126,10 +134,10 @@ However, the table shows very similar performance between both models. This allo
         large & $170$ & 76.0 & 79.1 \\
         \bottomrule
     \end{tabular}
-    \caption{\emph{CRNN} with a small and large vocabulary.}\label{tab:small_vs_large_vocab}
+    \caption{\emph{CRNN} with a small and large vocabulary. Metrics show similar performance between the two. Training on the large vocabulary does not prevent the model from learning how to classify the smaller vocabulary. Thus, I proceed with the larger vocabulary.}\label{tab:small_vs_large_vocab}
 \end{table}
 
-Note that the \texttt{mir\_eval} package also includes a \texttt{majmin} evaluation metric that compares chords over just the major and minor qualities. However, this is not quite the same as the test above due to subtleties in how \texttt{mir\_eval} chooses whether or not a chord is major or minor. It ends up ignoring many chords that could be mapped to these qualities in the smaller vocabulary. Coincidentally, \emph{CRNN} with the default parameters attains a \texttt{majmin} accuracy of $76.0\%$ over the larger vocabulary. This further confirms that we need not continue to test on the smaller vocabulary. The  \texttt{majmin} metric is not used in the rest of the thesis as it is not as informative as the other metrics and the \texttt{third} metric is highly correlated with it.
+Note that the \texttt{mir\_eval} package also includes a \texttt{majmin} evaluation metric that compares chords over just the major and minor qualities. However, this is not quite the same as the test above due to subtleties in how \texttt{mir\_eval} chooses whether or not a chord is major or minor. It ends up ignoring many chords that could be mapped to these qualities in the smaller vocabulary. Coincidentally, the \emph{CRNN} with the default parameters attains a \texttt{majmin} accuracy of $76.0\%$ over the larger vocabulary. This further confirms that we need not continue to test on the smaller vocabulary. The  \texttt{majmin} metric is not used in the rest of the thesis as it is not as informative as the other metrics and the \texttt{third} metric is highly correlated with it.
 
 \section{Chord Mapping}\label{app:chord_mapping}
 
@@ -147,20 +155,20 @@ Chords in Harte notation were mapped to the vocabulary with $C=170$ by first con
         off & \textbf{60.2} & 78.4 & 75.3 & \textbf{62.5} & 79.5 & \textbf{19.4} & \textbf{1.1} \\
         \bottomrule
     \end{tabular}
-    \caption{\emph{CRNN} with and without the added `CR2' decoder. Performance is very similar between the two. It could be argued that te model with CR2 on is better, but for simplicity, I proceed with the model without CR2. One could also argue that the effect of CR2 is similar to simply adding more layers to the GRU already present in \emph{CRNN}.}
+    \caption{\emph{CRNN} with and without the added `CR2' decoder. Performance is very similar between the two. It could be argued that te model with CR2 on is better, but for simplicity, I proceed with the model without CR2. One could also argue that the effect of CR2 is similar to simply adding more layers to the GRU already present in the \emph{CRNN}.}
 \end{table}
 
 \section{A Long Run with SGD}\label{app:long_sgd}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1.0\textwidth]{figures/long_sgd_training_plot.png}
-    \caption{Training graphs for \emph{CRNN} trained with SGD, momentum 0.9, a learning rate of $0.001$ and the \texttt{cosine} scheduling for 2000 epochs. Convergence is reached but performance does not exceed that which is achieved by Adam over 150 epochs. Furthermore, there is signifcant computational cost associated with running for 2000 epochs. I proceed with Adam for the remainder of experiments. }\label{fig:long_sgd}
+    \caption{Training graphs for the \emph{CRNN} trained with SGD, momentum 0.9, a learning rate of $0.001$ and the \texttt{cosine} scheduling for 2000 epochs. Convergence is reached but performance does not exceed that which is achieved by Adam over 150\,epochs. Furthermore, there is signifcant computational cost associated with running for 2000 epochs. I proceed with Adam for the remainder of experiments. }\label{fig:long_sgd}
 \end{figure}
 
 
 \section{Random Hyperparameter Search Sets}\label{app:random_hyperparameter_search_sets}
 
-The hyperparameter search for \emph{CRNN} was done over the following variables and values:
+The random hyperparameter search for the \emph{CRNN} was done over the following variables and values:
 \begin{itemize}
     \item \texttt{hidden\_size} $\in$ \{32, 64, 128, 256, 512\}
     \item \texttt{num\_layers} $\in$ \{1, 2, 3\}
@@ -211,7 +219,7 @@ For each run, a value was selected for each hyperparameter, with each possible v
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/incorrect_region_smoothing_histogram.png}
-    \caption{Histogram over incorrect region lengths for a \emph{CRNN} with and without smoothing. An incorrect region is defined as a sequence if incorrect frames with correct adjacent of either end. Both distributions have a long-tail, with $26.7\%$ regions being of length 1 without smoothing. This raises concerns over the smoothness of outputs and requires some form of post-processing explored in Section~\ref{sec:decoding}. The distribution is more uniform with smoothing, with approximately half the very short incorrect regions.}
+    \caption{Histogram over incorrect region lengths for the \emph{CRNN} with and without smoothing. An incorrect region is defined as a sequence if incorrect frames with correct adjacent of either end. Both distributions have a long-tail, with $26.7\%$ regions being of length 1 without smoothing. This raises concerns over the smoothness of outputs and requires some form of post-processing explored in Section~\ref{sec:decoding}. The distribution is more uniform with smoothing, with approximately half the very short incorrect regions.}
     \label{fig:histogram_over_region_lengths}
 \end{figure}
 
@@ -386,11 +394,3 @@ Figure~\ref{fig:calibration} shows the calibration of the model's outputs to acc
     \includegraphics[width=0.8\textwidth]{figures/beats_max_lags.png}
     \caption{Maximum lag cross correlation of chord transitions with beats within a window of $0.3$ seconds. Almost all maximum lags occur between $-0.1$ and $0.1$ seconds.}\label{fig:maximum_lag_cross_correlation}
 \end{figure}
-
-\section{Limitations and Ethics Statement}\label{app:limitations_and_ethics}
-
-It is worth bearing in mind the limitations of the work presented here and its conclusions. The dataset used focuses largely on pop and rock and cross-genre generalisation is not considered. These models expect music in standard tuning in the Wester chromatic scale. Chords themselves are also a highly Western concept. Not all music can be well described by the harmony structures considered in the chord vocabulary in this work. 
-
-There are also ethical issues relevant to training musical machine learning models worth mentioning. The audio data in this work is subject to copyright. Research on chord recognition falls under fair use but distribution of such data should be carefully controlled. 
-
-The generative models also present an ethical dilemma. Such models can be trained on copyrighted data without proper legal agreements with rights holder. The authors of the MusicGen models used in this work claim to have addressed such concerns. I do not support the use of work in chord recognition as a basis for advancing music generation models without proper legal and ethical issues being addressed.
