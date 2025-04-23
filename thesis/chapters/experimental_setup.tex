@@ -8,6 +8,7 @@ The initial period of this project was spent finding a suitable dataset for trai
 
 The dataset used in this work is referred to as \emph{pop}. It consists of songs from the \emph{Mcgill Billboard}, \emph{Isophonics}, \emph{RWC-Pop} and \emph{USPop} datasets introduced in Section~\ref{sec:background-data}. This collection was originally proposed in work by \citet{FourTimelyInsights} in order to bring together some of the known datasets for chord recognition. The dataset consists of subsets from the above sources filtered for duplicates and selected for those with annotations available. In total, there are 1,213 songs. The dataset was provided with obfuscated filenames and audio as \texttt{mp3} files and annotations as \texttt{jams} files~\citep{JAMS}. 
 
+\newpage
 \subsection{Data Integrity}\label{sec:data-integrity}
 
 Several possible sources of error in the dataset are investigated below.
@@ -34,7 +35,7 @@ Chord annotations are inherently subjective to some extent. Detailed examples in
 
 \subsubsection{Audio to CQT}\label{sec:audio-to-cqt}
 
-I first convert the audio to a constant-Q transform (CQT) representation explained in Section~\ref{sec:background-features}. This feature is common in ACR and is used as a starting point for this work. The CQT was computed using \texttt{librosa}, using the built-in \texttt{cqt} function. A sampling rate of $44100$Hz was used, with a hop size of 4096, 36 bins per octave, 6 octaves and a fundamental frequency corresponding to the note \texttt{C1}. These parameters were chosen to be consistent with previous works~\citep{StructuredTraining} and with common distribution formats. The CQT is returned as a complex-valued matrix containing phase, frequency and amplitude information. Phase information was discarded by taking the absolute value before being converted from amplitude to decibels (dB), equivalent to taking the logarithm.
+I first convert the audio to a constant-Q transform (CQT) representation introduced in Section~\ref{sec:background-features}. CQTs are common in ACR and is used as a starting point for this work. The CQT was computed using \texttt{librosa}, using the built-in \texttt{cqt} function. A sampling rate of $44100$Hz was used, with a hop size of 4096, 36 bins per octave, 6 octaves and a fundamental frequency corresponding to the note \texttt{C1}. These parameters were chosen to be consistent with previous works~\citep{StructuredTraining} and with common distribution formats. The CQT is returned as a complex-valued matrix containing phase, frequency and amplitude information. Phase information was discarded by taking the absolute value before being converted from amplitude to decibels (dB), equivalent to taking the logarithm.
 
 This leads to a CQT matrix of size $216 \times F$ where 216 is the number of frequency bins and $F$ is the number of frames in the song. The number of frames can be calculated as $F = \lceil \frac{44100}{4096} L  \rceil$ where $L$ is the length of the song in seconds, 44100 is the sampling rate in Hertz (Hz) and 4096 is the hop length in samples. A 3 minute song has just under 2000 frames. To save on computational cost, the CQT was pre-computed into a cached dataset rather than re-computing each CQT on every run.
 
@@ -73,7 +74,7 @@ Much of the recent literature has focused on the long tail of the chord distribu
 
 \section{Evaluation}\label{sec:evaluation}
 
-As is standard for ACR, I use weighted chord symbol recall (WCSR) to evaluate chord classifiers. Simply put, WCSR measures the fraction of time that a classifier's predictions are correct. I include a formal definition in Appendix~\ref{app:weighted_chord_symbol_recall_definitions}. Correctness can be measured in a variety of ways such as \texttt{root}, \texttt{third} and \texttt{seventh} which compare along roots, thirds, or sevenths respectively. I also use the \texttt{mirex} score, where a prediction is correct if it shares at least three notes with the label. This allows for errors like mistaking \texttt{C:7} for \texttt{C:maj}. Finally, I use \texttt{acc} to denote the overall accuracy where symbols must match exactly.
+As is standard for ACR, I use weighted chord symbol recall (WCSR) to evaluate chord classifiers. Simply put, WCSR measures the fraction of time that a classifier's predictions are correct. I include a formal definition in Appendix~\ref{app:weighted_chord_symbol_recall_definitions}. Correctness can be measured in a variety of ways such as \texttt{root}, \texttt{third} and \texttt{seventh} which compare along roots, thirds, or sevenths respectively. I also use the \texttt{mirex} score, where a prediction is correct if it shares at least three notes with the label. This allows for errors like mistaking \texttt{C:7} for \texttt{C:maj}. Finally, I use \texttt{acc}, or simply accuracy, to denote the overall accuracy where symbols must match exactly.
 
 Other measures of correctness are sometimes used. These include \texttt{majmin}, a measure of correctness over only major and minor qualities. I use this measure only to substantiate the use of the larger vocabulary in Appendix~\ref{app:small_vs_large_vocabulary}. Measures of correctness over triads and tetrads are also sometimes used but these are highly correlated with \texttt{third} and \texttt{seventh} respectively. This correlation is to be expected as the third and seventh are strong indicators of the triad and tetrad of the chord. This was verified empirically on preliminary experiments which are omitted.
 
@@ -87,7 +88,7 @@ For some experiments, two further metrics are calculated. These are the mean and
     \text{median}\textsubscript{class} = \text{median}_{c=1}^{C} [\text{\emph{WCSR}}(c)]
 \end{equation}
 
-$C$ denotes the number of chord classes. $\text{\emph{WCSR}}(c)$ is the WCSR considering only time when chord $c$ is playing. A formal definition in included in of class $c$ is also included in Appendix~\ref{app:weighted_chord_symbol_recall_definitions}.
+$C$ denotes the number of chord classes. $\text{\emph{WCSR}}(c)$ is the WCSR considering only time when chord $c$ is playing. A formal definition of $\text{\emph{WCSR}}(c)$ is also included in Appendix~\ref{app:weighted_chord_symbol_recall_definitions}.
 
 These metrics are intended to measure the model's performance on the long tail of the chord distribution. It is informative to measure both the mean and median to provide a sense of the skew in performance over classes. While the metric can be defined for any measure of correctness, I report only the \texttt{acc} as I found it to be the most informative. For example, the mean class-wise \texttt{root} score is harder to interpret.
 
