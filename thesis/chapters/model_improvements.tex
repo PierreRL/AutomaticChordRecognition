@@ -155,21 +155,21 @@ The results are shown in Table~\ref{tab:synthetic_data}. The model trained on bo
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{lcc}
+    \begin{tabular}{lcccc}
         \toprule
-        training set & \emph{pop} acc & \emph{synth} acc \\  
+        training set & \emph{pop} acc & \emph{pop} third & \emph{pop} seventh & \emph{synth} acc \\  
         \midrule
-        \emph{pop} & \textbf{62.1} & 24.2 \\
-        \emph{synth} & 48.6 & 44.8 \\
-        both & \textbf{62.1} & \textbf{51.0} \\
+        \emph{pop} & \textbf{62.1} & 77.7 & 64.4 & 24.2 \\
+        \emph{synth} & 48.6 & 64.4 & 50.6 & 44.8 \\
+        both & \textbf{62.1} & \textbf{77.9}  & \textbf{64.6} & \textbf{51.0} \\
         \bottomrule
     \end{tabular}
-    \caption{Results for models trained on the Pop dataset, synthetic data and both together. Unsurprisingly models trained on \emph{pop} perform better on \emph{pop} and models trained on \emph{synth} perform better on \emph{synth}. The model trained on both does not to any better on the \emph{pop} validation split, but performance is increased on the \emph{synth} validation split. Training only on \emph{pop} results in an accuracy of just $24.2\%$ on \emph{synth}, much lower than reported by \citet{MusiConGen}. However, this may be due to the unrealistic distribution of chords in the generated sequences. }\label{tab:synthetic_data}
+    \caption{Results for models trained on \emph{pop}, \emph{synth} and both together. Unsurprisingly models trained on \emph{pop} perform better on \emph{pop} and models trained on \emph{synth} perform better on \emph{synth}. The model trained on both does not to meaningfully better on the \emph{pop} validation split, but performance is increased on the \emph{synth} validation split. Training only on \emph{pop} results in an accuracy of just $24.2\%$ on \emph{synth}, much lower than reported by \citet{MusiConGen}. However, this may be due to the unrealistic distribution of chords in the generated sequences. }\label{tab:synthetic_data}
 \end{table}
 
-For further insight, the difference in confusion matrix over qualities is plotted in Appendix~\ref{app:cm_synthetic_data}. It does not show any clear trends. Recall on some rare qualities increases while it decreases for others. In general, the model predicts \texttt{maj} less often for rare chord qualities but replaces this with other erroneous predictions. 
+For further insight, the difference in confusion matrix over qualities is plotted in Appendix~\ref{app:cm_synthetic_data}. There are few clear trends. Recall on some rare qualities increases and decreases for others. Notably, recall on \texttt{min7} improves by $13\%$ and the model is much better at predicting the third in dominant and minor 7 chords. This is perhaps why the third and seventh accuracies increase slightly on the \emph{pop} validation set. 
 
-While performance does not improve, the lack of overfitting and the improvement on the synthetic data provides hope that with further work and improved generative models, synthetic data could prove a useful tool for ACR. Given the lack of performance increase, I do not continue to train on the synthetic data.
+While performance does not meaningfully improve on \emph{pop}, the lack of overfitting and the gain on the synthetic data provides hope that with further work and improved generative models, synthetic data could prove a useful tool for ACR. Given the lack of performance increase, I do not continue to train on synthetic data.
 
 \section{Beat Synchronisation}\label{sec:beat-synchronisation}
 
