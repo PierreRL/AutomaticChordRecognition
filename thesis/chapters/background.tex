@@ -79,7 +79,7 @@ Sources of data that have seen common use in ACR relevant to this work include:
     \item \emph{HookTheory}: 50 hours of labelled audio in the form of short musical segments, crowdsourced from an online forum called HookTheory\footnote{https://www.hooktheory.com/}.~\citep{MelodyTranscriptionViaGenerativePreTraining}
 \end{itemize}
 
-Many of these have been compiled together into the \emph{Chord Corpus} by \citet{Choco} with standardised annotation formats. However, audio is scarce, in part due to copyright issues. The most common dataset is comprised of 1217 songs compiled from the first four of the above collections. This dataset is dominated by pop songs.
+Many of these have been compiled together into the \emph{Chord Corpus} by \citet{Choco} with standardised annotation formats. However, audio is scarce due to copyright issues. The most common dataset is comprised of 1217 songs compiled from the first four of the above collections. This dataset is dominated by pop songs.
 
 Another problem is that the existing data is imbalanced, with a large number of major and minor chords and fewer instances of chords with more obscure qualities. This can lead to models that are biased towards predicting major and minor chords. Attempts to address such an imbalanced distribution have been made by weighting the loss function~\citep{ACRLargeVocab1}, adding `structure' to the chord targets~\citep{StructuredTraining,ACRLargeVocab1}, re-sampling training examples to balance chord classes~\citep{BalanceRandomForestACR} and curriculum learning~\citep{CurriculumLearning}.
 
