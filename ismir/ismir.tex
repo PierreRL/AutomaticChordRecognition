@@ -43,12 +43,9 @@ for over a decade, yet performance has not meaningfully
 improved in that time and the problem remains unsolved. 
 A key limiting factor is the lack of labelled data. In 
 this work, we investigate the use of generative music 
-models to address this, exploring them both as a source 
-of input features and as a means of generating synthetic 
-training data. We also rethink how the model predicts 
+models to address this. We extract embeddings from modern generative models for use as input features to an ACR classifier. We also create new training data using a chord-condition generative model. Finally, we rethink how the model predicts 
 chords in time by incorporating beat estimation. While performance improvements are small, synthetic data shows 
-promise in correcting model failures on rare chord 
-classes, and oracle beat estimation yields the strongest 
+promise in correcting model failures, and oracle beat estimation yields the strongest 
 results seen in the field, paving a path forward.
 \end{abstract}
 
