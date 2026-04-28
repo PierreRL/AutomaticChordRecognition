@@ -1,0 +1,155 @@
+\relax 
+\bibstyle{IEEEtran}
+\citation{annotatorsubjectivity}
+\citation{RethinkingChordRecognition}
+\citation{firstrnn,ACRCNNRNN1,ACRLargeVocab1,StructuredTraining}
+\citation{MelodyTranscriptionViaGenerativePreTraining,HarmonyTransformer,AttendToChords,CurriculumLearning,BTC,discordharmony,chordformer}
+\citation{firstrnn}
+\citation{FourTimelyInsights}
+\citation{RethinkingChordRecognition}
+\citation{StructuredTraining}
+\citation{annotatorsubjectivity}
+\citation{Jukebox}
+\citation{MusicGen}
+\citation{StructuredTraining}
+\citation{FujishimaACR}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {section}{\numberline {1.} Introduction}{1}{}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{1}{}{}{}}
+\@LN@col{2}
+\citation{RethinkingChordRecognition}
+\citation{firstrnn,ACRCNNRNN1,ACRLargeVocab1,StructuredTraining}
+\citation{MelodyTranscriptionViaGenerativePreTraining,HarmonyTransformer,AttendToChords,CurriculumLearning,BTC,discordharmony,chordformer}
+\citation{FourTimelyInsights}
+\citation{BTC}
+\citation{chordformer}
+\citation{StructuredTraining}
+\citation{BalanceRandomForestACR}
+\citation{ACRLargeVocab1}
+\citation{StructuredTraining}
+\citation{StructuredTraining,ACRLargeVocab1}
+\citation{ACRLargeVocab1}
+\citation{FourTimelyInsights,20YearsofACR}
+\citation{discordharmony}
+\citation{Jukebox}
+\citation{MusicLM}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{MusicGen}
+\citation{MusiConGen}
+\citation{ACRLargeVocab1}
+\citation{StructuredTraining}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{MelScale}
+\citation{madmom}
+\citation{madmom}
+\citation{McgillBillboard}
+\citation{Isophonics}
+\citation{RWC}
+\citation{USPop}
+\citation{biascv}
+\@LN@col{1}
+\@writefile{toc}{\contentsline {section}{\numberline {2.} Related Work}{2}{}\protected@file@percent }
+\newlabel{sec:related-work}{{2}{2}{}{}{}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {3.} Method}{2}{}\protected@file@percent }
+\newlabel{sec:method}{{3}{2}{}{}{}}
+\citation{librosa}
+\citation{mir_eval}
+\citation{StructuredTraining}
+\citation{StructuredTraining}
+\citation{BTC}
+\citation{adam}
+\citation{ACRLargeVocab1}
+\citation{StructuredTraining,chordformer,discordharmony}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{Jukebox}
+\citation{MusicGen}
+\citation{MusiConGen}
+\citation{Encodec}
+\@LN@col{1}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {4.} Experiments}{3}{}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1} Generative Features}{3}{}\protected@file@percent }
+\newlabel{sec:generative_features}{{4.1}{3}{}{}{}}
+\citation{MusicGen}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{Jukebox}
+\citation{MusicLM}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{MusiConGen}
+\citation{CocoMulla}
+\citation{BTC}
+\citation{GenerativeGrammarJazz}
+\@LN@col{1}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Comparison of CQT and generative features with a concatenation of the two, denoted as gen$\cdot $CQT. The concatenation performs the best on most metrics but not by enough to claim is meaningfully better. }}{4}{}\protected@file@percent }
+\newlabel{tab:gen_feature_comparison}{{1}{4}{}{}{}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2} Synthetic Data Generation}{4}{}\protected@file@percent }
+\newlabel{sec:synthetic_data}{{4.2}{4}{}{}{}}
+\citation{BTC}
+\citation{syntheticcollapse}
+\citation{MelodyTranscriptionViaGenerativePreTraining}
+\citation{madmom}
+\@LN@col{1}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Results for models trained on \emph  {pop}, \emph  {synth} and both together. }}{5}{}\protected@file@percent }
+\newlabel{tab:synthetic_data}{{2}{5}{}{}{}}
+\@LN@col{2}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Difference in normalised confusion matrix of the model trained on synthetic data and \emph  {pop} data versus just \emph  {pop} data. Training on synthetic data discourages the model from predicting \texttt  {X} chords, which are not present in the synthetic data. Recall on \texttt  {min7} and \texttt  {dim} qualities increases. However, recall on \texttt  {hdim7} and \texttt  {min6} worsens. In general, the model predicts \texttt  {maj} less often for rarer qualities. The synthetic data alters many of the predictions on \texttt  {7} qualities from \texttt  {min} to \texttt  {maj}. Something similar happens with \texttt  {min7} qualities. It is hard to say which model is better. Indeed, their overall accuracies are the same.}}{5}{}\protected@file@percent }
+\newlabel{fig:cm_synthetic_data}{{1}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3} Beat Synchronisation}{5}{}\protected@file@percent }
+\newlabel{sec:beat-synchronisation}{{4.3}{5}{}{}{}}
+\bibdata{refs}
+\bibcite{annotatorsubjectivity}{1}
+\@LN@col{1}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Results for different beat divisions. The beat division of `none' refers to a frame-wise \emph  {CRNN} with a hop length of $4096$ and HMM smoothing applied, `1' refers to the beats from \text  {madmom} and other numbers are the corresponding subdivision/grouping, and `oracle' refers to the intervals that are taken from the chord labels. }}{6}{}\protected@file@percent }
+\newlabel{tab:beat_division}{{3}{6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4} Final Results}{6}{}\protected@file@percent }
+\newlabel{sec:test-set}{{4.4}{6}{}{}{}}
+\@LN@col{2}
+\@writefile{toc}{\contentsline {section}{\numberline {5.} Conclusion}{6}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{6}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.} Ethics Statement}{6}{}\protected@file@percent }
+\newlabel{sec:ethics-statement}{{6}{6}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.} References}{6}{}\protected@file@percent }
+\bibcite{RethinkingChordRecognition}{2}
+\bibcite{firstrnn}{3}
+\bibcite{ACRCNNRNN1}{4}
+\bibcite{ACRLargeVocab1}{5}
+\bibcite{StructuredTraining}{6}
+\bibcite{MelodyTranscriptionViaGenerativePreTraining}{7}
+\bibcite{HarmonyTransformer}{8}
+\bibcite{AttendToChords}{9}
+\bibcite{CurriculumLearning}{10}
+\bibcite{BTC}{11}
+\bibcite{discordharmony}{12}
+\bibcite{chordformer}{13}
+\bibcite{FourTimelyInsights}{14}
+\bibcite{Jukebox}{15}
+\bibcite{MusicGen}{16}
+\bibcite{FujishimaACR}{17}
+\bibcite{BalanceRandomForestACR}{18}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Final results from various experimental setups on the test set. Best results excluding the oracle are bolded. }}{7}{}\protected@file@percent }
+\newlabel{tab:test_set}{{4}{7}{}{}{}}
+\@LN@col{1}
+\@LN@col{2}
+\bibcite{20YearsofACR}{19}
+\bibcite{MusicLM}{20}
+\bibcite{MusiConGen}{21}
+\bibcite{MelScale}{22}
+\bibcite{madmom}{23}
+\bibcite{McgillBillboard}{24}
+\bibcite{Isophonics}{25}
+\bibcite{RWC}{26}
+\bibcite{USPop}{27}
+\bibcite{biascv}{28}
+\bibcite{librosa}{29}
+\bibcite{mir_eval}{30}
+\bibcite{adam}{31}
+\bibcite{Encodec}{32}
+\bibcite{CocoMulla}{33}
+\bibcite{GenerativeGrammarJazz}{34}
+\bibcite{syntheticcollapse}{35}
+\@LN@col{1}
+\@LN@col{2}
+\gdef \@abspage@last{8}

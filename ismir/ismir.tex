@@ -24,7 +24,8 @@
 
 % For the author list in the Creative Common license, please enter author names.
 % Please abbreviate the first names of authors and add 'and' between the second to last and last authors.
-\def\authorname{P. Mackenzie, A. Storkey, and A. Wright}
+% \def\authorname{P. Mackenzie, A. Storkey, and A. Wright}
+\def\authorname{Anonymous Authors}
 
 % Optional: To use hyperref, uncomment the following.
 % \usepackage[bookmarks=false,pdfauthor={\authorname},pdfsubject={\pdfsubject},hidelinks]{hyperref}
@@ -36,8 +37,19 @@
 \maketitle
 
 \begin{abstract}
-Automatic Chord Recognition (ACR) forms an important part of music information retrieval because chords are a fundamental part of understanding many styles of music. Despite the significant progress of early models, the problem remains far from solved. In this work, we investigate why performance improvements have stagnated and revisit various methods of improvement. We also conduct novel research on using generative models as both feature extractors and a source of new data. Finally, we rethink how the model predicts chords in time by incorporating beat estimation.
-TODO: More
+Automatic Chord Recognition (ACR) has been a problem 
+of interest to the music information retrieval community 
+for over a decade, yet performance has not meaningfully 
+improved in that time and the problem remains unsolved. 
+A key limiting factor is the lack of labelled data. In 
+this work, we investigate the use of generative music 
+models to address this, exploring them both as a source 
+of input features and as a means of generating synthetic 
+training data. We also rethink how the model predicts 
+chords in time by incorporating beat estimation. While performance improvements are small, synthetic data shows 
+promise in correcting model failures on rare chord 
+classes, and oracle beat estimation yields the strongest 
+results seen in the field, paving a path forward.
 \end{abstract}
 
 \input{sections/1 introduction.tex}

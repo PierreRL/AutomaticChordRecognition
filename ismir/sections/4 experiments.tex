@@ -2,13 +2,13 @@
 
 \subsection{Generative Features}\label{sec:generative_features}
 
-\cite{MelodyTranscriptionViaGenerativePreTraining} use generative features extracted from Jukebox~\cite{Jukebox} to improve performance for melody transcription. They also produce a chord transcription model using the same methodology but do not report results. We test generative features using MusicGen~\cite{MusicGen} as a feature extractor. This was for several reasons. MusicGen is a newer model. It has several different sizes of models that can be tested to ablate on the complexity of the model. It has a fine-tuned variant called MusiConGen~\cite{MusiConGen} which is used for synthetic data generation in Section~\ref{sec:synthetic_data}. All model weights are available on the HuggingFace Hub.\footnote{\url{https://huggingface.co/docs/hub/en/index}} Finally, its training data was properly licensed, unlike Jukebox. We leave the results using Jukebox features and other models for future work. Details of the feature extraction process can be found in Appendix~\ref{app:generative_feature_extraction}.
+\cite{MelodyTranscriptionViaGenerativePreTraining} use generative features extracted from Jukebox~\cite{Jukebox} to improve performance for melody transcription. They also produce a chord transcription model using the same methodology but do not report results. We test generative features using MusicGen~\cite{MusicGen} as a feature extractor. This was for several reasons. MusicGen is a newer model. It has several different sizes of models that can be tested to ablate on the complexity of the model. It has a fine-tuned variant called MusiConGen~\cite{MusiConGen} which is used for synthetic data generation in Section~\ref{sec:synthetic_data}. All model weights are available on the HuggingFace Hub.\footnote{\url{https://huggingface.co/docs/hub/en/index}} Finally, its training data was properly licensed, unlike Jukebox. We leave the results using Jukebox features and other models for future work. 
 
-% Overlapping $5$ second chunks of audio were fed through MusicGen in a batched fashion. This first requires passing the audio through the pre-trained Encodec audio tokeniser~\cite{Encodec}. These are then fed through the language model. We take the output logits as the representation for each frame. The model outputs logits in four `codebooks', each $2048$-dimensional vectors, intended to represent different granularities of detail in the audio. Audio segments are overlapped such that every frame has context from both directions. The multiple representations for each frame are averaged. Finally, these representations are upsampled. The model operates at a frame rate of 50Hz. To compute a representation with the same frame length as the CQT, we take the mean over the frames outputted by the model closest to the centre of the CQT frame. In case averaging over frames dampened the signal, we also tried linearly interpolating between the two closest frames outputted by the model. However, this was empirically found to perform slightly worse. Results can be found in Appendix~\ref{app:linear_interpolation_vs_area_averaging}. This feature extraction required the use of NVIDIA RTX A6000 GPUs. The extraction process took approximately 4 hours for each model over the entire dataset. Due to computational constraints, pitch augmentation was removed for generative feature experiments.
+Overlapping $5$ second chunks of audio were fed through MusicGen in a batched fashion. This first requires passing the audio through the pre-trained Encodec audio tokeniser~\cite{Encodec}. These are then fed through the language model. We take the output logits as the representation for each frame. The model outputs logits in four `codebooks', each $2048$-dimensional vectors, intended to represent different granularities of detail in the audio. Audio segments are overlapped such that every frame has context from both directions. The multiple representations for each frame are averaged. Finally, these representations are upsampled. The model operates at a frame rate of 50Hz. To compute a representation with the same frame length as the CQT, we take the mean over the frames outputted by the model closest to the centre of the CQT frame. In case averaging over frames dampened the signal, we also tried linearly interpolating between the two closest frames outputted by the model. This was empirically found to perform slightly worse. Due to computational constraints, pitch augmentation was removed for generative feature experiments.
 
-As the representations are $2048$-dimensional, it is computationally infeasible to feed this directly into the GRU. Instead, using fully connected layers, we project these vectors down to a power of $2$, from $16$ to $1024$. The best representation is with $64$ dimensions, although results show no clear trend. Results are left to Appendix~\ref{app:projection_dimensionality}.
+As the representations are $2048$-dimensional, it is computationally infeasible to feed this directly into the GRU. Instead, using fully connected layers, we project these vectors down to a power of $2$, from $16$ to $1024$. The best representation is with $64$ dimensions, although results show no clear trend.
 
-We test different variants of MusicGen, including musicgen-large (3.3B parameters), musicgen-small (330M), musicgen-melody (1.5B) and MusiConGen (1.5B). We also test different reductions of the four `codebooks' outputted by the language model. This includes taking each codebook on its own, the element-wise mean across codebooks and the concatenation of all four. For further details on codebooks, see the work of \cite{MusicGen}. The best model was found to be musicgen-large and the best reduction to average over the four codebooks. However, results were close and are left to Appendices \ref{app:generative_feature_extraction_models} and \ref{app:generative_feature_extraction_reductions} for lack of interest.
+We test different variants of MusicGen, including musicgen-large (3.3B parameters), musicgen-small (330M), musicgen-melody (1.5B) and MusiConGen (1.5B). We also test different reductions of the four `codebooks' outputted by the language model. This includes taking each codebook on its own, the element-wise mean across codebooks and the concatenation of all four. For further details on codebooks, see the work of \cite{MusicGen}. The best model was found to be musicgen-large and the best reduction to average over the four codebooks. However, results were close and are omitted for lack of interest.
 
 % It might be argued that it is better to use musicgen-small to save on computational cost but the dimensionality of the codebooks is the same across all model variants. Once the features have been extracted, they are all equally as expensive to train on.
 
@@ -16,9 +16,9 @@ We test different variants of MusicGen, including musicgen-large (3.3B parameter
 
 To test whether or not these features help when compared with a CQT, we test with the CQT only, generative features only and a concatenation of the two. The results are shown in Table~\ref{tab:gen_feature_comparison}. Although the generative features perform worse than the CQT, they contain information useful for chord recognition with an accuracy of $58.7\%$. Performance remains largely the same when the CQT and generative features are used together. This experiment was run multiple times, with similar results each time. There is no clear evidence that the generative features from MusicGen provide any benefit over just using the CQT. 
 
-This conclusion is surprising as \cite{MelodyTranscriptionViaGenerativePreTraining} claim that generative features are better than hand-crafted features for the related task of melody recognition. However, they only compare to mel-spectrograms, which may not perform as well as CQTs, as they certainly do not for chord recognition. Observations here cast doubt on how well their claims generalise to chord recognition. Features extracted from other generative models such as Jukebox~\cite{Jukebox} or MusicLM~\cite{MusicLM} may perform better as MusicGen was trained with only licensed music, severely limiting the portion of the full distribution it learnt structure about. The comparison is left for future work. Another explanation is that \cite{MelodyTranscriptionViaGenerativePreTraining} use Mel-spectrogram features as baselines. We perform a further experiment with results in Appendix~\ref{app:spectrogram_variants} showing that CQTs outperform Mel-spectrograms for ACR. Thus the CQT baseline may be stronger in ACR than Mel-spectrograms for melody transcription.
+This conclusion is surprising as \cite{MelodyTranscriptionViaGenerativePreTraining} claim that generative features are better than hand-crafted features for the related task of melody recognition. However, they only compare to mel-spectrograms, which may not perform as well as CQTs, as they certainly do not for chord recognition. Observations here cast doubt on how well their claims generalise to chord recognition. Features extracted from other generative models such as Jukebox~\cite{Jukebox} or MusicLM~\cite{MusicLM} may perform better as MusicGen was trained with only licensed music, severely limiting the portion of the full distribution it learnt structure about. The comparison is left for future work. Another explanation is that~\cite{MelodyTranscriptionViaGenerativePreTraining} use Mel-spectrogram features as baselines. We perform a further experiment with results showing that CQTs improve over Mel-spectrograms by around $10\%$ for ACR. Thus, the CQT baseline may be stronger in ACR than Mel-spectrograms for melody transcription.
 
-Given the lack of improvement and the drastically increased computational cost associated with extracting features and training the model, we do not proceed with training on generative features.
+% Given the lack of improvement and the drastically increased computational cost associated with extracting features and training the model, we do not proceed with training on generative features.
 
 \begin{table}
     \centering
@@ -39,9 +39,16 @@ Given the lack of improvement and the drastically increased computational cost a
 
 Given the success of pitch augmentation for ACR, it is sensible to look for other sources of data. Further augmentation is possible by adding noise and time-stretching. However, these do not provide new harmonic structures or create new instances of rare chords. Instead, we look to generate new data, taking into account our understanding of harmonic structure. Generation would be possible through automatic arrangement, production and synthesis software. However, this is a complex task requiring a lot of human input and is unlikely to produce a sufficient variety of timbres, instrumentation and arrangement. Instead, we use a recent chord-conditioned generative model called MusiConGen~\cite{MusiConGen}. We use this over CocoMulla~\cite{CocoMulla} as the method of chord-conditioning has a more straightforward interface, doesn't require reference audio and the authors claim that it adheres more closely to its chord conditions. Indeed, they feed the outputted audio through BTC~\cite{BTC} and find a \texttt{triads} score of $71\%$ using the chord conditions as the ground truth. While far from perfect, it suggests the model can generate audio that mostly adheres to the chord conditions.
 
-We generate $1210$ songs, each $30$ seconds long, to mimic the size of the \emph{pop} dataset. We refer to this dataset as \emph{synth}. This is split into a train/validation/test split in the same fashion as for the \emph{pop} dataset. Generating a larger order of magnitude of audio would require more computational resources. While the model supports auto-regressive generation for longer audio, its outputs become incoherent using the provided generation functions. It also sometimes produces incoherent output with $30$ seconds of generation, but this was much less common. The details of generating the synthetic dataset can be found in Appendix~\ref{app:synthetic_data_gen}. 
+We generate $1210$ songs, each $30$ seconds long, to mimic the size of the \emph{pop} dataset. We refer to this dataset as \emph{synth}. This is split into a train/validation/test split in the same fashion as for the \emph{pop} dataset. Generating a larger order of magnitude of audio would require more computational resources. While the model supports auto-regressive generation for longer audio, its outputs become incoherent using the provided generation functions. It also sometimes produces incoherent output with $30$ seconds of generation, but this was much less common.
 
-The process generates a very different chord distribution than the one in \emph{pop} with many more instances of upper extensions and rare qualities. This is intended to provide the model with many more instances of rare chords. To offset this distribution shift, we calibrate the probabilities outputted by the model. To encourage root-invariance, calibration, terms are averaged over roots for each quality. The details of calculating calibration terms are described in Appendix~\ref{app:calibration}.
+To generate a song, we sample a BPM from $\mathcal{N}(11, 27)$ and a song description from a set of $20$ generated by ChatGPT. The model does not output melodic vocals, owing to the lack of vocal music in the pre-training and fine-tuning data. Finally, we generate a jazz chord progression using the theory of functional harmony~\cite{GenerativeGrammarJazz}. The process generates a very different chord distribution than the one in \emph{pop} with many more instances of upper extensions and rare qualities. This is intended to provide the model with many more instances of rare chords.
+
+To help correct for the distribution shift between synthetic training data and the \emph{pop} train split, we estimate the empirical class probabilities in each domain---\(P_{\text{train}}(y)\) and \(P_{\text{pop}}(y)\)---and rescale the model’s logits by the ratio
+\begin{equation}
+r(y)\;=\;\frac{P_{\text{pop}}(y)}{P_{\text{train}}(y)}.
+\end{equation}
+
+In order for calibration to be root invariant, we take the mean ratio over chords that share the same quality, and a single calibration factor \(r_q\) is applied to every chord with that quality. Note that the model's outputs are in logits so the log ratio is added in implementation.
 
 We manually inspect outputs from MusiConGen. In general, the outputs are good. They consistently stick to the specified BPM and usually stick to the chord conditions. Outputs are occasionally musically strange with jarring drum transients and unrealistic chord transitions. They also did not have an enormous variety in timbre and instrumentation. Nonetheless, most examples have sensible annotations that one would expect a human to be able to annotate well. 
 
@@ -53,7 +60,7 @@ Table~\ref{tab:synthetic_data} shows the results. The model trained on both data
     \centering
     \begin{tabular}{lcccc}
         \toprule
-        train & \emph{pop} & \emph{pop} & \emph{pop} & \emph{synth} \\  
+        train set & \emph{pop} & \emph{pop} & \emph{pop} & \emph{synth} \\  
          & acc & third & seventh & acc \\
         \midrule
         \emph{pop} & \textbf{62.1} & 77.7 & 64.4 & 24.2 \\
@@ -66,11 +73,58 @@ Table~\ref{tab:synthetic_data} shows the results. The model trained on both data
     }\label{tab:synthetic_data}
 \end{table}
 
-For further insight, the difference in confusion matrices over chord qualities is plotted in Appendix~\ref{app:cm_synthetic_data}. There are few clear trends. Recall increases for some rare qualities and decreases for others. Notably, recall on \texttt{min7} improves by $13\%$ and the model is much better at predicting the third in dominant and min7 chords. This is likely why the third and seventh accuracies increase slightly on the \emph{pop} validation set. 
+For further insight, the difference in confusion matrices over chord qualities is plotted in Figure~\ref{fig:cm_synthetic_data}. Recall increases for some rare qualities and decreases for others. Notably, recall on \texttt{min7} improves by $13\%$ and the model is much better at predicting the third in dominant and min7 chords. This is likely why the third and seventh accuracies increase slightly on the \emph{pop} validation set. 
 
-A problem may be that the chord-conditioned model was trained using an ACR model~\cite{BTC} which is fundamentally limited in its representations of harmonic structure. These limitations are the same ones we are trying to break through using synthetic data. This is akin to the problem of model collapse when recursively training on synthetic data~\cite{syntheticcollapse}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/confusion_matrix_synth.png}
+    \caption{Difference in normalised confusion matrix of the model trained on synthetic data and \emph{pop} data versus just \emph{pop} data. Training on synthetic data discourages the model from predicting \texttt{X} chords, which are not present in the synthetic data. Recall on \texttt{min7} and \texttt{dim} qualities increases. However, recall on \texttt{hdim7} and \texttt{min6} worsens. In general, the model predicts \texttt{maj} less often for rarer qualities. The synthetic data alters many of the predictions on \texttt{7} qualities from \texttt{min} to \texttt{maj}. Something similar happens with \texttt{min7} qualities. It is hard to say which model is better. Indeed, their overall accuracies are the same.}\label{fig:cm_synthetic_data}
+\end{figure}
 
-While performance does not meaningfully improve on \emph{pop}, the lack of overfitting and the gain on the synthetic data provide hope that synthetic data could prove a useful tool for ACR with further work and improved generative models. Furthermore, producing hand-annotated data is error-prone and subject to human interpretation. Synthetic data may produce non-identifiable data points but is consistent and error-free. Poor performance on synthetic data can only be explained by failures of the model or indeterminacy of the generated samples, not incorrect labels. Regardless, given the lack of performance increase, we do not continue to train on synthetic data.
+A problem is that the chord-conditioned model was trained using an ACR model~\cite{BTC} which is fundamentally limited in its representations of harmonic structure. These limitations are the same ones we are trying to break through using synthetic data. This is akin to the problem of model collapse when recursively training on synthetic data~\cite{syntheticcollapse}.
+
+While performance does not meaningfully improve on \emph{pop}, the lack of overfitting and the gain on the synthetic data provide hope that synthetic data could prove a useful tool for ACR with further work and improved generative models. Furthermore, producing hand-annotated data is error-prone and subject to human interpretation. Synthetic data may produce non-identifiable data points but is consistent and error-free. Poor performance on synthetic data can only be explained by failures of the model or indeterminacy of the generated samples, not incorrect labels.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lccccc}
+        \toprule
+        division & acc & root & third & seventh & mirex \\  
+        \midrule
+        1/4                 & 62.3           & 81.3          & 78.3          & 64.5           & 79.6         \\
+        1/2                 & \textbf{62.8}  & 81.5          & \textbf{78.6} & \textbf{65.1}  & 79.9         \\
+        1                   & 62.3           & 81.3          & 78.1          & 64.6           & 80.0         \\
+        2                   & 56.4           & 74.7          & 71.6          & 58.5           & 73.4         \\
+        % 4 & 50.8           & 68.0          & 64.5          & 52.8           & 67.2         \\
+        none                & 62.5           & \textbf{81.7} & 78.2          & 64.7           & 80.2         \\
+        oracle             & 61.1           & 79.6          & 76.1          & 63.4           & \textbf{90.4}\\
+        \bottomrule
+    \end{tabular}
+    \caption{Results for different beat divisions. The beat division of `none' refers to a frame-wise \emph{CRNN} with a hop length of $4096$ and HMM smoothing applied, `1' refers to the beats from \text{madmom} and other numbers are the corresponding subdivision/grouping, and `oracle' refers to the intervals that are taken from the chord labels. 
+    % Note that this `perfect' model is not a fair test. Beat-wise predictions with beat intervals of $1$ and below show performance decrease compared to frame-wise predictions. Beat intervals greater than $1$ increasingly suffer from being forced to assign predictions to larger periods of time that may align with true chord transitions. Interestingly, a beat interval of 2 still performs relatively well. A notable result is the \texttt{mirex} score of the `perfect' model. A score of $90.4\%$ is the highest of any in the literature. Despite this, its accuracy does not improve. 
+    }\label{tab:beat_division}
+\end{table}
+
+\begin{table*}[h]
+    \centering
+    \begin{tabular}{lcccccc}
+        \toprule
+         & acc & root & third & seventh & mirex & acc\textsubscript{class} \\
+        \midrule
+        \emph{CRNN}                & 62.8  & 80.9  & 78.3  & 64.6  & 80.6  & 18.6 \\
+        + gen features             & 62.7  & 80.4  & 77.9  & 64.6  & \textbf{80.6}  & 19.5 \\
+        + pitch shift              & 63.8  & \textbf{82.4}  & 79.4  & 65.6  & 80.3  & \textbf{19.7} \\
+        + synthetic data           & \textbf{64.4}  & 82.2  & \textbf{79.9}  & \textbf{66.3}  & \textbf{81.5}  & 18.3 \\
+        + beats                    & 63.7  & 82.4  & 79.7  & 65.6  & 80.9  & \textbf{19.7} \\
+        \midrule
+        + oracle beats             & 65.8  & 84.5  & 81.7  & 67.6  & 88.7  & 21.2 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Final results from various experimental setups on the test set. Best results excluding the oracle are bolded.
+    % The `perfect beats' model assumes oracle beat tracking and achieves the highest results across all metrics. It is excluded when considering the best results for each metric as it is not a fair comparison. Beat-wise models do not use synthetic data. Observations echo those found previously on the validation set. Adding the weighted loss, structured loss term and an HMM smoother improves accuracy by $1.2\%$. Generative features do not help. Pitch shifting improves metrics by $1\%$ and synthetic data by a further $0.6\%$.
+    }\label{tab:test_set}
+\end{table*}
+
 
 \subsection{Beat Synchronisation}\label{sec:beat-synchronisation}
 
@@ -90,51 +144,12 @@ The \emph{oracle} model performs slightly worse on accuracy metrics but attains 
 
 % Further analysis may reduce the gap between \texttt{mirex} and accuracy and improvements on ACR.
 
-\begin{table*}[h]
-    \centering
-    \begin{tabular}{lccccc}
-        \toprule
-        beat division & acc & root & third & seventh & mirex \\  
-        \midrule
-        1/4                 & 62.3           & 81.3          & 78.3          & 64.5           & 79.6         \\
-        1/2                 & \textbf{62.8}  & 81.5          & \textbf{78.6} & \textbf{65.1}  & 79.9         \\
-        1                   & 62.3           & 81.3          & 78.1          & 64.6           & 80.0         \\
-        2                   & 56.4           & 74.7          & 71.6          & 58.5           & 73.4         \\
-        % 4 & 50.8           & 68.0          & 64.5          & 52.8           & 67.2         \\
-        none                & 62.5           & \textbf{81.7} & 78.2          & 64.7           & 80.2         \\
-        oracle             & 61.1           & 79.6          & 76.1          & 63.4           & \textbf{90.4}\\
-        \bottomrule
-    \end{tabular}
-    \caption{Results for different beat divisions. The beat division of `none' refers to a frame-wise \emph{CRNN} with a hop length of $4096$ and HMM smoothing applied, `1' refers to the beats from \text{madmom} and other numbers are the corresponding subdivision/grouping, and `oracle' refers to the intervals that are taken from the chord labels. 
-    % Note that this `perfect' model is not a fair test. Beat-wise predictions with beat intervals of $1$ and below show performance decrease compared to frame-wise predictions. Beat intervals greater than $1$ increasingly suffer from being forced to assign predictions to larger periods of time that may align with true chord transitions. Interestingly, a beat interval of 2 still performs relatively well. A notable result is the \texttt{mirex} score of the `perfect' model. A score of $90.4\%$ is the highest of any in the literature. Despite this, its accuracy does not improve. 
-    }\label{tab:beat_division}
-\end{table*}
+
 
 \subsection{Final Results}\label{sec:test-set}
 
-For final results, we retrain select models on the combined training and validation splits and test on the held-out test split. This is an 80/20\% train/test split. We consider the original \emph{CRNN} with no improvements, the \emph{CRNN} with a weighted and structured loss and HMM smoothing, concatenating generative features with CQTs, pitch augmentation, beat-wise predictions, `perfect' beat-wise predictions and training on synthetic data. 
+For final results, we retrain select models on the combined training and validation splits and test on the held-out test split. This is an 80/20\% train/test split. We consider the \emph{CRNN} with a weighted and structured loss and HMM smoothing, concatenating generative features with CQTs, pitch augmentation, beat-wise predictions, `oracle' beat-wise predictions and training on synthetic data. 
 
-Results are shown in Table~\ref{tab:test_set}. Observations are largely similar to those found previously. Weighted and structured loss with smoothing improves accuracy by $1.2\%$ and pitch shifting improves accuracy by a further $1\%$. Generative features do not help and synthetic data improves performance by an additional $0.6\%$. This alone is not a clear enough signal that training on synthetic data is better, but it provides hope for further work. Finally, beat-wise predictions maintain the same performance. The `perfect' model achieves the highest performance across all metrics. The \texttt{mirex} of $90\%$ found on the validation set has reduced to $88.7\%$, and the gap with accuracy has narrowed compared to previous results in Table~\ref{tab:beat_division}. This is still a significant result and suggests that there is hope for breaking through the `glass ceiling'. The mean class-wise accuracy does not improve past $19.7\%$ without `perfect' beats. The median in this case is $6\%$. The model's performance on the long tail remains poor. Using a greater $\alpha$ in weighting may improve the picture but would require sacrificing accuracy.
+Results are shown in Table~\ref{tab:test_set}. Observations are largely similar to those found previously. Generative features do not help and synthetic data improves performance by an additional $0.6\%$. This alone is not a clear enough signal that training on synthetic data is better, but it provides hope for further work. Finally, beat-wise predictions maintain the same performance. The `oracle' model achieves the highest performance across all metrics. This is still a significant result and suggests that there is hope for breaking through the `glass ceiling' through better beat detection. The model's performance on the long tail remains poor.
 
-Another observation is that the model's accuracy did not improve on the test set with the additional training data. Accuracy of the \emph{CRNN} with pitch shifts trained on only $60\%$ of \emph{pop} attained an accuracy of $64.3\%$, while the model trained on the full $80\%$ training split attains $63.7\%$. The discrepancy suggests that more data from the same distribution may not improve performance. 
-
-\begin{table*}[h]
-    \centering
-    \begin{tabular}{lcccccc}
-        \toprule
-         & acc & root & third & seventh & mirex & acc\textsubscript{class} \\
-        \midrule
-        \emph{CRNN}                & 61.6  & 79.3  & 76.5  & 63.3  & 80.6  & 18.9 \\
-        + weighted/structured/HMM  & 62.8  & 80.9  & 78.3  & 64.6  & 80.6  & 18.6 \\
-        + gen features             & 62.7  & 80.4  & 77.9  & 64.6  & \textbf{80.6}  & 19.5 \\
-        + pitch shift              & 63.8  & \textbf{82.4}  & 79.4  & 65.6  & 80.3  & \textbf{19.7} \\
-        + synthetic data           & \textbf{64.4}  & 82.2  & \textbf{79.9}  & \textbf{66.3}  & \textbf{81.5}  & 18.3 \\
-        + beats                    & 63.7  & 82.4  & 79.7  & 65.6  & 80.9  & \textbf{19.7} \\
-        \midrule
-        + oracle beats             & 65.8  & 84.5  & 81.7  & 67.6  & 88.7  & 21.2 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Final results from various experimental setups on the test set. 
-    % The `perfect beats' model assumes oracle beat tracking and achieves the highest results across all metrics. It is excluded when considering the best results for each metric as it is not a fair comparison. Beat-wise models do not use synthetic data. Observations echo those found previously on the validation set. Adding the weighted loss, structured loss term and an HMM smoother improves accuracy by $1.2\%$. Generative features do not help. Pitch shifting improves metrics by $1\%$ and synthetic data by a further $0.6\%$.
-    }\label{tab:test_set}
-\end{table*}
+% Another observation is that the model's accuracy did not improve on the test set with the additional training data. Accuracy of the \emph{CRNN} with pitch shifts trained on only $60\%$ of \emph{pop} attained an accuracy of $64.3\%$, while the model trained on the full $80\%$ training split attains $63.7\%$. The discrepancy suggests that more data from the same distribution may not improve performance. 
