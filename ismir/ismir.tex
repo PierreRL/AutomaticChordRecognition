@@ -1,0 +1,54 @@
+% Requirements :
+% * 6+n page length maximum
+% * 10MB maximum file size
+% * Copyright note must appear in the bottom left corner of first page
+% * Clearer statement about citing own work in anonymized submission
+
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[submission]{ismir} % Remove the "submission" option for camera-ready version
+\usepackage{amsmath,cite,url}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{booktabs}
+
+\title{Automatic Chord Recognition with Generative Models}
+
+\threeauthors
+  {Pierre Mackenzie} {The University of British Columbia \\ \texttt{pierrerl@cs.ubc.ca}}
+  {Amos Storkey} {The University of Edinburgh \\ \texttt{a.storkey@ed.ac.uk}}
+  {Alec Wright} {The University of Edinburgh \\ \texttt{alec.wright@ed.ac.uk}}
+
+% For the author list in the Creative Common license, please enter author names.
+% Please abbreviate the first names of authors and add 'and' between the second to last and last authors.
+\def\authorname{P. Mackenzie, A. Storkey, and A. Wright}
+
+% Optional: To use hyperref, uncomment the following.
+% \usepackage[bookmarks=false,pdfauthor={\authorname},pdfsubject={\pdfsubject},hidelinks]{hyperref}
+
+\sloppy
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Automatic Chord Recognition (ACR) forms an important part of music information retrieval because chords are a fundamental part of understanding many styles of music. Despite the significant progress of early models, the problem remains far from solved. In this work, we investigate why performance improvements have stagnated and revisit various methods of improvement. We also conduct novel research on using generative models as both feature extractors and a source of new data. Finally, we rethink how the model predicts chords in time by incorporating beat estimation.
+TODO: More
+\end{abstract}
+
+\input{sections/1 introduction.tex}
+\input{sections/2 related work.tex}
+\input{sections/3 method.tex}
+\input{sections/4 experiments.tex}
+\input{sections/5 conclusion.tex}
+\input{sections/6 extras.tex}
+
+\bibliography{refs}
+
+\input{sections/7 appendix.tex}
+
+\end{document}

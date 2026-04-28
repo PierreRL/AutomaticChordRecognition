@@ -1,0 +1,836 @@
+% Introduction
+@book{tonalharmony,
+  title     = {Tonal Harmony: With an Introduction to Twentieth-century Music},
+  author    = {Kostka, Stefan and Payne, Dorothy and Almén, Byron},
+  year      = {2017},
+  publisher = {McGraw-Hill Education},
+  edition   = {8th},
+  address   = {New York}
+}
+@article{annotatorsubjectivity,
+  title   = {Annotator subjectivity in harmony annotations of popular music},
+  author  = {Koops, Hendrik Vincent and de Haas, W. Bas and Burgoyne, John Ashley and Bransen, Jeroen and Kent-Muller, Anna and Volk, Anja},
+  journal = {Journal of New Music Research},
+  volume  = {48},
+  number  = {3},
+  pages   = {232--252},
+  year    = {2019},
+  doi     = {10.1080/09298215.2019.1613436}
+}
+
+% Models
+@inproceedings{RethinkingChordRecognition,
+  author    = {Humphrey, Eric J. and Bello, Juan P.},
+  booktitle = {2012 11th International Conference on Machine Learning and Applications},
+  title     = {Rethinking Automatic Chord Recognition with Convolutional Neural Networks},
+  year      = {2012},
+  volume    = {2},
+  number    = {},
+  pages     = {357-362},
+  keywords  = {Training;Neural networks;Computer architecture;Accuracy;Kernel;Vectors;Training data;chord recognition;automatic music transcription;convolutional neural nets},
+  doi       = {10.1109/ICMLA.2012.220}
+}
+@inproceedings{FourTimelyInsights,
+  title     = {Four Timely Insights on Automatic Chord Estimation},
+  author    = {Eric J. Humphrey and Juan Pablo Bello},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2015},
+  url       = {https://api.semanticscholar.org/CorpusID:18774190}
+}
+@inproceedings{ACRCNNRNN1,
+  author    = {Wu, Yiming and Carsault, Tristan and Yoshii, Kazuyoshi},
+  booktitle = {2019 27th European Signal Processing Conference (EUSIPCO)},
+  title     = {Automatic Chord Estimation Based on a Frame-wise Convolutional Recurrent Neural Network with Non-Aligned Annotations},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {1-5},
+  keywords  = {Hidden Markov models;Annotations;Feature extraction;Multiple signal classification;Training;Estimation;Convolution;Automatic chord estimation;forced alignment;HMM;CNN;and RNN},
+  doi       = {10.23919/EUSIPCO.2019.8902741}
+}
+@inproceedings{ACRLargeVocab1,
+  title     = {Large-vocabulary Chord Transcription Via Chord Structure Decomposition},
+  author    = {Junyan Jiang and K. Chen and Wei Li and Gus G. Xia},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2019},
+  url       = {https://api.semanticscholar.org/CorpusID:208334209}
+}
+@inproceedings{firstrnn,
+  title     = {Audio Chord Recognition with Recurrent Neural Networks},
+  author    = {Mauch, Matthias and Dixon, Simon},
+  booktitle = {Proceedings of the 15th International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2014}
+}
+@inproceedings{StructuredTraining,
+  title     = {Structured Training for Large-Vocabulary Chord Recognition},
+  author    = {Brian McFee and Juan Pablo Bello},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2017},
+  url       = {https://api.semanticscholar.org/CorpusID:3072806}
+}
+
+@inproceedings{CurriculumLearning,
+  title     = {Curriculum Learning for Imbalanced Classification in Large Vocabulary Automatic Chord Recognition},
+  author    = {Rowe, Luke O. and Tzanetakis, George},
+  booktitle = {Proceedings of the 22nd International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2021},
+  pages     = {586--593},
+  url       = {https://archives.ismir.net/ismir2021/paper/000073.pdf}
+}
+
+@inproceedings{HarmonyTransformer,
+  title     = {Harmony Transformer: Incorporating Chord Segmentation into Harmony Recognition},
+  author    = {Tsung-Ping Chen and Li Su},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2019},
+  url       = {https://api.semanticscholar.org/CorpusID:208334896}
+}
+
+@misc{chordformer,
+  title         = {ChordFormer: A Conformer-Based Architecture for Large-Vocabulary Audio Chord Recognition},
+  author        = {Muhammad Waseem Akram and Stefano Dettori and Valentina Colla and Giorgio Carlo Buttazzo},
+  year          = {2025},
+  eprint        = {2502.11840},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2502.11840}
+}
+@misc{discordharmony,
+  title         = {From Discord to Harmony: Decomposed Consonance-based Training for Improved Audio Chord Estimation},
+  author        = {Andrea Poltronieri and Xavier Serra and Martín Rocamora},
+  year          = {2025},
+  eprint        = {2509.01588},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2509.01588}
+}
+@article{AttendToChords,
+  title   = {Attend to Chords: Improving Harmonic Analysis of Symbolic Music Using Transformer-Based Models},
+  author  = {Tsung-Ping Chen and Li Su},
+  journal = {Trans. Int. Soc. Music. Inf. Retr.},
+  year    = {2021},
+  volume  = {4},
+  pages   = {1-13},
+  url     = {https://api.semanticscholar.org/CorpusID:232051159}
+}
+@misc{MelodyTranscriptionViaGenerativePreTraining,
+  title         = {Melody transcription via generative pre-training},
+  author        = {Chris Donahue, John Thickstun and Percy Liang},
+  year          = {2022},
+  eprint        = {2212.01884},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2212.01884}
+}
+@misc{JukeBoxFeatureExtraction,
+  title         = {Codified audio language modeling learns useful representations for music information retrieval},
+  author        = {Rodrigo Castellon and Chris Donahue and Percy Liang},
+  year          = {2021},
+  eprint        = {2107.05677},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2107.05677}
+}
+@inproceedings{BTC,
+  author    = {Jonggwon Park and
+               Kyoyun Choi and
+               Sungwook Jeon and
+               Dokyun Kim and
+               Jonghun Park},
+  title     = {A Bi-Directional Transformer for Musical Chord Recognition},
+  booktitle = {Proceedings of the 20th International Society for Music Information Retrieval Conference (ISMIR)},
+  pages     = {620--627},
+  year      = {2019},
+  url       = {https://archives.ismir.net/ismir2019/paper/000075.pdf}
+}
+@inproceedings{BalanceRandomForestACR,
+  author    = {Miller, Jeff and O'Hanlon, Ken and Sandler, Mark B.},
+  booktitle = {2022 30th European Signal Processing Conference (EUSIPCO)},
+  title     = {Improving Balance in Automatic Chord Recognition with Random Forests},
+  year      = {2022},
+  volume    = {},
+  number    = {},
+  pages     = {244-248},
+  keywords  = {Radio frequency;Measurement;Training;Vocabulary;Smoothing methods;Estimation;Training data},
+  doi       = {10.23919/EUSIPCO55093.2022.9909558}
+}
+@inproceedings{CQTvsChroma,
+  author    = {O’Hanlon, Ken and Sandler, Mark B.},
+  booktitle = {ICASSP 2019 - 2019 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  title     = {Comparing CQT and Reassignment Based Chroma Features for Template-based Automatic Chord Recognition},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {860-864},
+  keywords  = {Feature extraction;Spectrogram;Transforms;Task analysis;Estimation;Harmonic analysis;Standards;chord recognition;spectral reassignment;chroma;CRP feature},
+  doi       = {10.1109/ICASSP.2019.8682774}
+}
+@inproceedings{AlignmentChordAnnotations,
+  title     = {ChordSync: Conformer-Based Alignment of Chord Annotations to Music Audio},
+  author    = {Andrea Poltronieri and Valentina Presutti and Mart\'in Rocamora},
+  booktitle = {Proceedings of the Sound and Music Computing Conference (SMC)},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2408.00674}
+}
+@inproceedings{FeatureMaps,
+  title        = {A Fully Convolutional Deep Auditory Model for Musical Chord Recognition},
+  author       = {Korzeniowski, Filip and Widmer, Gerhard},
+  booktitle    = {2016 IEEE 26th International Workshop on Machine Learning for Signal Processing (MLSP)},
+  pages        = {1--6},
+  year         = {2016},
+  organization = {IEEE},
+  doi          = {10.1109/MLSP.2016.7738895}
+}
+@inproceedings{SaliencyChroma,
+  title     = {Feature Learning for Chord Recognition: The Deep Chroma Extractor},
+  author    = {Korzeniowski, Filip and Widmer, Gerhard},
+  booktitle = {Proceedings of the 17th International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2016},
+  pages     = {37--43}
+}
+
+
+
+
+
+% Older papers
+@article{ComprehensiveReviewMusicTranscription,
+  author  = {Bhattarai, Bhuwan and Lee, Joonwhoan},
+  year    = {2023},
+  month   = {10},
+  pages   = {11882},
+  title   = {A Comprehensive Review on Music Transcription},
+  volume  = {13},
+  journal = {Applied Sciences},
+  doi     = {10.3390/app132111882}
+}
+@inproceedings{ACRHMM,
+  author = {Lee, Kyogu and Slaney, Malcolm},
+  year   = {2006},
+  month  = {01},
+  pages  = {133-137},
+  title  = {Automatic Chord Recognition from Audio Using a HMM with Supervised Learning.}
+}
+@article{LeadSheet2008,
+  author   = {Ryynänen, Matti P. and Klapuri, Anssi P.},
+  journal  = {Computer Music Journal},
+  title    = {Automatic Transcription of Melody, Bass Line, and Chords in Polyphonic Music},
+  year     = {2008},
+  volume   = {32},
+  number   = {3},
+  pages    = {72-86},
+  keywords = {},
+  doi      = {10.1162/comj.2008.32.3.72}
+}
+@inproceedings{LeadSheet2009,
+  author = {Weil, Jan and Sikora, Thomas and Durrieu, Jean-Louis and Richard, Gaël},
+  year   = {2009},
+  month  = {01},
+  pages  = {603-608},
+  title  = {Automatic Generation of Lead Sheets from Polyphonic Music Signals.}
+}
+@inproceedings{20YearsofACR,
+  title     = {20 Years of Automatic Chord Recognition from Audio},
+  author    = {Johan Pauwels and Ken O'Hanlon and Emilia G{\'o}mez and Mark B. Sandler},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2019},
+  url       = {https://api.semanticscholar.org/CorpusID:208334309}
+}
+
+@inproceedings{FujishimaACR,
+  title     = {Realtime Chord Recognition of Musical Sound: a System Using Common Lisp Music},
+  author    = {Takuya Fujishima},
+  booktitle = {International Conference on Mathematics and Computing},
+  year      = {1999},
+  url       = {https://api.semanticscholar.org/CorpusID:38716842}
+}
+
+
+
+
+% Features
+@article{CQT,
+  author  = {Brown, Judith},
+  year    = {1991},
+  month   = {01},
+  pages   = {425-},
+  title   = {Calculation of a Constant Q Spectral Transform},
+  volume  = {89},
+  journal = {Journal of the Acoustical Society of America},
+  doi     = {10.1121/1.400476}
+}
+@inproceedings{NNLSChroma,
+  author = {Mauch, Matthias and Dixon, Simon},
+  year   = {2010},
+  month  = {01},
+  pages  = {135-140},
+  title  = {Approximate Note Transcription for the Improved Identification of Difficult Chords.}
+}
+@misc{PianoTranscriptionWithTransformer,
+  title         = {Automatic Piano Transcription with Hierarchical Frequency-Time Transformer},
+  author        = {Keisuke Toyama and Taketo Akama and Yukara Ikemiya and Yuhta Takida and Wei-Hsiang Liao and Yuki Mitsufuji},
+  year          = {2023},
+  eprint        = {2307.04305},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2307.04305}
+}
+
+@inproceedings{ShazamSpectrogram,
+  author = {Wang, Avery},
+  year   = {2003},
+  month  = {01},
+  pages  = {},
+  title  = {An Industrial Strength Audio Search Algorithm.}
+}
+
+@inproceedings{FirstDeepLearningCQT,
+  author    = {Humphrey, Eric J. and Bello, Juan P.},
+  booktitle = {2012 11th International Conference on Machine Learning and Applications},
+  title     = {Rethinking Automatic Chord Recognition with Convolutional Neural Networks},
+  year      = {2012},
+  volume    = {2},
+  number    = {},
+  pages     = {357-362},
+  keywords  = {Training;Neural networks;Computer architecture;Accuracy;Kernel;Vectors;Training data;chord recognition;automatic music transcription;convolutional neural nets},
+  doi       = {10.1109/ICMLA.2012.220}
+}
+@article{MelScale,
+  title     = {A scale for the measurement of the psychological magnitude pitch},
+  author    = {Stevens, S. S. and Volkmann, J. and Newman, E. B.},
+  journal   = {The Journal of the Acoustical Society of America},
+  volume    = {8},
+  number    = {3},
+  pages     = {185--190},
+  year      = {1937},
+  publisher = {Acoustical Society of America},
+  doi       = {10.1121/1.1915893}
+}
+@inproceedings{GenerativeFeaturesforMIR,
+  title     = {Codified Audio Language Modeling Learns Useful Representations for Music Information Retrieval},
+  author    = {Castellon, Ryan and Donahue, Chris and Liang, Percy},
+  booktitle = {Proceedings of the 22nd International Society for Music Information Retrieval Conference (ISMIR)},
+  pages     = {885--892},
+  year      = {2021}
+}
+@article{MFCC,
+  title     = {Comparison of parametric representations for monosyllabic word recognition in continuously spoken sentences},
+  author    = {Davis, Steven and Mermelstein, Paul},
+  journal   = {IEEE Transactions on Acoustics, Speech, and Signal Processing},
+  volume    = {28},
+  number    = {4},
+  pages     = {357--366},
+  year      = {1980},
+  publisher = {IEEE},
+  doi       = {10.1109/TASSP.1980.1163420}
+}
+@article{MFCCfingerprinting,
+  title     = {A review of audio fingerprinting},
+  author    = {Cano, Pablo and Batle, Eloi and Kalker, Ton and Haitsma, Jaap},
+  journal   = {Journal of VLSI signal processing systems for signal, image and video technology},
+  volume    = {41},
+  number    = {3},
+  pages     = {271--284},
+  year      = {2005},
+  publisher = {Springer},
+  doi       = {10.1007/s11265-005-4151-3}
+}
+
+
+
+% Datasets
+@inproceedings{McgillBillboard,
+  author  = {Burgoyne, John and Wild, Jonathan and Fujinaga, Ichiro},
+  year    = {2011},
+  month   = {01},
+  pages   = {633-638},
+  title   = {An Expert Ground Truth Set for Audio Chord Recognition and Music Analysis.},
+  journal = {Proceedings of the 12th International Society for Music Information Retrieval Conference, ISMIR 2011}
+}
+@inproceedings{JAAH,
+  title     = {Audio-Aligned Jazz Harmony Dataset for Automatic Chord Transcription and Corpus-Based Research},
+  author    = {Eremenko, Vsevolod and Demirel, Emir and Bozkurt, Baris and Serra, Xavier},
+  booktitle = {Proceedings of the 19th International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2018},
+  address   = {Paris, France},
+  pages     = {488--495},
+  url       = {https://ismir2018.ircam.fr/doc/pdfs/206_Paper.pdf},
+  doi       = {10.5281/zenodo.1290736}
+}
+@article{ChorusAlignmentJAAH,
+  author  = {Durán, Gabriel and de la Cuadra, Patricio},
+  title   = {{Transcribing Lead Sheet-Like Chord Progressions of Jazz Recordings}},
+  journal = {Computer Music Journal},
+  volume  = {44},
+  number  = {4},
+  pages   = {26-42},
+  year    = {2020},
+  month   = {12},
+  issn    = {0148-9267},
+  doi     = {10.1162/comj_a_00579},
+  url     = {https://doi.org/10.1162/comj\_a\_00579},
+  eprint  = {https://direct.mit.edu/comj/article-pdf/44/4/26/2005864/comj\_a\_00579.pdf}
+}
+@conference{JAMS,
+  title    = {JAMS: A JSON annotated music specification for reproducible MIR research},
+  abstract = {The continued growth of MIR is motivating more complex annotation data, consisting of richer information, multiple annotations for a given task, and multiple tasks for a given music signal. In this work, we propose JAMS, a JSON-based music annotation format capable of addressing the evolving research requirements of the community, based on the three core principles of simplicity, structure and sustainability. It is designed to support existing data while encouraging the transition to more consistent, comprehensive, well-documented annotations that are poised to be at the crux of future MIR research. Finally, we provide a formal schema, software tools, and popular datasets in the proposed format to lower barriers to entry, and discuss how now is a crucial time to make a concerted effort toward sustainable annotation standards.},
+  author   = {Humphrey, {Eric J.} and Justin Salamon and Oriol Nieto and Jon Forsyth and Bittner, {Rachel M.} and Bello, {Juan P.}},
+  year     = {2014},
+  language = {English (US)},
+  pages    = {591--596},
+  note     = {15th International Society for Music Information Retrieval Conference, ISMIR 2014 ; Conference date: 27-10-2014 Through 31-10-2014}
+}
+@article{Choco,
+  author  = {de Berardinis, Jacopo and Meroño-Peñuela, Albert and Poltronieri, Andrea and Presutti, Valentina},
+  year    = {2023},
+  month   = {09},
+  pages   = {},
+  title   = {ChoCo: a Chord Corpus and a Data Transformation Workflow for Musical Harmony Knowledge Graphs},
+  volume  = {10},
+  journal = {Scientific Data},
+  doi     = {10.1038/s41597-023-02410-w}
+}
+@inproceedings{Isophonics,
+  title     = {OMRAS2 metadata project},
+  author    = {Cannam, Chris and Landone, Craig and Sandler, Mark},
+  booktitle = {Proceedings of the 10th International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2009},
+  pages     = {309--310}
+}
+
+@article{USPop,
+  title     = {A large-scale evaluation of acoustic and subjective music-similarity measures},
+  author    = {Berenzweig, Adam and Logan, Beth and Ellis, Daniel P. and Whitman, Brian},
+  journal   = {Computer Music Journal},
+  pages     = {63--76},
+  year      = {2004},
+  volume    = {28},
+  number    = {2},
+  publisher = {MIT Press}
+}
+
+@inproceedings{RWC,
+  author = {Goto, Masataka and Hashiguchi, Hiroki and Nishimura, Takuichi and Oka, Ryuichi},
+  year   = {2002},
+  month  = {01},
+  title  = {RWC Music Database: Popular, Classical, and Jazz Music Databases}
+}
+
+@article{AnnotatorAgreement76,
+  title     = {Annotator subjectivity in harmony annotations of popular music},
+  author    = {Ni, Y. and McVicar, M. and Devaney, J. and Fujinaga, I. and Sandler, M.},
+  journal   = {Journal of New Music Research},
+  volume    = {48},
+  number    = {2},
+  pages     = {118--135},
+  year      = {2019},
+  publisher = {Taylor \& Francis},
+  doi       = {10.1080/09298215.2019.1613436},
+  url       = {https://www.tandfonline.com/doi/full/10.1080/09298215.2019.1613436}
+}
+@inproceedings{RockHarmonyAnalysis94,
+  title     = {A corpus analysis of rock harmony},
+  author    = {De Clercq, T. and Temperley, D.},
+  booktitle = {Proceedings of the 12th International Society for Music Information Retrieval Conference (ISMIR)},
+  pages     = {23--28},
+  year      = {2011},
+  url       = {https://ismir2011.ismir.net/papers/OS6-1.pdf}
+}
+@inproceedings{UnderstandingSubjectivity,
+  title     = {Understanding effects of subjectivity in measuring chord estimation accuracy},
+  author    = {Harte, C. and Sandler, M.},
+  booktitle = {Proceedings of the 11th International Society for Music Information Retrieval Conference (ISMIR)},
+  pages     = {345--350},
+  year      = {2010},
+  url       = {https://www.researchgate.net/publication/260711996_Understanding_Effects_of_Subjectivity_in_Measuring_Chord_Estimation_Accuracy}
+}
+
+@article{RelativePerformance,
+  title     = {On the Relative Importance of Individual Components of Chord Recognition Systems},
+  author    = {Cho, Taemin and Bello, Juan Pablo},
+  journal   = {IEEE/ACM Transactions on Audio, Speech, and Language Processing},
+  volume    = {22},
+  number    = {2},
+  pages     = {477--492},
+  year      = {2014},
+  publisher = {IEEE}
+}
+@inproceedings{CommonVariations,
+  title     = {Exploring Common Variations in State of the Art Chord Recognition Systems},
+  author    = {Cho, Taemin and Weiss, Ron J. and Bello, Juan P.},
+  booktitle = {Proceedings of the 7th Sound and Music Computing Conference (SMC)},
+  pages     = {31},
+  year      = {2010},
+  publisher = {Sound and Music Computing Network},
+  address   = {Barcelona, Spain}
+}
+
+
+% Synthetic Data
+@misc{Jukebox,
+  title         = {Jukebox: A Generative Model for Music},
+  author        = {Prafulla Dhariwal and Heewoo Jun and Christine Payne and Jong Wook Kim and Alec Radford and Ilya Sutskever},
+  year          = {2020},
+  eprint        = {2005.00341},
+  archiveprefix = {arXiv},
+  primaryclass  = {eess.AS},
+  url           = {https://arxiv.org/abs/2005.00341}
+}
+@misc{MERTSupervisedLearning,
+  title         = {MERT: Acoustic Music Understanding Model with Large-Scale Self-supervised Training},
+  author        = {Yizhi Li and Ruibin Yuan and Ge Zhang and Yinghao Ma and Xingran Chen and Hanzhi Yin and Chenghao Xiao and Chenghua Lin and Anton Ragni and Emmanouil Benetos and Norbert Gyenge and Roger Dannenberg and Ruibo Liu and Wenhu Chen and Gus Xia and Yemin Shi and Wenhao Huang and Zili Wang and Yike Guo and Jie Fu},
+  year          = {2024},
+  eprint        = {2306.00107},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2306.00107}
+}
+@misc{AnnotationFreeSyntheticData,
+  title         = {Annotation-free Automatic Music Transcription with Scalable Synthetic Data and Adversarial Domain Confusion},
+  author        = {Gakusei Sato and Taketo Akama},
+  year          = {2024},
+  eprint        = {2312.10402},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2312.10402}
+}
+@misc{ScalingUpSemiSupervisedLearning,
+  title         = {Scaling Up Music Information Retrieval Training with Semi-Supervised Learning},
+  author        = {Yun-Ning Hung and Ju-Chiang Wang and Minz Won and Duc Le},
+  year          = {2023},
+  eprint        = {2310.01353},
+  archiveprefix = {arXiv},
+  primaryclass  = {eess.AS},
+  url           = {https://arxiv.org/abs/2310.01353}
+}
+@misc{MusicGenTrainingData,
+  title         = {Can MusicGen Create Training Data for MIR Tasks?},
+  author        = {Nadine Kroher and Helena Cuesta and Aggelos Pikrakis},
+  year          = {2023},
+  eprint        = {2311.09094},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2311.09094}
+}
+@misc{RAVE,
+  title         = {RAVE: A variational autoencoder for fast and high-quality neural audio synthesis},
+  author        = {Antoine Caillon and Philippe Esling},
+  year          = {2021},
+  eprint        = {2111.05011},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2111.05011}
+}
+@inproceedings{MusicGen,
+  author    = {Copet, Jade and Kreuk, Felix and Gat, Itai and Remez, Tal and Kant, David and Synnaeve, Gabriel and Adi, Yossi and Defossez, Alexandre},
+  booktitle = {Advances in Neural Information Processing Systems},
+  editor    = {A. Oh and T. Naumann and A. Globerson and K. Saenko and M. Hardt and S. Levine},
+  pages     = {47704--47720},
+  publisher = {Curran Associates, Inc.},
+  title     = {Simple and Controllable Music Generation},
+  url       = {https://proceedings.neurips.cc/paper_files/paper/2023/file/94b472a1842cd7c56dcb125fb2765fbd-Paper-Conference.pdf},
+  volume    = {36},
+  year      = {2023}
+}
+@inproceedings{MusiConGen,
+  title     = {MusiConGen: Rhythm and Chord Control for Transformer-Based Text-to-Music Generation},
+  author    = {Yun-Han Lan and Wen-Yi Hsiao and Hao-Chung Cheng and Yi-Hsuan Yang},
+  booktitle = {Proceedings of the 25th International Society for Music Information Retrieval Conference (ISMIR)},
+  year      = {2024},
+  address   = {San Francisco, United States},
+  url       = {https://arxiv.org/abs/2407.15060}
+}
+@misc{CocoMulla,
+  title         = {Content-based Controls For Music Large Language Modeling},
+  author        = {Liwei Lin and Gus Xia and Junyan Jiang and Yixiao Zhang},
+  year          = {2023},
+  eprint        = {2310.17162},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.AI}
+}
+@misc{Encodec,
+  title         = {High Fidelity Neural Audio Compression},
+  author        = {Alexandre Défossez and Jade Copet and Gabriel Synnaeve and Yossi Adi},
+  year          = {2022},
+  eprint        = {2210.13438},
+  archiveprefix = {arXiv},
+  primaryclass  = {eess.AS}
+}
+@inproceedings{madmom,
+  title     = {{madmom: a new Python Audio and Music Signal Processing Library}},
+  author    = {B{\"o}ck, Sebastian and Korzeniowski, Filip and Schl{\"u}ter, Jan and Krebs, Florian and Widmer, Gerhard},
+  booktitle = {Proceedings of the 24th ACM International Conference on Multimedia},
+  month     = {10},
+  year      = {2016},
+  pages     = {1174--1178},
+  address   = {Amsterdam, The Netherlands},
+  doi       = {10.1145/2964284.2973795}
+}
+
+
+
+
+
+
+% Libraries
+@inproceedings{music21,
+  added-at  = {2020-03-12T00:00:00.000+0100},
+  author    = {Cuthbert, Michael Scott and Ariza, Christopher},
+  biburl    = {https://www.bibsonomy.org/bibtex/2655eb165e9efd7371a52cc1ce2d4efab/dblp},
+  booktitle = {ISMIR},
+  editor    = {Downie, J. Stephen and Veltkamp, Remco C.},
+  ee        = {http://ismir2010.ismir.net/proceedings/ismir2010-108.pdf},
+  interhash = {75ae23495cb8183efb69481e6ad51a5f},
+  intrahash = {655eb165e9efd7371a52cc1ce2d4efab},
+  isbn      = {978-90-393-53813},
+  keywords  = {dblp},
+  pages     = {637-642},
+  publisher = {International Society for Music Information Retrieval},
+  timestamp = {2020-03-13T13:00:05.000+0100},
+  title     = {Music21: A Toolkit for Computer-Aided Musicology and Symbolic Music Data.},
+  url       = {http://dblp.uni-trier.de/db/conf/ismir/ismir2010.html#CuthbertA10},
+  year      = 2010
+}
+@inproceedings{mir_eval,
+  title     = {MIR\_EVAL: A Transparent Implementation of Common MIR Metrics},
+  author    = {Colin Raffel and Brian McFee and Eric J. Humphrey and Justin Salamon and Oriol Nieto and Dawen Liang and Daniel P. W. Ellis},
+  booktitle = {International Society for Music Information Retrieval Conference},
+  year      = {2014},
+  url       = {https://api.semanticscholar.org/CorpusID:17163281}
+}
+@inproceedings{librosa,
+  author = {McFee, Brian and Raffel, Colin and Liang, Dawen and Ellis, Daniel and Mcvicar, Matt and Battenberg, Eric and Nieto, Oriol},
+  year   = {2015},
+  month  = {01},
+  pages  = {18-24},
+  title  = {librosa: Audio and Music Signal Analysis in Python},
+  doi    = {10.25080/Majora-7b98e3ed-003}
+}
+@inproceedings{HarteNotation,
+  author = {Harte, Christopher and Sandler, Mark and Abdallah, Samer and Gómez, Emilia},
+  year   = {2005},
+  month  = {01},
+  pages  = {66-71},
+  title  = {Symbolic Representation of Musical Chords: A Proposed Syntax for Text Annotations.}
+}
+@inproceedings{adam,
+  author    = {Diederik P. Kingma and
+               Jimmy Ba},
+  title     = {Adam: {A} Method for Stochastic Optimization},
+  booktitle = {3rd International Conference on Learning Representations, {ICLR} 2015,
+               San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings},
+  year      = {2015},
+  url       = {http://arxiv.org/abs/1412.6980},
+  timestamp = {Thu, 25 Jul 2019 14:25:47 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/KingmaB14},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+@inproceedings{pytorch,
+  title     = {PyTorch: An Imperative Style, High-Performance Deep Learning Library},
+  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and Desmaison, Alban and K{\"o}pf, Andreas and Yang, Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and Chintala, Soumith},
+  booktitle = {Advances in Neural Information Processing Systems 32},
+  pages     = {8024--8035},
+  year      = {2019},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://papers.nips.cc/paper/9015-pytorch-an-imperative-style-high-performance-deep-learning-library.pdf}
+}
+
+@article{Viterbi,
+  title     = {Error bounds for convolutional codes and an asymptotically optimum decoding algorithm},
+  author    = {Viterbi, Andrew J.},
+  journal   = {IEEE Transactions on Information Theory},
+  volume    = {13},
+  number    = {2},
+  pages     = {260--269},
+  year      = {1967},
+  publisher = {IEEE}
+}
+
+
+
+% Generic ML
+@inproceedings{GRU,
+  title     = {Learning Phrase Representations using {RNN} Encoder{--}Decoder for Statistical Machine Translation},
+  author    = {Cho, Kyunghyun  and
+               van Merri{\"e}nboer, Bart  and
+               Gulcehre, Caglar  and
+               Bahdanau, Dzmitry  and
+               Bougares, Fethi  and
+               Schwenk, Holger  and
+               Bengio, Yoshua},
+  editor    = {Moschitti, Alessandro  and
+               Pang, Bo  and
+               Daelemans, Walter},
+  booktitle = {Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing ({EMNLP})},
+  month     = oct,
+  year      = {2014},
+  address   = {Doha, Qatar},
+  publisher = {Association for Computational Linguistics},
+  url       = {https://aclanthology.org/D14-1179/},
+  doi       = {10.3115/v1/D14-1179},
+  pages     = {1724--1734}
+}
+@misc{AttentionIsAllYouNeed,
+  title         = {Attention Is All You Need},
+  author        = {Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and Llion Jones and Aidan N. Gomez and Lukasz Kaiser and Illia Polosukhin},
+  year          = {2023},
+  eprint        = {1706.03762},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.CL},
+  url           = {https://arxiv.org/abs/1706.03762}
+}
+@inproceedings{BatchNorm,
+  title     = {Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift},
+  author    = {Ioffe, Sergey and Szegedy, Christian},
+  booktitle = {Proceedings of the 32nd International Conference on Machine Learning (ICML)},
+  year      = {2015},
+  volume    = {37},
+  pages     = {448--456},
+  publisher = {PMLR}
+}
+@misc{MusicGenChord,
+  title         = {MusicGen-Chord: Advancing Music Generation through Chord Progressions and Interactive Web-UI},
+  author        = {Jongmin Jung and Andreas Jansson and Dasaem Jeong},
+  year          = {2024},
+  eprint        = {2412.00325},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.SD},
+  url           = {https://arxiv.org/abs/2412.00325}
+}
+@article{MusicLM,
+  title   = {MusicLM: Generating Music From Text},
+  author  = {Agostinelli, Andrea and Denk, Timo I. and Borsos, Zal{\'a}n and Engel, Jesse and Verzetti, Mauro and Caillon, Antoine and Huang, Qingqing and Jansen, Aren and Roberts, Adam and Tagliasacchi, Marco and Sharifi, Matt and Zeghidour, Neil and Frank, Christian},
+  journal = {arXiv preprint arXiv:2301.11325},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2301.11325}
+}
+
+
+@article{SpeechProcessingMels,
+  author  = {Lee, Sang-Hoon and Yoon, Hyun-Wook and Noh, Hyeong-Rae and Kim, Ji-Hoon and Lee, Seong-Whan},
+  year    = {2021},
+  month   = {05},
+  pages   = {13198-13206},
+  title   = {Multi-SpectroGAN: High-Diversity and High-Fidelity Spectrogram Generation with Adversarial Style Combination for Speech Synthesis},
+  volume  = {35},
+  journal = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  doi     = {10.1609/aaai.v35i14.17559}
+}
+@inproceedings{SGD1,
+  title     = {On the convergence of {A}dam and beyond},
+  author    = {Reddi, Sashank J and Kale, Satyen and Kumar, Sanjiv},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2018},
+  url       = {https://openreview.net/forum?id=ryQu7f-RZ}
+}
+@inproceedings{SGD2,
+  title     = {The marginal value of adaptive gradient methods in machine learning},
+  author    = {Wilson, Ashia C and Roelofs, Rebecca and Stern, Mitchell and Srebro, Nati and Recht, Benjamin},
+  booktitle = {Proceedings of the 34th International Conference on Machine Learning (ICML)},
+  pages     = {414--423},
+  year      = {2017},
+  volume    = {70},
+  series    = {Proceedings of Machine Learning Research},
+  publisher = {PMLR},
+  url       = {https://proceedings.mlr.press/v70/wilson17a.html}
+}
+@inproceedings{reweightingvsresampling,
+  title     = {What is the Effect of Importance Weighting in Deep Learning?},
+  author    = {Byrd, Dustin and Wei, Siyuan and Lu, Jiyan and Eskreis-Winkler, Sofia and Wang, Yixin and Zhao, Yue and Srebro, Nathan and Ma, Yitong and Zhang, Chiyuan},
+  booktitle = {Proceedings of the 36th International Conference on Machine Learning (ICML)},
+  year      = {2019},
+  pages     = {614--623},
+  url       = {https://arxiv.org/abs/1906.02691}
+}
+
+
+% Music Theory
+
+@book{HarmonyandVoiceLeading,
+  title     = {Harmony and Voice Leading},
+  author    = {Aldwell, Edward and Schachter, Carl and Cadwallader, Allen},
+  year      = {2010},
+  publisher = {Cengage Learning},
+  note      = {ISBN: 9780495189756}
+}
+
+@book{JazzTheoryBook,
+  title     = {The Jazz Theory Book},
+  author    = {Levine, Mark},
+  year      = {1995},
+  publisher = {Sher Music Co.},
+  note      = {ISBN: 9781883217044}
+}
+
+@book{GuitarChordBible,
+  title     = {Guitar Chord Bible: 500 More Chords},
+  author    = {Simplicio, Joseph},
+  year      = {2003},
+  publisher = {Hal Leonard Corporation},
+  note      = {ISBN: 9780634057314}
+}
+
+@article{TonalAnalysisBach,
+  author  = {Rohrmeier, Martin and Cross, Ian},
+  year    = {2008},
+  month   = {01},
+  pages   = {},
+  title   = {Statistical Properties of Tonal Harmony in Bach's Chorales},
+  journal = {Proceedings of the 10th International Conference on Music Perception and Cognition}
+}
+
+@article{MusicGenreClassification,
+  author   = {Tzanetakis, G. and Cook, P.},
+  journal  = {IEEE Transactions on Speech and Audio Processing},
+  title    = {Musical genre classification of audio signals},
+  year     = {2002},
+  volume   = {10},
+  number   = {5},
+  pages    = {293-302},
+  keywords = {Humans;Music information retrieval;Instruments;Computer science;Multiple signal classification;Signal analysis;Pattern recognition;Feature extraction;Wavelet analysis;Cultural differences},
+  doi      = {10.1109/TSA.2002.800560}
+}
+
+@article{GenerativeSyntaxofHarmony,
+  title   = {Towards a generative syntax of tonal harmony},
+  author  = {Rohrmeier, Martin},
+  journal = {Journal of Mathematics and Music},
+  volume  = {5},
+  number  = {1},
+  pages   = {35--53},
+  year    = {2011},
+  doi     = {10.1080/17459737.2011.573676}
+}
+
+@article{GenerativeGrammarJazz,
+  title   = {A generative grammar for jazz chord sequences},
+  author  = {Steedman, Mark},
+  journal = {Music Perception: An Interdisciplinary Journal},
+  volume  = {2},
+  number  = {1},
+  pages   = {52--77},
+  year    = {1984},
+  doi     = {10.2307/40285276}
+}
+
+% General ML
+@article{biascv,
+  author  = {Sudhir Varma and Richard Simon},
+  title   = {Bias in error estimation when using cross-validation for model selection},
+  journal = {BMC Bioinformatics},
+  year    = {2006},
+  volume  = {7},
+  number  = {1},
+  pages   = {91},
+  doi     = {10.1186/1471-2105-7-91},
+  url     = {https://doi.org/10.1186/1471-2105-7-91}
+}
+@article{syntheticcollapse,
+  title   = {AI models collapse when trained on recursively generated data},
+  author  = {Shumailov, Ilia and Shumaylov, Zakhar and Zhao, Yiren and Papernot, Nicolas and Anderson, Ross and Gal, Yarin},
+  journal = {Nature},
+  volume  = {631},
+  pages   = {755--759},
+  year    = {2024},
+  doi     = {10.1038/s41586-024-07566-y}
+}
